@@ -1,0 +1,138 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  // Supabase PostgreSQL. Для serverless (Vercel) используем pooling (pgbouncer),
+  // а для миграций — прямое подключение через directUrl.
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============================================================================
+// АРХИВ ЛОРА — два параллельных мира: Элария (D&D 5e) и Голарион (Pathfinder 2e).
+// PostgreSQL: все "enum-like" поля хранятся как String (для простоты миграций).
+// Картинки хранятся в Supabase Storage (bucket "images"), в БД — публичный URL.
+// ============================================================================
+
+// --- Пользователи / вход в архив ---
+// login/password используются для определения мира: DND → Элария, PF2E → Голарион.
+// ⚠️ Пароль хранится открыто — для боевого применения добавь bcrypt.
+model User {
+  id          String   @id @default(cuid())
+  login       String   @unique
+  password    String   // TODO: захешировать через bcrypt в production
+  displayName String
+  // system: "DND" | "PF2E" — определяет, какой мир видит пользователь
+  system      String
+  createdAt   DateTime @default(now())
+}
+
+// --- Фракции: «папки» со значимыми NPC текущей кампании ---
+model Faction {
+  id          String       @id @default(cuid())
+  name        String
+  // system: "DND" | "PF2E"
+  system      String
+  sigil       String       // один эмодзи/глиф, напр. "⚙", "⭐"
+  description String       // 2-4 предложения
+  sortOrder   Int          @default(0)
+  createdAt   DateTime     @default(now())
+  npcs        Character[]
+}
+
+// --- Персонажи: герои партии (kind="HERO") и NPC фракций (kind="NPC") ---
+model Character {
+  id             String   @id @default(cuid())
+  name           String
+  title          String   // краткое прозвище / эпитет
+  // system: "DND" | "PF2E"
+  system         String
+  category       String   // класс/роль, напр. "Паладин", "Правитель", "Жрец"
+  race           String   // напр. "Полуэльф", "Дварф", "Человек"
+  description    String   // длинный атмосферный текст
+  sigil          String   // один глиф/эмодзи
+  mapX           Int      @default(0)
+  mapY           Int      @default(0)
+  isLocked       Boolean  @default(false)
+  isCorrupted    Boolean  @default(false)
+  secretFragment String?
+  shardWord      String?
+  // kind: "HERO" — участник партии (секция «Герои»); "NPC" — член фракции
+  kind           String   @default("HERO")
+  factionId      String?
+  faction        Faction? @relation(fields: [factionId], references: [id])
+  // путь к портрету в Supabase Storage (публичный URL) или null — показать сигил
+  imageUrl       String?
+  // status: "ALIVE" (по умолч.) | "DEAD" | "MISSING" — судьба героя
+  status         String   @default("ALIVE")
+  createdAt      DateTime @default(now())
+}
+
+// --- Лор мира / сеттинга ---
+model Lore {
+  id             String   @id @default(cuid())
+  title          String
+  // category: "Бог" | "Боги" | "Катастрофа" | "Религия" | "Ресурс" | "Болезнь" | "Эпоха" | "Артефакт" | "Лич" | "Город-государство"
+  category       String
+  // system: "DND" | "PF2E"
+  system         String
+  description    String
+  sigil          String
+  mapX           Int      @default(0)
+  mapY           Int      @default(0)
+  isLocked       Boolean  @default(false)
+  isCorrupted    Boolean  @default(false)
+  secretFragment String?
+  shardWord      String?
+  createdAt      DateTime @default(now())
+}
+
+// --- Локации: посещённые места ---
+model Location {
+  id             String   @id @default(cuid())
+  name           String
+  // type: "Город" | "Столица" | "Крепость" | "Руины" | "Святилище" | "Разлом" | "Кратер" | "Древо" | "Империя"
+  type           String
+  // system: "DND" | "PF2E"
+  system         String
+  description    String
+  sigil          String
+  mapX           Int      @default(0)
+  mapY           Int      @default(0)
+  isLocked       Boolean  @default(false)
+  isCorrupted    Boolean  @default(false)
+  secretFragment String?
+  shardWord      String?
+  createdAt      DateTime @default(now())
+}
+
+// --- Хроники: записи о сессиях партии ---
+model Chronicle {
+  id             String   @id @default(cuid())
+  sessionNumber  Int
+  title          String
+  summary        String   // длинный текст — что произошло в сессию
+  date           String   // ISO-дата строкой, напр. "2024-03-15"
+  // system: "DND" | "PF2E"
+  system         String
+  isLocked       Boolean  @default(false)
+  isCorrupted    Boolean  @default(false)
+  secretFragment String?
+  shardWord      String?
+  createdAt      DateTime @default(now())
+}
+
+// --- Достижения (определения; прогресс хранится в localStorage клиента) ---
+model Achievement {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  description String
+  sigil       String
+  createdAt   DateTime @default(now())
+}

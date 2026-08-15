@@ -1,0 +1,746 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-mono);
+  --font-mono: var(--font-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+/* ============================================================
+   CRT TERMINAL THEME — Ashen Hand Archive
+   ============================================================ */
+
+:root {
+  --radius: 0.125rem;
+
+  /* CRT phosphor palette */
+  --bg: #050505;
+  --bg-deep: #020202;
+  --panel: #0a0d0a;
+  --panel-2: #0e120e;
+  --line: #1a201a;
+  --line-bright: #2a3a2a;
+
+  --green: #4af626;
+  --green-dim: #2c8a17;
+  --green-deep: #163d0d;
+  --cyan: #3fd6c8;
+  --amber: #e8a13a;
+  --amber-dim: #8a5f1f;
+  --red: #ff2424;
+  --red-dim: #a01212;
+  --violet: #a78bfa;
+
+  --text: #b6c2b2;
+  --text-dim: #5d685c;
+  --text-dead: #8a9588;
+
+  /* shadcn token overrides → CRT dark */
+  --background: #050505;
+  --foreground: #b6c2b2;
+  --card: #0a0d0a;
+  --card-foreground: #b6c2b2;
+  --popover: #0a0d0a;
+  --popover-foreground: #b6c2b2;
+  --primary: #4af626;
+  --primary-foreground: #050505;
+  --secondary: #0e120e;
+  --secondary-foreground: #b6c2b2;
+  --muted: #0e120e;
+  --muted-foreground: #5d685c;
+  --accent: #163d0d;
+  --accent-foreground: #4af626;
+  --destructive: #ff2424;
+  --border: #1a201a;
+  --input: #1a201a;
+  --ring: #4af626;
+  --chart-1: #4af626;
+  --chart-2: #3fd6c8;
+  --chart-3: #e8a13a;
+  --chart-4: #a78bfa;
+  --chart-5: #ff2424;
+  --sidebar: #070907;
+  --sidebar-foreground: #b6c2b2;
+  --sidebar-primary: #4af626;
+  --sidebar-primary-foreground: #050505;
+  --sidebar-accent: #163d0d;
+  --sidebar-accent-foreground: #4af626;
+  --sidebar-border: #1a201a;
+  --sidebar-ring: #4af626;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    border-color: var(--line);
+  }
+  html,
+  body {
+    background: var(--bg);
+    color: var(--text);
+  }
+  body {
+    font-family: var(--font-mono), "Share Tech Mono", monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    overflow-x: hidden;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection {
+    background: rgba(74, 246, 38, 0.3);
+    color: #fff;
+  }
+}
+
+/* ============================================================
+   FONTS
+   ============================================================ */
+.font-vt323 {
+  font-family: var(--font-vt323), "VT323", monospace;
+}
+.font-medieval {
+  font-family: var(--font-medieval), "MedievalSharp", serif;
+}
+.font-mono-crt {
+  font-family: var(--font-mono), "Share Tech Mono", monospace;
+}
+
+/* ============================================================
+   GLOW + TEXT EFFECTS
+   ============================================================ */
+.glow-green {
+  color: var(--green);
+  text-shadow: 0 0 4px rgba(74, 246, 38, 0.7), 0 0 12px rgba(74, 246, 38, 0.35);
+}
+.glow-green-strong {
+  color: var(--green);
+  text-shadow: 0 0 6px rgba(74, 246, 38, 0.9), 0 0 18px rgba(74, 246, 38, 0.5),
+    0 0 32px rgba(74, 246, 38, 0.25);
+}
+.glow-amber {
+  color: var(--amber);
+  text-shadow: 0 0 4px rgba(232, 161, 58, 0.7), 0 0 12px rgba(232, 161, 58, 0.35);
+}
+.glow-red {
+  color: var(--red);
+  text-shadow: 0 0 4px rgba(255, 36, 36, 0.7), 0 0 12px rgba(255, 36, 36, 0.4);
+}
+.glow-cyan {
+  color: var(--cyan);
+  text-shadow: 0 0 4px rgba(63, 214, 200, 0.7), 0 0 12px rgba(63, 214, 200, 0.35);
+}
+.glow-violet {
+  color: var(--violet);
+  text-shadow: 0 0 5px rgba(167, 139, 250, 0.7), 0 0 14px rgba(167, 139, 250, 0.4);
+}
+.text-dim {
+  color: var(--text-dim);
+}
+.text-dead {
+  color: var(--text-dead);
+}
+
+/* ============================================================
+   CLIP-PATH HUD CORNERS (cyber-panel look)
+   ============================================================ */
+.clip-hud {
+  clip-path: polygon(
+    0 8px,
+    8px 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% calc(100% - 8px),
+    calc(100% - 8px) 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
+}
+.clip-hud-sm {
+  clip-path: polygon(
+    0 4px,
+    4px 0,
+    calc(100% - 4px) 0,
+    100% 4px,
+    100% calc(100% - 4px),
+    calc(100% - 4px) 100%,
+    4px 100%,
+    0 calc(100% - 4px)
+  );
+}
+.clip-tab {
+  clip-path: polygon(
+    8px 0,
+    100% 0,
+    100% 100%,
+    0 100%,
+    0 8px
+  );
+}
+
+/* ============================================================
+   PANELS / BORDERS
+   ============================================================ */
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line-bright);
+  box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(74, 246, 38, 0.04);
+}
+.panel-2 {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+}
+.panel-inset {
+  background: var(--bg-deep);
+  border: 1px solid var(--line);
+  box-shadow: inset 0 0 16px rgba(0, 0, 0, 0.8);
+}
+
+/* corner brackets */
+.brackets {
+  position: relative;
+}
+.brackets::before,
+.brackets::after {
+  content: "";
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-color: var(--green);
+  pointer-events: none;
+}
+.brackets::before {
+  top: -1px;
+  left: -1px;
+  border-top: 2px solid;
+  border-left: 2px solid;
+}
+.brackets::after {
+  bottom: -1px;
+  right: -1px;
+  border-bottom: 2px solid;
+  border-right: 2px solid;
+}
+
+/* ============================================================
+   BUTTONS / NAV ITEMS
+   ============================================================ */
+.btn-crt {
+  position: relative;
+  background: var(--panel-2);
+  border: 1px solid var(--line-bright);
+  color: var(--text);
+  font-family: var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+.btn-crt:hover {
+  background: var(--green-deep);
+  border-color: var(--green-dim);
+  color: var(--green);
+  text-shadow: 0 0 6px rgba(74, 246, 38, 0.7);
+  box-shadow: 0 0 12px rgba(74, 246, 38, 0.2),
+    inset 0 0 12px rgba(74, 246, 38, 0.08);
+}
+.btn-crt:active {
+  transform: translateY(1px);
+}
+.btn-crt[data-active="true"] {
+  background: var(--green-deep);
+  border-color: var(--green);
+  color: var(--green);
+  text-shadow: 0 0 6px rgba(74, 246, 38, 0.8);
+  box-shadow: inset 0 0 14px rgba(74, 246, 38, 0.18),
+    0 0 14px rgba(74, 246, 38, 0.15);
+}
+.btn-crt[data-active="true"]::before {
+  content: "▶";
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--green);
+  font-size: 0.7em;
+}
+.btn-amber {
+  border-color: var(--amber-dim);
+  color: var(--amber);
+}
+.btn-amber:hover {
+  background: rgba(232, 161, 58, 0.1);
+  border-color: var(--amber);
+  color: var(--amber);
+  text-shadow: 0 0 6px rgba(232, 161, 58, 0.7);
+  box-shadow: 0 0 12px rgba(232, 161, 58, 0.2);
+}
+.btn-red {
+  border-color: var(--red-dim);
+  color: var(--red);
+}
+.btn-red:hover {
+  background: rgba(255, 36, 36, 0.1);
+  border-color: var(--red);
+  box-shadow: 0 0 12px rgba(255, 36, 36, 0.25);
+}
+
+/* ============================================================
+   CRT OVERLAYS (fixed, full-screen, pointer-events:none)
+   ============================================================ */
+.crt-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9000;
+}
+.crt-scanlines {
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0px,
+    rgba(0, 0, 0, 0) 2px,
+    rgba(0, 0, 0, 0.25) 3px,
+    rgba(0, 0, 0, 0.25) 4px
+  );
+  opacity: 0.55;
+}
+.crt-vignette {
+  background: radial-gradient(
+    ellipse at center,
+    transparent 35%,
+    rgba(0, 0, 0, 0.4) 75%,
+    rgba(0, 0, 0, 0.85) 100%
+  );
+  box-shadow: inset 0 0 120px rgba(0, 0, 0, 0.8);
+}
+.crt-noise {
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: noiseShift 0.4s steps(3) infinite;
+}
+.crt-flicker {
+  background: rgba(74, 246, 38, 0.02);
+  animation: flicker 6s infinite;
+}
+
+@keyframes noiseShift {
+  0% { transform: translate(0, 0); }
+  33% { transform: translate(-2px, 1px); }
+  66% { transform: translate(1px, -2px); }
+  100% { transform: translate(0, 0); }
+}
+@keyframes flicker {
+  0%, 96%, 100% { opacity: 0.02; }
+  97% { opacity: 0.06; }
+  98% { opacity: 0.01; }
+  99% { opacity: 0.05; }
+}
+
+/* ============================================================
+   GLITCH (corrupted records)
+   ============================================================ */
+.glitch {
+  position: relative;
+  animation: glitchSkew 2.5s infinite linear;
+}
+.glitch::before,
+.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+.glitch::before {
+  left: 2px;
+  text-shadow: -2px 0 var(--red);
+  animation: glitchTop 1.6s infinite linear alternate-reverse;
+  clip-path: polygon(0 0, 100% 0, 100% 33%, 0 33%);
+}
+.glitch::after {
+  left: -2px;
+  text-shadow: -2px 0 var(--cyan);
+  animation: glitchBot 1.2s infinite linear alternate-reverse;
+  clip-path: polygon(0 67%, 100% 67%, 100% 100%, 0 100%);
+}
+@keyframes glitchTop {
+  0% { transform: translate(0); }
+  20% { transform: translate(-3px, 1px); }
+  40% { transform: translate(3px, -1px); }
+  60% { transform: translate(-2px, 0); }
+  80% { transform: translate(2px, 1px); }
+  100% { transform: translate(0); }
+}
+@keyframes glitchBot {
+  0% { transform: translate(0); }
+  20% { transform: translate(3px, -1px); }
+  40% { transform: translate(-3px, 1px); }
+  60% { transform: translate(2px, 0); }
+  80% { transform: translate(-2px, -1px); }
+  100% { transform: translate(0); }
+}
+@keyframes glitchSkew {
+  0%, 90%, 100% { transform: skew(0deg); }
+  92% { transform: skew(0.5deg); }
+  94% { transform: skew(-0.4deg); }
+  96% { transform: skew(0.3deg); }
+}
+
+/* censored text block */
+.censor-block {
+  background: #000;
+  color: transparent;
+  border-radius: 1px;
+  user-select: none;
+  filter: blur(3px);
+}
+.censor-glitch {
+  font-family: var(--font-mono);
+  letter-spacing: 0.1em;
+  color: var(--red-dim);
+  user-select: none;
+}
+
+/* ============================================================
+   BOOT ANIMATION
+   ============================================================ */
+.boot-flash {
+  background: #fff;
+  animation: bootFlash 0.18s ease-out forwards;
+}
+@keyframes bootFlash {
+  0% { opacity: 0; }
+  30% { opacity: 0.9; }
+  100% { opacity: 0; }
+}
+.boot-sweep {
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(74, 246, 38, 0.5) 50%,
+    transparent 100%
+  );
+  height: 100%;
+  animation: sweepDown 0.5s ease-in forwards;
+}
+@keyframes sweepDown {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+.boot-bar {
+  height: 6px;
+  background: var(--panel-2);
+  border: 1px solid var(--line-bright);
+  overflow: hidden;
+}
+.boot-bar-fill {
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--green-deep),
+    var(--green)
+  );
+  box-shadow: 0 0 10px rgba(74, 246, 38, 0.6);
+  animation: bootFill 2.2s ease-out forwards;
+}
+@keyframes bootFill {
+  0% { width: 0%; }
+  100% { width: 100%; }
+}
+.boot-cursor {
+  display: inline-block;
+  width: 0.55em;
+  height: 1em;
+  background: var(--green);
+  vertical-align: text-bottom;
+  animation: cursorBlink 1s steps(2) infinite;
+  box-shadow: 0 0 6px rgba(74, 246, 38, 0.7);
+}
+@keyframes cursorBlink {
+  0%, 50% { opacity: 1; }
+  50.01%, 100% { opacity: 0; }
+}
+
+/* ============================================================
+   LEDs
+   ============================================================ */
+.led {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: 0 0 6px currentColor;
+}
+.led-red { background: var(--red); color: var(--red); animation: ledPulse 2s infinite; }
+.led-amber { background: var(--amber); color: var(--amber); }
+.led-green { background: var(--green); color: var(--green); animation: ledBlink 1.4s infinite; }
+@keyframes ledBlink {
+  0%, 60% { opacity: 1; }
+  65%, 100% { opacity: 0.25; }
+}
+@keyframes ledPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* ============================================================
+   SIGIL (holographic icon container)
+   ============================================================ */
+.sigil-holo {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--green);
+  text-shadow: 0 0 8px rgba(74, 246, 38, 0.7), 0 0 20px rgba(74, 246, 38, 0.4);
+}
+.sigil-holo.corrupted {
+  color: var(--red);
+  text-shadow: 0 0 8px rgba(255, 36, 36, 0.7), 0 0 20px rgba(255, 36, 36, 0.4);
+  animation: sigilFlicker 1.8s infinite;
+}
+@keyframes sigilFlicker {
+  0%, 80%, 100% { opacity: 1; }
+  82% { opacity: 0.3; }
+  84% { opacity: 1; }
+  86% { opacity: 0.5; }
+}
+.sigil-spin {
+  animation: holoSpin 18s linear infinite;
+}
+@keyframes holoSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================================
+   HOVER GLITCH LINKS
+   ============================================================ */
+.glitch-hover {
+  position: relative;
+  transition: color 0.1s;
+}
+.glitch-hover:hover {
+  animation: glitchSkew 0.3s infinite;
+  text-shadow: 2px 0 var(--red), -2px 0 var(--cyan);
+}
+
+/* ============================================================
+   CUSTOM SCROLLBAR
+   ============================================================ */
+.crt-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--green-dim) var(--panel);
+}
+.crt-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.crt-scroll::-webkit-scrollbar-track {
+  background: var(--bg-deep);
+  border-left: 1px solid var(--line);
+}
+.crt-scroll::-webkit-scrollbar-thumb {
+  background: var(--green-dim);
+  border-radius: 0;
+  box-shadow: 0 0 6px rgba(74, 246, 38, 0.4);
+}
+.crt-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--green);
+  box-shadow: 0 0 10px rgba(74, 246, 38, 0.7);
+}
+
+/* ============================================================
+   GOD'S GAZE — body classes progressively degrade the CRT
+   ============================================================ */
+body.gaze-low .crt-scanlines { opacity: 0.6; }
+body.gaze-low .crt-noise { opacity: 0.05; }
+
+body.gaze-med .crt-scanlines { opacity: 0.7; }
+body.gaze-med .crt-noise { opacity: 0.07; }
+body.gaze-med .crt-vignette { box-shadow: inset 0 0 140px rgba(80, 0, 0, 0.4); }
+
+body.gaze-high .crt-scanlines { opacity: 0.8; animation: flicker 3s infinite; }
+body.gaze-high .crt-noise { opacity: 0.1; }
+body.gaze-high .crt-vignette {
+  box-shadow: inset 0 0 160px rgba(120, 0, 0, 0.55);
+}
+body.gaze-high .glow-green { text-shadow: 0 0 6px rgba(74, 246, 38, 0.5), 0 0 14px rgba(120, 0, 0, 0.3); }
+
+body.gaze-extreme {
+  animation: gazeJitter 0.15s infinite;
+}
+body.gaze-extreme .crt-scanlines { opacity: 0.9; }
+body.gaze-extreme .crt-noise { opacity: 0.14; }
+body.gaze-extreme .crt-vignette {
+  box-shadow: inset 0 0 200px rgba(160, 0, 0, 0.7);
+}
+@keyframes gazeJitter {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(-1px, 1px); }
+  50% { transform: translate(1px, -1px); }
+  75% { transform: translate(-1px, -1px); }
+}
+
+/* ============================================================
+   WITCHING HOUR — violet tint
+   ============================================================ */
+body.witching .crt-flicker {
+  background: rgba(167, 139, 250, 0.04);
+}
+body.witching::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 8999;
+  background: radial-gradient(
+    ellipse at top right,
+    rgba(167, 139, 250, 0.08),
+    transparent 50%
+  );
+}
+
+/* ============================================================
+   ACHIEVEMENT TOAST
+   ============================================================ */
+.ach-toast {
+  animation: achIn 0.4s ease-out forwards;
+}
+.ach-toast.ach-out {
+  animation: achOut 0.4s ease-in forwards;
+}
+@keyframes achIn {
+  0% { transform: translateX(120%); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+@keyframes achOut {
+  0% { transform: translateX(0); opacity: 1; }
+  100% { transform: translateX(120%); opacity: 0; }
+}
+
+/* ============================================================
+   MISC ANIMATIONS
+   ============================================================ */
+.fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.pulse-slow {
+  animation: pulseSlow 3s ease-in-out infinite;
+}
+@keyframes pulseSlow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+.float-mote {
+  animation: floatMote 4s ease-in-out infinite;
+}
+@keyframes floatMote {
+  0%, 100% { transform: translate(0, 0); }
+  33% { transform: translate(2px, -3px); }
+  66% { transform: translate(-2px, 2px); }
+}
+
+/* scan line that sweeps over a card */
+.holo-scan {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(74, 246, 38, 0.6),
+    transparent
+  );
+  animation: holoScan 3s linear infinite;
+}
+@keyframes holoScan {
+  0% { top: 0; }
+  100% { top: 100%; }
+}
+
+/* typing caret for hint */
+.hint-caret::after {
+  content: "_";
+  animation: cursorBlink 1s steps(2) infinite;
+  color: var(--green);
+}
+
+/* divider line with glow */
+.divider-glow {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--green-dim),
+    transparent
+  );
+  box-shadow: 0 0 4px rgba(74, 246, 38, 0.3);
+}
+
+/* small status chip */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid var(--line-bright);
+  background: var(--panel-2);
+}
+.chip-ok { color: var(--green); border-color: var(--green-dim); }
+.chip-warn { color: var(--amber); border-color: var(--amber-dim); }
+.chip-err { color: var(--red); border-color: var(--red-dim); animation: ledPulse 1.5s infinite; }
+.chip-violet { color: var(--violet); border-color: rgba(167,139,250,0.4); }
+
+/* responsive helpers */
+@media (max-width: 900px) {
+  body { font-size: 13px; }
+}
