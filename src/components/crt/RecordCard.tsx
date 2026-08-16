@@ -163,13 +163,13 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
   };
 
   const onOpen = () => {
-    if (isSealed) return;
     // Загадка для записей с загадкой
     if (riddleLocked) {
       sfx.select();
       setRiddleOpen(true);
       return;
     }
+    // Открываем модалку ВСЕГДА (даже для запечатанных — там есть ритуал)
     sfx.select();
     setModalOpen(true);
   };
