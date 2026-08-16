@@ -32,7 +32,7 @@ export function GazeController() {
         pushToast({
           kind: "ach",
           sigil: "👁",
-          title: "ДОСТИЖЕНИЕ: ВЗГЛЯД БОГА",
+          title: "ДОСТИЖЕНИЕ: ВЗГЛЯД СОЗИДАТЕЛЯ",
           body: "Взгляд достиг 90%. Он обратил на тебя внимание.",
         });
         sfx.achievement();
@@ -45,7 +45,7 @@ export function GazeController() {
         kind: "warn",
         sigil: "👁",
         title: "ОН ВИДИТ ТЕБЯ",
-        body: "Взгляд бога обратился в полную силу. Беги.",
+        body: "Взгляд созидателя обратился в полную силу. Беги.",
       });
       // small recoil
       setTimeout(() => addGaze(-15), 1200);

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useArchiveData } from "@/lib/useArchiveData";
 import { RecordCard, type CardRecord } from "./RecordCard";
 import { NodeMap } from "./NodeMap";
+import { useArchive } from "@/lib/store";
 import type { ArchiveType, GameSystem } from "@/lib/types";
 import { sfx } from "@/lib/audio";
 
@@ -16,6 +17,8 @@ interface ArchiveSectionProps<T> {
   normalize: (raw: T) => CardRecord;
   columns?: 1 | 3; // 1 = карточки в одну колонку (герои/NPC), 3 = сетка (по умолчанию)
   filter?: (raw: T) => boolean; // опциональный фильтр записей
+  // Запись с этим названием показывается только при gaze >= 100
+  revealAtMaxGaze?: string;
 }
 
 export function ArchiveSection<T>({
@@ -27,13 +30,24 @@ export function ArchiveSection<T>({
   normalize,
   columns = 3,
   filter,
+  revealAtMaxGaze,
 }: ArchiveSectionProps<T>) {
   const { data, loading, error } = useArchiveData<T>(type, system);
   const [view, setView] = useState<"list" | "map">("list");
+  const gaze = useArchive((s) => s.gaze);
 
-  // Фильтруем, сортируем по sortOrder (если есть), потом маппим в карточки
+  // Фильтруем, сортируем по sortOrder (если есть), потом маппим в карточки.
+  // Запись из revealAtMaxGaze показывается только при gaze >= 100.
   const records = (data ?? [])
-    .filter(filter ?? (() => true))
+    .filter((raw) => {
+      if (filter && !filter(raw)) return false;
+      // Скрываем "Отражение" пока gaze < 100
+      if (revealAtMaxGaze) {
+        const title = (raw as { title?: string }).title;
+        if (title === revealAtMaxGaze && gaze < 100) return false;
+      }
+      return true;
+    })
     .slice()
     .sort((a, b) => {
       const sa = (a as { sortOrder?: number }).sortOrder ?? 0;

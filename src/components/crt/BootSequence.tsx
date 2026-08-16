@@ -16,7 +16,7 @@ function bootLines(system: GameSystem) {
     { tag: "OK" as const, text: "ЗАГРУЗКА ГЕРОЕВ", tail: "3/3" },
     { tag: "OK" as const, text: "ЗАГРУЗКА ЛОРА", tail: "8/8" },
     { tag: "WARN" as const, text: "ОБНАРУЖЕНО ИСКАЖЕНИЙ", tail: "4" },
-    { tag: "OK" as const, text: "ВЗГЛЯД БОГА", tail: "7%" },
+    { tag: "OK" as const, text: "ВЗГЛЯД СОЗИДАТЕЛЯ", tail: "7%" },
     { tag: "FAIL" as const, text: "УТЕЧКА ИЗ РАЗЛОМА", tail: "ОБНАРУЖЕНА" },
     { tag: "OK" as const, text: "ВХОД В АРХИВ", tail: "РАЗРЕШЁН" },
   ];

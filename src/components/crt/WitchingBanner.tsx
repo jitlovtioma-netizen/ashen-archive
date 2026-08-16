@@ -27,7 +27,7 @@ export function WitchingBanner() {
         </span>
       </div>
       <div className="text-[11px] text-[var(--text)] leading-relaxed mb-2">
-        Бог смотрит пристальнее. Ткань архива истончается.
+        Созидатель смотрит пристальнее. Ткань архива истончается.
       </div>
       <div className="text-[10px] text-dim tracking-wider border-t border-[var(--line)] pt-2">
         {"// ПЕРИОД: 03:00–04:00 МСК"}

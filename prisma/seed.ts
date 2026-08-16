@@ -264,7 +264,7 @@ async function main() {
         mapY: 180,
         kind: 'NPC',
         factionId: ferrumgardId,
-        shardWord: 'бесстрашие',
+        shardWord: null,
         secretFragment:
           'Эйдан тайно содержит тайную канцелярию «Серые Сваи», следящую за семью Великими Князьями.',
       },
@@ -282,7 +282,7 @@ async function main() {
         isLocked: true,
         kind: 'NPC',
         factionId: ferrumgardId,
-        shardWord: 'кодекс',
+        shardWord: null,
       },
       // ─── Эйриос ───
       {
@@ -298,7 +298,7 @@ async function main() {
         mapY: 320,
         kind: 'NPC',
         factionId: eriosId,
-        shardWord: 'слияние',
+        shardWord: null,
         secretFragment:
           'Говорят, Эйриос давно не человек: его разум растворён в Игдрасиле, и решения принимает само Древо.',
       },
@@ -330,7 +330,7 @@ async function main() {
         mapY: 360,
         kind: 'NPC',
         factionId: spardaId,
-        shardWord: 'реформа',
+        shardWord: null,
       },
       {
         name: 'Архиепископ Венцеслав',
@@ -363,7 +363,7 @@ async function main() {
         isLocked: true,
         kind: 'NPC',
         factionId: vanId,
-        shardWord: 'бедствие',
+        shardWord: null,
         secretFragment:
           'Радна знает, что кристаллическая болезнь — это эхо ядра Аларуса, спрятанного Лунартом и Элианной.',
       },
@@ -395,7 +395,7 @@ async function main() {
         mapY: 620,
         kind: 'NPC',
         factionId: alariaId,
-        shardWord: 'перемирие',
+        shardWord: null,
       },
       {
         name: 'Алар Таэлин',
@@ -427,7 +427,7 @@ async function main() {
         mapY: 380,
         kind: 'NPC',
         factionId: dragonOrderDndId,
-        shardWord: 'золотой',
+        shardWord: null,
       },
       {
         name: 'Хранитель Свитка — Брат Олард',
@@ -458,7 +458,7 @@ async function main() {
         isCorrupted: true,
         kind: 'NPC',
         factionId: unknownDndId,
-        shardWord: 'луна',
+        shardWord: null,
       },
       {
         name: 'Жрица Украденного Солнца',
@@ -509,7 +509,7 @@ async function main() {
         mapY: 260,
         kind: 'NPC',
         factionId: absalomId,
-        shardWord: 'свобода',
+        shardWord: null,
       },
       {
         name: 'Советница Илзира Декарт',
@@ -542,7 +542,7 @@ async function main() {
         isCorrupted: true,
         kind: 'NPC',
         factionId: cheliaId,
-        shardWord: 'контракт',
+        shardWord: null,
         secretFragment:
           'Аспасия тайно переписывается с Равунелем, ища легальный повод оставить Челию до её падения.',
       },
@@ -576,7 +576,7 @@ async function main() {
         isLocked: true,
         kind: 'NPC',
         factionId: ustalavId,
-        shardWord: 'печать',
+        shardWord: null,
         secretFragment:
           'В отрубленной длани Тар-Бафона, что до сих пор цепляется за землю в Хватке Тирана, скрыт осколок его филактерии.',
       },
@@ -594,7 +594,7 @@ async function main() {
         isCorrupted: true,
         kind: 'NPC',
         factionId: ustalavId,
-        shardWord: 'кость',
+        shardWord: null,
       },
       // ─── Мендев ───
       {
@@ -610,7 +610,7 @@ async function main() {
         mapY: 180,
         kind: 'NPC',
         factionId: mendevId,
-        shardWord: 'крест',
+        shardWord: null,
       },
       {
         name: 'Венчур-Капитан Зоран Велим',
@@ -640,7 +640,7 @@ async function main() {
         mapY: 280,
         kind: 'NPC',
         factionId: nidalId,
-        shardWord: 'тьма',
+        shardWord: null,
         secretFragment:
           'Зосим тайно переписывает древние рулы Договора, надеясь однажды разорвать его — ценой всей нации.',
       },
@@ -672,7 +672,7 @@ async function main() {
         mapY: 330,
         kind: 'NPC',
         factionId: pathfinderId,
-        shardWord: 'хроника',
+        shardWord: null,
         secretFragment:
           'Амика прячет в сейфе Великой Ложи карту звёздного коридора, ведущего в Собор Звёздного Камня.',
       },
@@ -705,7 +705,7 @@ async function main() {
         isCorrupted: true,
         kind: 'NPC',
         factionId: unknownPf2eId,
-        shardWord: 'шёпот',
+        shardWord: null,
       },
       {
         name: 'Серая Сестра Некрополиса',
@@ -750,7 +750,7 @@ async function main() {
         kind: 'HERO',
         status: 'DEAD',
         imageUrl: img('heroes/eiri.png'),
-        shardWord: 'тень',
+        shardWord: null,
         secretFragment:
           'Эйри не совсем мертва. Часть её осталась в Плане Теней — и если очень тихо, она всё ещё слышит выстрел.',
       },
@@ -769,7 +769,7 @@ async function main() {
         kind: 'HERO',
         status: 'ALIVE',
         imageUrl: img('heroes/remi.png'),
-        shardWord: 'корень',
+        shardWord: null,
         secretFragment:
           'Реми слышит, как растёт Звёздная Руда. Он верит, что она — не металл, а застывший смех Аларуса.',
       },
@@ -788,7 +788,7 @@ async function main() {
         kind: 'HERO',
         status: 'ALIVE',
         imageUrl: img('heroes/bruno.png'),
-        shardWord: 'сон',
+        shardWord: null,
         secretFragment:
           'Бруно помнит лицо Творца. Он нарисовал его лишь однажды — и сжег рисунок. Кто-то всё ещё ищет пепел.',
       },
@@ -807,7 +807,7 @@ async function main() {
         kind: 'HERO',
         status: 'ALIVE',
         imageUrl: img('heroes/raudon.png'),
-        shardWord: 'метка',
+        shardWord: null,
         secretFragment:
           'Раудон носит метку, что питает Мерику. Но однажды метка потечёт в обратную сторону — и тогда решит он, кто кем питается.',
       },
@@ -827,7 +827,7 @@ async function main() {
         kind: 'HERO',
         status: 'ALIVE',
         imageUrl: img('heroes/murasaki.png'),
-        shardWord: 'клятва',
+        shardWord: null,
         secretFragment:
           'Мурасаки носит имя цвета, которого нет в спектре Эларии. Говорят, она пришла не из этого мира — и не из соседнего.',
       },
@@ -844,7 +844,7 @@ async function main() {
         mapY: 100,
         isLocked: true,
         kind: 'HERO',
-        shardWord: 'маска',
+        shardWord: null,
       },
       {
         name: 'Крестоносец Мендева',
@@ -858,7 +858,7 @@ async function main() {
         mapY: 150,
         isLocked: true,
         kind: 'HERO',
-        shardWord: 'клятва',
+        shardWord: null,
       },
       {
         name: 'Бард Магамбии',
@@ -892,7 +892,7 @@ async function main() {
         mapX: 780,
         mapY: 200,
         isLocked: true,
-        shardWord: 'бездна',
+        shardWord: null,
         secretFragment:
           'У самого края Разлома, по слухам, Радна Ванский нашёл осколок ядра Аларуса — источник кристаллической болезни.',
       },
@@ -905,7 +905,7 @@ async function main() {
         sigil: '🌟',
         mapX: 540,
         mapY: 460,
-        shardWord: 'вера',
+        shardWord: null,
       },
       {
         title: 'Звёздная Руда',
@@ -916,7 +916,7 @@ async function main() {
         sigil: '✷',
         mapX: 440,
         mapY: 640,
-        shardWord: 'руда',
+        shardWord: null,
       },
       {
         title: 'Кристаллическая Болезнь',
@@ -940,7 +940,7 @@ async function main() {
         sigil: '🌒',
         mapX: 560,
         mapY: 480,
-        shardWord: 'угасание',
+        shardWord: null,
       },
       // ─── Папка «Божества» (folder=PANTHEON) — 12 богов с портретами ───
       {
@@ -957,7 +957,7 @@ async function main() {
         imageUrl: img('gods/alarus.png'),
         sortOrder: 1,
         status: 'DEAD',
-        shardWord: 'звезда',
+        shardWord: 'Мощь',
         secretFragment:
           'Алдуин частично запечатал Разлом, но равновесие не вернулось. Чтобы оживить Творца, нужно ядро — а оно спит там, куда не смотрит ни один бог.',
       },
@@ -973,7 +973,7 @@ async function main() {
         folder: 'PANTHEON',
         imageUrl: img('gods/lunart.png'),
         sortOrder: 2,
-        shardWord: 'луна',
+        shardWord: null,
         secretFragment:
           'Глаз Лунарта, что даровал ему Аларус, до сих пор смотрит сквозь ночь. Никто не знает, куда смотрит второй.',
       },
@@ -989,7 +989,7 @@ async function main() {
         folder: 'PANTHEON',
         imageUrl: img('gods/elianna.png'),
         sortOrder: 3,
-        shardWord: 'солнце',
+        shardWord: 'Свет',
         secretFragment:
           'Солнце на небе Эларии, по вере Спарды, — украденный свет. Истинный свет исходит только от веры в Абнера.',
       },
@@ -1005,7 +1005,7 @@ async function main() {
         folder: 'PANTHEON',
         imageUrl: img('gods/alduin.png'),
         sortOrder: 4,
-        shardWord: 'присяга',
+        shardWord: null,
         secretFragment:
           'Пакт не даёт Алдуину убить предателей. Но он ищет Избранного, на которого Пакт не распространяется.',
       },
@@ -1021,7 +1021,7 @@ async function main() {
         folder: 'PANTHEON',
         imageUrl: img('gods/abner.png'),
         sortOrder: 5,
-        shardWord: 'истина',
+        shardWord: null,
         secretFragment:
           'В Спарде лжецов клеймят магическими печатями. Говорят, само клеймо — осколок взгляда Абнера.',
       },
@@ -1037,7 +1037,7 @@ async function main() {
         folder: 'PANTHEON',
         imageUrl: img('gods/xu.png'),
         sortOrder: 6,
-        shardWord: 'зима',
+        shardWord: null,
         secretFragment:
           'Ксу спит подо льдом северных морей. Когда она ворочается во сне, бывают вьюги, что длятся неделями.',
       },
@@ -1054,7 +1054,7 @@ async function main() {
         folder: 'PANTHEON',
         imageUrl: img('gods/meremot.png'),
         sortOrder: 7,
-        shardWord: 'кость',
+        shardWord: 'Тьма',
         secretFragment:
           'Меремот не создаёт нежить — он лишь открывает двери. Что входит через них, зависит от того, кто стучит.',
       },
@@ -1070,7 +1070,7 @@ async function main() {
         folder: 'PANTHEON',
         imageUrl: img('gods/kelemvor.png'),
         sortOrder: 8,
-        shardWord: 'суд',
+        shardWord: null,
         secretFragment:
           'Келемвор не решает, жить или умереть. Он лишь решает, куда душа пойдёт после — и иногда это страшнее смерти.',
       },
@@ -1086,7 +1086,7 @@ async function main() {
         folder: 'PANTHEON',
         imageUrl: img('gods/mencisa.png'),
         sortOrder: 9,
-        shardWord: 'побег',
+        shardWord: null,
         secretFragment:
           'Менциса не исцеляет — она даёт силу расти. Раненый, что молится ей, должен сам выбрать жить.',
       },
@@ -1103,7 +1103,7 @@ async function main() {
         folder: 'PANTHEON',
         imageUrl: img('gods/radna.png'),
         sortOrder: 10,
-        shardWord: 'битва',
+        shardWord: null,
         secretFragment:
           'Радна — единственный бог, что правит земным царством. Говорят, он ищет способ убить Лунарта и Элианну, чего не может Алдуин из-за Пакта.',
       },
@@ -1119,7 +1119,7 @@ async function main() {
         folder: 'PANTHEON',
         imageUrl: img('gods/prokess.png'),
         sortOrder: 11,
-        shardWord: 'труд',
+        shardWord: null,
         secretFragment:
           'Прокесс верит, что Разлом можно закрыть не магией, а изобретением. Его последователи строят машину, чьё назначение скрывают от всех богов.',
       },
@@ -1135,7 +1135,7 @@ async function main() {
         folder: 'PANTHEON',
         imageUrl: img('gods/rahish.png'),
         sortOrder: 12,
-        shardWord: 'торг',
+        shardWord: null,
         secretFragment:
           'Рахиш знает цену всему — даже смерти Аларуса. Говорят, он ведёт счёт, кому из богов сколько веры осталось.',
       },
@@ -1153,7 +1153,7 @@ async function main() {
         imageUrl: img('heroes/amelia.png'),
         sortOrder: 1,
         status: 'DEAD',
-        shardWord: 'спасение',
+        shardWord: null,
         secretFragment:
           'Амелия действовала по приказу Кали. Было ли спасение Бруно милостью — или ловушкой, в которую угодила сама Амелия?',
       },
@@ -1170,7 +1170,7 @@ async function main() {
         folder: 'SECONDARY_HEROES',
         imageUrl: img('heroes/merika.png'),
         sortOrder: 2,
-        shardWord: 'гордыня',
+        shardWord: null,
         secretFragment:
           'Мерика пережила удар бабки и встречу с Увитаром. Невероятная удача — или чья-то воля, что хранит её для чего-то худшего?',
       },
@@ -1187,7 +1187,7 @@ async function main() {
         folder: 'SECONDARY_HEROES',
         imageUrl: img('heroes/martin.png'),
         sortOrder: 3,
-        shardWord: 'мрак',
+        shardWord: 'Время',
         secretFragment:
           'Мартин — покровитель Мерики и Увитара. Но кто покровительствует ему самому? Имени его хозяина не знает ни один бог.',
       },
@@ -1205,7 +1205,7 @@ async function main() {
         folder: 'SECONDARY_HEROES',
         imageUrl: img('heroes/kali.png'),
         sortOrder: 4,
-        shardWord: 'маска',
+        shardWord: 'Реальность',
         secretFragment:
           'Кали приказала спасти Бруно. Но было ли это спасением — или пробуждением оружия, которое однажды обратится против богов?',
       },
@@ -1222,7 +1222,7 @@ async function main() {
         imageUrl: img('heroes/uvitar.png'),
         sortOrder: 5,
         status: 'DEAD',
-        shardWord: 'гордыня',
+        shardWord: null,
         secretFragment:
           'Увитар переродился в кристалл — тот самый, что поражает Ван. Болезнь, что породила Мерика, нашла в нём идеальную почву.',
       },
@@ -1239,7 +1239,7 @@ async function main() {
         folder: 'SECONDARY_HEROES',
         imageUrl: img('heroes/mika_mifita.png'),
         sortOrder: 6,
-        shardWord: 'маска',
+        shardWord: null,
         secretFragment:
           'Мифита меняет форму бесконтрольно. Говорят, в её истинном облике нет ни одного знакомого чертежа — и тот, кто увидит его, сходит с ума.',
       },
@@ -1256,7 +1256,7 @@ async function main() {
         imageUrl: img('heroes/yugvikh.png'),
         sortOrder: 7,
         status: 'DEAD',
-        shardWord: 'доблесть',
+        shardWord: null,
         secretFragment:
           'Югвих пал от руки Мартина. Но перед смертью он, говорят, успел передать Избранному Алдуина тайну, которую не знал даже сам Алдуин.',
       },
@@ -1273,9 +1273,29 @@ async function main() {
         folder: 'SECONDARY_HEROES',
         imageUrl: img('heroes/irem.png'),
         sortOrder: 8,
-        shardWord: 'отражение',
+        shardWord: null,
         secretFragment:
           'Ирем носит лицо Реми. Но если Реми — друид, что слышит корни, то Ирем — тот, кто слышит тьму. Один из них не настоящий.',
+      },
+      // ─── Отражение — открывается при 100% взгляда созидателя ───
+      {
+        title: 'Отражение',
+        category: '??? · СОКРЫТОЕ',
+        system: 'DND',
+        description:
+          '▓▒░ ОНА ░▒▓ ОБМАНЫВАЕТ ▓▒░ НЕ ВЕРЬ ░▒▓ ЕЙ ▓▒░ БЕГИ ░▒▓ она ░▒░ не ░▒░ то ░▒░ что ░▒░ кажется ░▒▓ отражение ░▒░ не ░▒░ имеет ░▒░ лица ░▒▓ она ░▒░ смотрит ░▒░ из-за ░▒░ стекла ░▒▓ БЕГИ ░▒▓ ОНА ░▒░ ОБМАНЫВАЕТ ░▒▓ НЕ ░▒░ ВЕРЬ ░▒▓ ЕЙ ░▒▓ БЕГИ ░▒░ ▓▒░',
+        sigil: '🪞',
+        mapX: 500,
+        mapY: 350,
+        isLocked: true,
+        isCorrupted: true,
+        folder: 'SECONDARY_HEROES',
+        imageUrl: null,
+        sortOrder: 9,
+        status: 'ALIVE',
+        shardWord: null,
+        secretFragment:
+          '▓▒░ Отражение — это не имя. Это приговор. Она ждёт, когда ты посмотришь слишком долго. ░▒▓',
       },
     ],
   })
@@ -1294,7 +1314,7 @@ async function main() {
         sigil: '🌟',
         mapX: 490,
         mapY: 270,
-        shardWord: 'человечество',
+        shardWord: null,
         secretFragment:
           'Истинная причина смерти Ародена неизвестна; некоторые жрецы шепчут, что его поглотила сама Звезда, а не болезнь.',
       },
@@ -1308,7 +1328,7 @@ async function main() {
         mapX: 350,
         mapY: 500,
         isLocked: true,
-        shardWord: 'землепад',
+        shardWord: null,
       },
       {
         title: 'Звёздный Камень (Starstone)',
@@ -1319,7 +1339,7 @@ async function main() {
         sigil: '💎',
         mapX: 470,
         mapY: 250,
-        shardWord: 'камень',
+        shardWord: null,
       },
       {
         title: 'Шепчущий Тиран (Тар-Бафон)',
@@ -1331,7 +1351,7 @@ async function main() {
         mapX: 380,
         mapY: 230,
         isLocked: true,
-        shardWord: 'тиран',
+        shardWord: null,
         secretFragment:
           'Филактерия Тар-Бафона была разделена надвое; одна часть — в его отрубленной длани, вторая — спрятана в Шпиле Висельника.',
       },
@@ -1345,7 +1365,7 @@ async function main() {
         mapX: 420,
         mapY: 190,
         isCorrupted: true,
-        shardWord: 'язва',
+        shardWord: null,
       },
       {
         title: 'Око Абендего',
@@ -1356,7 +1376,7 @@ async function main() {
         sigil: '🌀',
         mapX: 200,
         mapY: 620,
-        shardWord: 'ураган',
+        shardWord: null,
         secretFragment:
           'В самом спокойном «глазе» Ока, по слухам, плавает обломок библиотеки Лиргена с утраченными пророчествами Ародена.',
       },
@@ -1369,7 +1389,7 @@ async function main() {
         sigil: '⭐',
         mapX: 490,
         mapY: 280,
-        shardWord: 'центр',
+        shardWord: null,
       },
       {
         title: 'Эпоха Утраченных Пророчеств',
@@ -1402,7 +1422,7 @@ async function main() {
         sigil: '⚙',
         mapX: 250,
         mapY: 200,
-        shardWord: 'сталь',
+        shardWord: null,
       },
       {
         name: 'Светоград',
@@ -1413,7 +1433,7 @@ async function main() {
         sigil: '☀',
         mapX: 200,
         mapY: 380,
-        shardWord: 'свет',
+        shardWord: null,
       },
       {
         name: 'Таргон',
@@ -1436,7 +1456,7 @@ async function main() {
         sigil: '⚒',
         mapX: 440,
         mapY: 660,
-        shardWord: 'плавильня',
+        shardWord: null,
       },
       {
         name: 'Мировое Древо Игдрасиль',
@@ -1447,7 +1467,7 @@ async function main() {
         sigil: '🌳',
         mapX: 530,
         mapY: 340,
-        shardWord: 'древо',
+        shardWord: null,
         secretFragment: 'Корни Игдрасиля, по слухам, уходят так глубоко, что касаются сердца Аларии и черпают силу Звёздной Руды.',
       },
       {
@@ -1460,7 +1480,7 @@ async function main() {
         mapX: 800,
         mapY: 220,
         isLocked: true,
-        shardWord: 'бездна',
+        shardWord: null,
       },
     ],
   })
@@ -1480,7 +1500,7 @@ async function main() {
         sigil: '⭐',
         mapX: 480,
         mapY: 270,
-        shardWord: 'центр',
+        shardWord: null,
       },
       {
         name: 'Отари',
@@ -1491,7 +1511,7 @@ async function main() {
         sigil: '🏚',
         mapX: 510,
         mapY: 320,
-        shardWord: 'маяк',
+        shardWord: null,
       },
       {
         name: 'Диобель',
@@ -1513,7 +1533,7 @@ async function main() {
         sigil: '🏰',
         mapX: 460,
         mapY: 250,
-        shardWord: 'руины',
+        shardWord: null,
       },
       {
         name: 'Мировая Язва',
@@ -1525,7 +1545,7 @@ async function main() {
         mapX: 420,
         mapY: 180,
         isLocked: true,
-        shardWord: 'язва',
+        shardWord: null,
       },
       {
         name: 'Челия',

@@ -46,7 +46,7 @@ export function KonamiHandler() {
             kind: "secret",
             sigil: "🌙",
             title: "ПРОБУЖДЕНИЕ ЧАСА ВЕДЬМЫ",
-            body: "Бог смотрит пристальнее. На 90 секунд.",
+            body: "Созидатель смотрит пристальнее. На 90 секунд.",
           });
           sfx.whisper();
         } else if (w.endsWith("gaze")) {

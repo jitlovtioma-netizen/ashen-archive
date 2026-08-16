@@ -222,6 +222,9 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
   // <main>. Так position: fixed гарантированно работает относительно viewport.
   if (typeof document === "undefined") return null;
 
+  // ─── Специальное досье для «Отражения» — фиолетовый glitch ───
+  const isReflection = record.name === "Отражение";
+
   // ─── Экран загадки для Мартина ───
   if (needsRiddle) {
     return createPortal(
@@ -342,10 +345,12 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9700] flex items-center justify-center p-2 sm:p-4"
+      className={`fixed inset-0 z-[9700] flex items-center justify-center p-2 sm:p-4 ${isReflection ? "reflection-overlay" : ""}`}
       style={{
-        background: "rgba(2, 0, 2, 0.85)",
-        backdropFilter: "blur(2px)",
+        background: isReflection
+          ? "rgba(20, 0, 30, 0.9)"
+          : "rgba(2, 0, 2, 0.85)",
+        backdropFilter: isReflection ? "blur(4px)" : "blur(2px)",
       }}
       onClick={onClose}
       role="dialog"
@@ -353,11 +358,16 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
       aria-label={record.name}
     >
       <div
-        className="panel clip-hud brackets w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden fade-in"
+        className={`panel clip-hud brackets w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden fade-in ${isReflection ? "reflection-panel" : ""}`}
         style={{
-          boxShadow:
-            "0 0 60px rgba(74, 246, 38, 0.2), 0 0 120px rgba(0, 0, 0, 0.8)",
-          animation: "modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+          boxShadow: isReflection
+            ? "0 0 60px rgba(167, 139, 250, 0.4), 0 0 120px rgba(40, 0, 60, 0.9)"
+            : "0 0 60px rgba(74, 246, 38, 0.2), 0 0 120px rgba(0, 0, 0, 0.8)",
+          animation: isReflection
+            ? "reflectionGlitch 0.15s steps(2) infinite, modalIn 0.3s ease-out forwards"
+            : "modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+          background: isReflection ? "rgba(15, 0, 25, 0.95)" : undefined,
+          border: isReflection ? "1px solid rgba(167, 139, 250, 0.5)" : undefined,
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -425,9 +435,17 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
               <div className="text-[10px] text-dim tracking-widest mb-2">
                 {"// ОПИСАНИЕ //"}
               </div>
+              {/* Предупреждения для Отражения */}
+              {isReflection && (
+                <div className="mb-3 text-center space-y-1">
+                  <div className="reflection-warning text-lg">ОНА ОБМАНЫВАЕТ!</div>
+                  <div className="reflection-warning text-lg">НЕ ВЕРЬ ЕЙ!</div>
+                  <div className="reflection-warning text-2xl">БЕГИ!</div>
+                </div>
+              )}
               {!isSealed ? (
                 <p
-                  className="text-[14px] leading-relaxed text-[var(--text)]"
+                  className={`text-[14px] leading-relaxed ${isReflection ? "reflection-text" : "text-[var(--text)]"}`}
                   dangerouslySetInnerHTML={
                     isCorrupted ? { __html: corruptedDisplay } : undefined
                   }

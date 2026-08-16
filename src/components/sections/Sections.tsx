@@ -114,6 +114,7 @@ export function LoreNpcsSection({ system }: SectionProps) {
       columns={1}
       blurb={`// значимые NPC, встреченные партией в странствиях //`}
       filter={(r) => r.folder === "SECONDARY_HEROES"}
+      revealAtMaxGaze="Отражение"
       normalize={(r) => ({
         id: r.id,
         name: r.title,

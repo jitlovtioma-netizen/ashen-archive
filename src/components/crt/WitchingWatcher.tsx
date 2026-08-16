@@ -31,7 +31,7 @@ export function WitchingWatcher() {
             kind: "secret",
             sigil: "🌙",
             title: "ЧАС ВЕДЬМЫ НАСТАЛ",
-            body: "Бог смотрит пристальнее. +15% взгляда.",
+            body: "Созидатель смотрит пристальнее. +15% взгляда.",
           });
           if (isNew) {
             S.pushToast({

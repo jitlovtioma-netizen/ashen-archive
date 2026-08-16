@@ -754,3 +754,49 @@ body.witching::after {
 @media (max-width: 900px) {
   body { font-size: 13px; }
 }
+
+/* ============================================================
+   ОТРАЖЕНИЕ — фиолетовый glitch-эффект
+   ============================================================ */
+.reflection-overlay {
+  animation: reflectionFlicker 0.1s steps(2) infinite;
+}
+@keyframes reflectionFlicker {
+  0% { opacity: 0.95; }
+  50% { opacity: 1; }
+  100% { opacity: 0.92; }
+}
+.reflection-panel {
+  animation: reflectionGlitch 0.12s steps(2) infinite !important;
+}
+@keyframes reflectionGlitch {
+  0% { transform: translate(0, 0) skew(0deg); filter: hue-rotate(0deg); }
+  20% { transform: translate(-1px, 1px) skew(0.3deg); filter: hue-rotate(-5deg); }
+  40% { transform: translate(1px, -1px) skew(-0.2deg); filter: hue-rotate(5deg); }
+  60% { transform: translate(-1px, 0) skew(0.1deg); filter: hue-rotate(-3deg); }
+  80% { transform: translate(1px, 1px) skew(-0.3deg); filter: hue-rotate(3deg); }
+  100% { transform: translate(0, 0) skew(0deg); filter: hue-rotate(0deg); }
+}
+.reflection-text {
+  color: rgba(167, 139, 250, 0.6);
+  text-shadow: 2px 0 rgba(167, 139, 250, 0.4), -2px 0 rgba(100, 50, 150, 0.4);
+  animation: reflectionTextGlitch 0.2s steps(3) infinite;
+  user-select: none;
+}
+@keyframes reflectionTextGlitch {
+  0% { text-shadow: 2px 0 rgba(167, 139, 250, 0.5), -2px 0 rgba(100, 50, 150, 0.5); }
+  33% { text-shadow: -3px 0 rgba(167, 139, 250, 0.3), 3px 0 rgba(100, 50, 150, 0.3); }
+  66% { text-shadow: 1px 1px rgba(167, 139, 250, 0.6), -1px -1px rgba(100, 50, 150, 0.6); }
+  100% { text-shadow: 2px 0 rgba(167, 139, 250, 0.5), -2px 0 rgba(100, 50, 150, 0.5); }
+}
+.reflection-warning {
+  color: rgba(220, 100, 255, 0.8);
+  font-weight: bold;
+  text-transform: uppercase;
+  animation: reflectionWarning 0.5s steps(2) infinite;
+}
+@keyframes reflectionWarning {
+  0% { opacity: 0.8; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.02); }
+  100% { opacity: 0.7; transform: scale(0.98); }
+}
