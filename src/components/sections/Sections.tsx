@@ -53,7 +53,68 @@ export function LoreSection({ system }: SectionProps) {
       title="База Лора"
       code="ЗАПРОС_БАЗА_ЛОРА"
       columns={1}
-      blurb={`// история мира: боги, катастрофы, эпохи //`}
+      blurb={`// история мира: катастрофы, эпохи, ресурсы //`}
+      filter={(r) => !r.folder}
+      normalize={(r) => ({
+        id: r.id,
+        name: r.title,
+        subtitle: r.category,
+        system: r.system,
+        description: r.description,
+        sigil: r.sigil,
+        isLocked: r.isLocked,
+        isCorrupted: r.isCorrupted,
+        secretFragment: r.secretFragment,
+        shardWord: r.shardWord,
+        mapX: r.mapX,
+        mapY: r.mapY,
+        imageUrl: r.imageUrl ?? null,
+        status: (r.status as "ALIVE" | "DEAD" | "MISSING") ?? "ALIVE",
+      })}
+    />
+  );
+}
+
+export function LoreGodsSection({ system }: SectionProps) {
+  return (
+    <ArchiveSection<Lore>
+      type="lore"
+      system={system}
+      title="Божества"
+      code="ЗАПРОС_ПАНТЕОН"
+      columns={1}
+      blurb={`// двенадцать божеств Эларии, что черпают силу из веры //`}
+      filter={(r) => r.folder === "PANTHEON"}
+      normalize={(r) => ({
+        id: r.id,
+        name: r.title,
+        subtitle: r.category,
+        system: r.system,
+        description: r.description,
+        sigil: r.sigil,
+        isLocked: r.isLocked,
+        isCorrupted: r.isCorrupted,
+        secretFragment: r.secretFragment,
+        shardWord: r.shardWord,
+        mapX: r.mapX,
+        mapY: r.mapY,
+        imageUrl: r.imageUrl ?? null,
+        status: (r.status as "ALIVE" | "DEAD" | "MISSING") ?? "ALIVE",
+      })}
+    />
+  );
+}
+
+export function LoreNpcsSection({ system }: SectionProps) {
+  return (
+    <ArchiveSection<Lore>
+      type="lore"
+      system={system}
+      title="Второстепенные герои"
+      code="ЗАПРОС_ВТОРОСТЕПЕННЫЕ"
+      columns={1}
+      blurb={`// значимые NPC, встреченные партией в странствиях //`}
+      filter={(r) => r.folder === "SECONDARY_HEROES"}
       normalize={(r) => ({
         id: r.id,
         name: r.title,

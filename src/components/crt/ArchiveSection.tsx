@@ -15,6 +15,7 @@ interface ArchiveSectionProps<T> {
   blurb: string;
   normalize: (raw: T) => CardRecord;
   columns?: 1 | 3; // 1 = карточки в одну колонку (герои/NPC), 3 = сетка (по умолчанию)
+  filter?: (raw: T) => boolean; // опциональный фильтр записей
 }
 
 export function ArchiveSection<T>({
@@ -25,11 +26,21 @@ export function ArchiveSection<T>({
   blurb,
   normalize,
   columns = 3,
+  filter,
 }: ArchiveSectionProps<T>) {
   const { data, loading, error } = useArchiveData<T>(type, system);
   const [view, setView] = useState<"list" | "map">("list");
 
-  const records = (data ?? []).map(normalize);
+  // Фильтруем, сортируем по sortOrder (если есть), потом маппим в карточки
+  const records = (data ?? [])
+    .filter(filter ?? (() => true))
+    .slice()
+    .sort((a, b) => {
+      const sa = (a as { sortOrder?: number }).sortOrder ?? 0;
+      const sb = (b as { sortOrder?: number }).sortOrder ?? 0;
+      return sa - sb;
+    })
+    .map(normalize);
 
   const toggleView = (v: "list" | "map") => {
     if (v === view) return;

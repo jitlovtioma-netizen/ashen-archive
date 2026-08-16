@@ -70,10 +70,23 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
       }
     };
     window.addEventListener("keydown", onKey);
-    document.body.style.overflow = "hidden";
+    // Сохраняем позицию скролла и фиксируем body, чтобы модалка
+    // центрировалась в видимой области без прыжка наверх.
+    const scrollY = window.scrollY;
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+    document.body.style.width = "100%";
     return () => {
       window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
+      // Восстанавливаем позицию скролла
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.width = "";
+      window.scrollTo(0, scrollY);
     };
   }, [onClose]);
 
@@ -181,17 +194,16 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-[9700] overflow-y-auto crt-scroll modal-backdrop"
+      className="fixed inset-0 z-[9700] flex items-center justify-center p-2 sm:p-4 modal-backdrop"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-label={record.name}
     >
-      <div className="min-h-full flex items-center justify-center p-2 sm:p-4">
-        <div
-          className="modal-panel panel clip-hud brackets w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden fade-in"
-          onClick={(e) => e.stopPropagation()}
-        >
+      <div
+        className="modal-panel panel clip-hud brackets w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden fade-in"
+        onClick={(e) => e.stopPropagation()}
+      >
           {/* header bar */}
           <div className="flex items-center gap-2 px-4 py-2 border-b border-[var(--line-bright)] shrink-0 bg-[var(--panel-2)]">
             <span className="led led-red" />
@@ -420,7 +432,6 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
             </div>
           </div>
         </div>
-      </div>
     </div>
   );
 }

@@ -17,6 +17,8 @@ import { SecretBanner } from "@/components/crt/SecretBanner";
 import {
   CharactersSection,
   LoreSection,
+  LoreGodsSection,
+  LoreNpcsSection,
   LocationsSection,
   ChroniclesSection,
 } from "@/components/sections/Sections";
@@ -32,6 +34,10 @@ function Viewport({ system }: { system: "DND" | "PF2E" }) {
       return <FactionsSection system={system} />;
     case "lore":
       return <LoreSection system={system} />;
+    case "lore_gods":
+      return <LoreGodsSection system={system} />;
+    case "lore_npcs":
+      return <LoreNpcsSection system={system} />;
     case "locations":
       return <LocationsSection system={system} />;
     case "chronicles":

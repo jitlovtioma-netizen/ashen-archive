@@ -8,6 +8,8 @@ export type Section =
   | "characters"
   | "factions"
   | "lore"
+  | "lore_gods"
+  | "lore_npcs"
   | "locations"
   | "chronicles"
   | "achievements";
