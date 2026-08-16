@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { HoloPortrait } from "./HoloPortrait";
 import { Sigil } from "./Sigil";
 import { useArchive } from "@/lib/store";
@@ -70,8 +71,12 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
       }
     };
     window.addEventListener("keydown", onKey);
+    // Блокируем скролл body, чтобы модалка оставалась статичной
+    // по центру экрана и не "уезжала" при скролле.
+    document.body.style.overflow = "hidden";
     return () => {
       window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
     };
   }, [onClose]);
 
@@ -177,7 +182,11 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
 
   const corruptedDisplay = censorText(record.description);
 
-  return (
+  // Portal: рендерим модалку прямо в document.body, а не внутри скроллимого
+  // <main>. Так position: fixed гарантированно работает относительно viewport.
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <div
       className="fixed inset-0 z-[9700] flex items-center justify-center p-2 sm:p-4"
       style={{
@@ -426,6 +435,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
             </div>
           </div>
         </div>
-    </div>
+    </div>,
+    document.body
   );
 }
