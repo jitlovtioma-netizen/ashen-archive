@@ -78,7 +78,7 @@ export function KonamiHandler() {
           sfx.blip();
         } else if (w.endsWith("ash")) {
           word.current = "";
-          const isNew = S.unlockAchievement("ARCHIVIST");
+          const isNew = S.unlockAchievement("RIDDLE_MARTIN");
           S.pushToast({
             kind: "ach",
             sigil: "📖",
@@ -99,7 +99,7 @@ export function KonamiHandler() {
 function triggerKonami(S: ReturnType<typeof useArchive.getState>) {
   if (!S.konamiUnlocked) S.setKonamiUnlocked(true);
   if (!S.secretRevealed) S.revealSecret();
-  const isNew = S.unlockAchievement("MASTER_KEYS");
+  const isNew = S.unlockAchievement("RIDDLE_MARTIN");
   S.addGaze(8);
   S.forceWitching(60000);
   sfx.achievement();

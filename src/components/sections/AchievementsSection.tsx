@@ -63,7 +63,7 @@ export function AchievementsSection({ system }: { system: GameSystem }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 content-start pb-2">
           {list.map((a) => {
             const isUnlocked = unlocked.includes(a.code);
-            const isSecret = !isUnlocked && a.code !== "FIRST_BREACH";
+            const isSecret = !isUnlocked && a.code !== "SECRETS_OPENED";
             return (
               <div
                 key={a.id}

@@ -24,9 +24,9 @@ export function GazeController() {
     const level = [...LEVELS].reverse().find((l) => gaze >= l.min);
     if (level) body.classList.add(level.cls);
 
-    // crossing 90 → EYE_OF_GOD
+    // crossing 90 → REFLECTION_SEEN
     if (gaze >= 90 && prevGaze.current < 90) {
-      const isNew = unlockAchievement("EYE_OF_GOD");
+      const isNew = unlockAchievement("REFLECTION_SEEN");
       sfx.gaze();
       if (isNew) {
         pushToast({

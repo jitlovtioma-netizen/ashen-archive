@@ -25,7 +25,7 @@ export function WitchingWatcher() {
         S.addGaze(15);
         if (!grantedRef.current) {
           grantedRef.current = true;
-          const isNew = S.unlockAchievement("WITCHING_HOUR");
+          const isNew = S.unlockAchievement("RIDDLE_OUTER_PLANE");
           sfx.whisper();
           S.pushToast({
             kind: "secret",

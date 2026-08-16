@@ -71,9 +71,10 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
     ? shards.includes(record.shardWord)
     : false;
   const secretRevealed = revealedSecrets.includes(record.id);
-  // Мартин: текст скрыт пока загадка не разгадана
-  const martinLocked =
-    record.name === "Мартин" && !solvedRiddles.includes(record.id);
+  // Мартин и Внешний План: текст скрыт пока загадка не разгадана
+  const riddleLocked =
+    (record.name === "Мартин" || record.name === "Внешний План") &&
+    !solvedRiddles.includes(record.id);
 
   const [expanded, setExpanded] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
@@ -97,7 +98,7 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
     sfx.unlock();
     addGaze(4);
     if (isNew) {
-      const firstBreach = unlockAchievement("FIRST_BREACH");
+      const firstBreach = unlockAchievement("SECRETS_OPENED");
       pushToast({
         kind: "ach",
         sigil: "🔓",
@@ -162,9 +163,9 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
         title: "ОСКОЛОК ПАМЯТИ",
         body: `Собрано: «${record.shardWord}»`,
       });
-      // SHARD_COLLECTOR at 3 shards
+      // SECRETS_OPENED at 3 shards
       if (shards.length + 1 >= 3) {
-        const ach = unlockAchievement("SHARD_COLLECTOR");
+        const ach = unlockAchievement("SECRETS_OPENED");
         if (ach) {
           pushToast({
             kind: "ach",
@@ -286,7 +287,7 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
           </div>
 
           {/* description */}
-          {martinLocked ? (
+          {riddleLocked ? (
             <div className="panel-inset p-3 text-center">
               <div className="font-vt323 text-lg glow-violet mb-1">
                 [ ДАННЫЕ СОКРЫТЫ ]

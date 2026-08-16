@@ -60,25 +60,64 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
   const readRef = useRef(false);
   const ritualRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Загадка для Мартина — показывается перед досье, пока не разгадана
-  const needsRiddle =
+  // Загадка для Мартина и Внешнего Плана — показывается перед досье
+  const needsMartinRiddle =
     record.name === "Мартин" && !solvedRiddles.includes(record.id);
+  const needsOuterPlaneRiddle =
+    record.name === "Внешний План" && !solvedRiddles.includes(record.id);
+  const needsRiddle = needsMartinRiddle || needsOuterPlaneRiddle;
+
+  // Данные загадок
+  const riddleData = needsMartinRiddle
+    ? {
+        sigil: "🌑",
+        title: "МАРТИН",
+        subtitle: "// теневой покровитель //",
+        riddle: [
+          "Он не царь и не король,",
+          "Но в игре он главный роль.",
+          "Если имя назовёт —",
+          "Каждый руки поднесёт.",
+          "А без имени приказ",
+          "Выполнять нельзя сейчас!",
+          "Кто команду отдаёт,",
+          "Угадай-ка, в тот же ждёт?",
+        ],
+        valid: ["саймон говорит", "симон говорит", "саймон", "симон", "саймон говорит.", "симон говорит."],
+        achievementCode: "RIDDLE_MARTIN",
+        hint: "// разгадай загадку, чтобы открыть досье Мартина //",
+      }
+    : needsOuterPlaneRiddle
+      ? {
+          sigil: "🏚",
+          title: "ВНЕШНИЙ ПЛАН",
+          subtitle: "// измерение · сокрытое //",
+          riddle: [
+            "Мёртвый мир, где нет веселья,",
+            "Куклы-стражи, дом, безделье.",
+            "Мика пьёт, чтоб заглушить",
+            "То, что страшно пережить.",
+            "Но откуда хмель берёт?",
+            "В мире, где никто не пьёт?",
+            "Тайна скрыта в ней самой —",
+            "Где источник хмеля той?",
+          ],
+          valid: ["волосы", "волос", "из волос", "волосы.", "волос."],
+          achievementCode: "RIDDLE_OUTER_PLANE",
+          hint: "// разгадай загадку, чтобы открыть досье Внешнего Плана //",
+        }
+      : null;
 
   const checkRiddle = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!riddleData) return;
     const answer = riddleAnswer.trim().toLowerCase();
-    // Принимаем варианты: "саймон говорит", "симон говорит", "симон", "саймон"
-    const valid = [
-      "саймон говорит",
-      "симон говорит",
-      "саймон",
-      "симон",
-      "саймон говорит.",
-      "симон говорит.",
-    ];
-    if (valid.includes(answer)) {
+    if (riddleData.valid.includes(answer)) {
       solveRiddle(record.id);
       sfx.unlock();
+      // Разблокируем соответствующее достижение
+      unlockAchievement(riddleData.achievementCode);
+      sfx.achievement();
       pushToast({
         kind: "secret",
         sigil: "🎯",
@@ -122,7 +161,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
     sfx.unlock();
     addGaze(4);
     if (isNew) {
-      const firstBreach = unlockAchievement("FIRST_BREACH");
+      const firstBreach = unlockAchievement("SECRETS_OPENED");
       pushToast({
         kind: "ach",
         sigil: "🔓",
@@ -186,7 +225,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
         body: `Собрано: «${record.shardWord}»`,
       });
       if (shards.length + 1 >= 3) {
-        const ach = unlockAchievement("SHARD_COLLECTOR");
+        const ach = unlockAchievement("SECRETS_OPENED");
         if (ach) {
           pushToast({
             kind: "ach",
@@ -225,8 +264,8 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
   // ─── Специальное досье для «Отражения» — фиолетовый glitch ───
   const isReflection = record.name === "Отражение";
 
-  // ─── Экран загадки для Мартина ───
-  if (needsRiddle) {
+  // ─── Экран загадки (Мартин / Внешний План) ───
+  if (needsRiddle && riddleData) {
     return createPortal(
       <div
         className="fixed inset-0 z-[9700] flex items-center justify-center p-4"
@@ -237,7 +276,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
         onClick={onClose}
         role="dialog"
         aria-modal="true"
-        aria-label="Загадка Мартина"
+        aria-label="Загадка"
       >
         <div
           className="panel clip-hud brackets w-full max-w-lg p-6 fade-in"
@@ -264,12 +303,12 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
 
           {/* sigil */}
           <div className="text-center mb-4">
-            <div className="text-4xl glow-violet mb-2 pulse-slow">🌑</div>
+            <div className="text-4xl glow-violet mb-2 pulse-slow">{riddleData.sigil}</div>
             <div className="font-medieval text-xl glow-violet tracking-wider">
-              МАРТИН
+              {riddleData.title}
             </div>
             <div className="text-[10px] text-dim tracking-widest mt-1">
-              {"// теневой покровитель //"}
+              {riddleData.subtitle}
             </div>
           </div>
 
@@ -279,14 +318,9 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
               ⟁ ЗАГАДКА
             </div>
             <div className="text-[13px] text-[var(--text)] leading-relaxed italic space-y-1">
-              <p>Он не царь и не король,</p>
-              <p>Но в игре он главный роль.</p>
-              <p>Если имя назовёт —</p>
-              <p>Каждый руки поднесёт.</p>
-              <p>А без имени приказ</p>
-              <p>Выполнять нельзя сейчас!</p>
-              <p>Кто команду отдаёт,</p>
-              <p>Угадай-ка, в тот же ждёт?</p>
+              {riddleData.riddle.map((line, i) => (
+                <p key={i}>{line}</p>
+              ))}
             </div>
           </div>
 
@@ -335,7 +369,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
           </form>
 
           <div className="text-[9px] text-dim mt-4 text-center tracking-wider">
-            {"// разгадай загадку, чтобы открыть досье Мартина //"}
+            {riddleData.hint}
           </div>
         </div>
       </div>,
