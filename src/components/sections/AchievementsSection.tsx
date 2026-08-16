@@ -95,6 +95,17 @@ export function AchievementsSection({ system }: { system: GameSystem }) {
                       ? "// условие открытия неизвестно. продолжайте исследовать архив. //"
                       : a.description}
                   </p>
+                  {/* Подсказка (secretFragment) — видна только если есть и достижение открыто */}
+                  {isUnlocked && a.secretFragment && (
+                    <div className="mt-2 panel-inset p-2 border-l-2 border-[var(--violet)]">
+                      <div className="text-[9px] glow-violet tracking-widest mb-0.5">
+                        ⟁ ПОДСКАЗКА
+                      </div>
+                      <div className="text-[11px] italic text-[var(--text)]">
+                        {a.secretFragment}
+                      </div>
+                    </div>
+                  )}
                   <div className="mt-2">
                     {isUnlocked ? (
                       <span className="chip chip-warn">✓ ОТКРЫТО</span>

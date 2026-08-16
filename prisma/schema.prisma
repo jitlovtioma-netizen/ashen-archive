@@ -122,10 +122,12 @@ model Location {
 
 // --- Достижения (определения; прогресс хранится в localStorage клиента) ---
 model Achievement {
-  id          String   @id @default(cuid())
-  code        String   @unique
-  name        String
-  description String
-  sigil       String
-  createdAt   DateTime @default(now())
+  id             String   @id @default(cuid())
+  code           String   @unique
+  name           String
+  description    String
+  sigil          String
+  // Подсказка для достижения (может быть null)
+  secretFragment String?
+  createdAt      DateTime @default(now())
 }

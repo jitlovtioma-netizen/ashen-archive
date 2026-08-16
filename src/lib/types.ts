@@ -64,6 +64,7 @@ export interface Achievement {
   name: string;
   description: string;
   sigil: string;
+  secretFragment?: string | null;
 }
 
 export type ArchiveType =
