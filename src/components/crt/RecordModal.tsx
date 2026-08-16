@@ -63,12 +63,14 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
   const readRef = useRef(false);
   const ritualRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Загадка для Мартина и Внешнего Плана — показывается перед досье
+  // Загадка для Мартина, Внешнего Плана и Четвёртого — показывается перед досье
   const needsMartinRiddle =
     record.name === "Мартин" && !solvedRiddles.includes(record.id);
   const needsOuterPlaneRiddle =
     record.name === "Внешний План" && !solvedRiddles.includes(record.id);
-  const needsRiddle = needsMartinRiddle || needsOuterPlaneRiddle;
+  const needsChetvertyRiddle =
+    record.name === "Четвёртый" && !solvedRiddles.includes(record.id);
+  const needsRiddle = needsMartinRiddle || needsOuterPlaneRiddle || needsChetvertyRiddle;
 
   // Данные загадок
   const riddleData = needsMartinRiddle
@@ -109,7 +111,26 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
           achievementCode: "RIDDLE_OUTER_PLANE",
           hint: "// разгадай загадку, чтобы открыть досье Внешнего Плана //",
         }
-      : null;
+      : needsChetvertyRiddle
+        ? {
+            sigil: "😈",
+            title: "ЧЕТВЁРТЫЙ",
+            subtitle: "// демон · предатель //",
+            riddle: [
+              "Мужчина. Демон. Предатель.",
+              "Жену знаешь ты, читатель?",
+              "Имя жены его назови —",
+              "И предатель оживёт в любви.",
+              "Ведьма злая, мать змеи,",
+              "Кровь её — в его семье.",
+              "Кто она? Скажи скорей —",
+              "И Четвёртый станет visible.",
+            ],
+            valid: ["ехидна", "эхидна", "ехидна.", "эхидна."],
+            achievementCode: "RIDDLE_CHETVERTY",
+            hint: "// назови имя его жены, чтобы открыть досье Четвёртого //",
+          }
+        : null;
 
   const checkRiddle = (e: React.FormEvent) => {
     e.preventDefault();
@@ -302,6 +323,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
   // ─── Специальное досье для «Отражения» — фиолетовый glitch ───
   const isReflection = record.name === "Отражение";
   const isUnknown = record.name === "Неизвестность";
+  const isChetverty = record.name === "Четвёртый";
 
   // ─── Экран загадки (Мартин / Внешний План) ───
   if (needsRiddle && riddleData) {
@@ -552,7 +574,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
                 </div>
               )}
               {!isSealed ? (
-                isUnknown ? (
+                isUnknown || isChetverty ? (
                   <div className="text-[14px] leading-relaxed space-y-2">
                     {/* Для Неизвестности: парсим ★★★ как выделенный текст */}
                     {record.description.split('\n').map((line, i) => {
