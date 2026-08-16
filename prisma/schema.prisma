@@ -41,7 +41,6 @@ model Faction {
   sigil       String       // один эмодзи/глиф, напр. "⚙", "⭐"
   description String       // 2-4 предложения
   sortOrder   Int          @default(0)
-  isCorrupted Boolean      @default(false)
   createdAt   DateTime     @default(now())
   npcs        Character[]
 }
@@ -75,7 +74,6 @@ model Character {
 }
 
 // --- Лор мира / сеттинга ---
-// folder: null = общий лор; "PANTHEON" = папка «Божества»; "SECONDARY_HEROES" = папка «Второстепенные герои».
 model Lore {
   id             String   @id @default(cuid())
   title          String
@@ -91,14 +89,6 @@ model Lore {
   isCorrupted    Boolean  @default(false)
   secretFragment String?
   shardWord      String?
-  // группировка в папки во вкладке «Лор»
-  folder         String?
-  // путь к портрету в Supabase Storage (публичный URL) или null — показать сигил
-  imageUrl       String?
-  // порядок внутри папки
-  sortOrder      Int      @default(0)
-  // status: "ALIVE" | "DEAD" | "MISSING" — судьба (для второстепенных героев)
-  status         String   @default("ALIVE")
   createdAt      DateTime @default(now())
 }
 
@@ -121,6 +111,22 @@ model Location {
   createdAt      DateTime @default(now())
 }
 
+// --- Хроники: записи о сессиях партии ---
+model Chronicle {
+  id             String   @id @default(cuid())
+  sessionNumber  Int
+  title          String
+  summary        String   // длинный текст — что произошло в сессию
+  date           String   // ISO-дата строкой, напр. "2024-03-15"
+  // system: "DND" | "PF2E"
+  system         String
+  isLocked       Boolean  @default(false)
+  isCorrupted    Boolean  @default(false)
+  secretFragment String?
+  shardWord      String?
+  createdAt      DateTime @default(now())
+}
+
 // --- Достижения (определения; прогресс хранится в localStorage клиента) ---
 model Achievement {
   id             String   @id @default(cuid())
@@ -128,7 +134,6 @@ model Achievement {
   name           String
   description    String
   sigil          String
-  // Подсказка для достижения (может быть null)
   secretFragment String?
   createdAt      DateTime @default(now())
 }

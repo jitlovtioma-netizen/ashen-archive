@@ -1,9 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Sigil } from "./Sigil";
 import { HoloPortrait } from "./HoloPortrait";
-import { RecordModal } from "./RecordModal";
+import { BrunoMiniGame } from "./BrunoMiniGame";
+import { RiddleGate } from "./RiddleGate";
 import { useArchive } from "@/lib/store";
 import { sfx } from "@/lib/audio";
 import { SYSTEM_LABEL, SYSTEM_COLOR, type GameSystem } from "@/lib/types";
@@ -27,7 +29,6 @@ export interface CardRecord {
 
 interface RecordCardProps {
   record: CardRecord;
-  horizontal?: boolean; // горизонтальная раскладка: portrait слева, текст справа
 }
 
 const GLITCH_CHARS = "█▓▒░▚▞▐▌╳╲╱▀▄";
@@ -51,7 +52,7 @@ function censorText(text: string, corrupted: boolean, revealed: boolean) {
     .join(" ");
 }
 
-export function RecordCard({ record, horizontal = false }: RecordCardProps) {
+export function RecordCard({ record }: RecordCardProps) {
   const {
     unlockedIds,
     unlockRecord,
@@ -62,7 +63,6 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
     addGaze,
     unlockAchievement,
     pushToast,
-    solvedRiddles,
   } = useArchive();
 
   const isSealed = record.isLocked && !unlockedIds.includes(record.id);
@@ -71,15 +71,12 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
     ? shards.includes(record.shardWord)
     : false;
   const secretRevealed = revealedSecrets.includes(record.id);
-  // Мартин и Внешний План: текст скрыт пока загадка не разгадана
-  const riddleLocked =
-    (record.name === "Мартин" || record.name === "Внешний План") &&
-    !solvedRiddles.includes(record.id);
 
   const [expanded, setExpanded] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
   const [ritualCharge, setRitualCharge] = useState(0);
   const [ritualActive, setRitualActive] = useState(false);
+  const [miniGameOpen, setMiniGameOpen] = useState(false);
+  const [riddleOpen, setRiddleOpen] = useState(false);
   const readRef = useRef(false);
   const ritualRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -98,7 +95,7 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
     sfx.unlock();
     addGaze(4);
     if (isNew) {
-      const firstBreach = unlockAchievement("SECRETS_OPENED");
+      const firstBreach = unlockAchievement("FIRST_BREACH");
       pushToast({
         kind: "ach",
         sigil: "🔓",
@@ -163,9 +160,9 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
         title: "ОСКОЛОК ПАМЯТИ",
         body: `Собрано: «${record.shardWord}»`,
       });
-      // SECRETS_OPENED at 3 shards
+      // SHARD_COLLECTOR at 3 shards
       if (shards.length + 1 >= 3) {
-        const ach = unlockAchievement("SECRETS_OPENED");
+        const ach = unlockAchievement("SHARD_COLLECTOR");
         if (ach) {
           pushToast({
             kind: "ach",
@@ -197,8 +194,14 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
 
   const onOpen = () => {
     if (isSealed) return;
+    // Для "Разум Бруно" — показываем загадку, если ещё не разгадана
+    if (record.name === "Разум Бруно" && !solvedRiddles.includes(record.name)) {
+      sfx.select();
+      setRiddleOpen(true);
+      return;
+    }
     sfx.select();
-    setModalOpen(true);
+    setExpanded((v) => !v);
   };
 
   const corruptedDisplay = censorText(record.description, isCorrupted, false);
@@ -208,10 +211,7 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
     <article
       className={`panel clip-hud brackets relative p-4 transition-all duration-200 ${
         expanded ? "md:col-span-2 lg:col-span-3" : ""
-      } ${isSealed ? "opacity-90" : "hover:border-[var(--green-dim)]"} ${
-        horizontal ? "hover:shadow-[0_0_16px_rgba(74,246,38,0.15)] cursor-pointer" : ""
-      }`}
-      onClick={horizontal ? onOpen : undefined}
+      } ${isSealed ? "opacity-90" : "hover:border-[var(--green-dim)]"}`}
     >
       {/* status chips */}
       <div className="flex items-center gap-1.5 mb-3 flex-wrap">
@@ -251,23 +251,23 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
         )}
       </div>
 
-      <div className={`flex gap-4 ${horizontal ? "flex-row items-center" : ""}`}>
-        {/* portrait / sigil */}
+      <div className="flex gap-4">
+        {/* portrait (only when expanded, to limit concurrent images) / sigil */}
         <div className="shrink-0">
-          {record.imageUrl ? (
+          {record.imageUrl && expanded ? (
             <HoloPortrait
               src={record.imageUrl}
               corrupted={isCorrupted}
               sealed={isSealed}
               status={record.status}
-              size={horizontal ? 88 : 120}
+              size={120}
               fallbackGlyph={record.sigil}
             />
           ) : (
             <Sigil
               glyph={record.sigil}
               corrupted={isCorrupted}
-              size={horizontal ? 72 : (expanded ? 96 : 72)}
+              size={expanded ? 96 : 72}
             />
           )}
         </div>
@@ -275,7 +275,7 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
         {/* content */}
         <div className="flex-1 min-w-0">
           <h3
-            className={`font-medieval ${horizontal ? "text-xl" : "text-lg"} leading-tight ${
+            className={`font-medieval text-lg leading-tight ${
               isCorrupted ? "glow-red glitch" : "glow-green"
             }`}
             data-text={record.name}
@@ -287,20 +287,11 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
           </div>
 
           {/* description */}
-          {riddleLocked ? (
-            <div className="panel-inset p-3 text-center">
-              <div className="font-vt323 text-lg glow-violet mb-1">
-                [ ДАННЫЕ СОКРЫТЫ ]
-              </div>
-              <div className="text-dim text-[11px]">
-                {"// разгадай загадку, чтобы открыть досье //"}
-              </div>
-            </div>
-          ) : !isSealed ? (
+          {!isSealed ? (
             <p
               className={`text-[13px] leading-relaxed ${
                 isCorrupted ? "text-[var(--red-dim)]" : "text-[var(--text)]"
-              } ${horizontal ? "line-clamp-2" : "line-clamp-3"}`}
+              } ${expanded ? "" : "line-clamp-3"}`}
               dangerouslySetInnerHTML={
                 isCorrupted
                   ? { __html: corruptedDisplay }
@@ -319,7 +310,6 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
               </div>
             </div>
           )}
-
 
           {/* secret fragment (revealed) */}
           {secretRevealed && record.secretFragment && (
@@ -399,11 +389,38 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
             ⟁ ?
           </button>
         )}
+
+        {/* Кнопка "Помочь" — только для Бруно */}
+        {record.name === "Бруно" && !isSealed && (
+          <button
+            onClick={() => {
+              sfx.select();
+              setMiniGameOpen(true);
+            }}
+            className="btn-crt clip-hud-sm px-3 py-1.5 text-[11px]"
+            style={{ borderColor: "var(--green)", color: "var(--green)" }}
+          >
+            🧠 ПОМОЧЬ
+          </button>
+        )}
       </div>
     </article>
 
-      {modalOpen && (
-        <RecordModal record={record} onClose={() => setModalOpen(false)} />
+      {miniGameOpen && typeof document !== "undefined" && createPortal(
+        <BrunoMiniGame onClose={() => setMiniGameOpen(false)} />,
+        document.body
+      )}
+
+      {riddleOpen && typeof document !== "undefined" && createPortal(
+        <RiddleGate
+          recordName={record.name}
+          onSolved={() => {
+            setRiddleOpen(false);
+            setExpanded(true);
+          }}
+          onCancel={() => setRiddleOpen(false)}
+        />,
+        document.body
       )}
     </>
   );
