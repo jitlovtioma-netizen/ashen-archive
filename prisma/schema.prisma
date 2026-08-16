@@ -36,11 +36,11 @@ model User {
 model Faction {
   id          String       @id @default(cuid())
   name        String
-  // system: "DND" | "PF2E"
   system      String
-  sigil       String       // один эмодзи/глиф, напр. "⚙", "⭐"
-  description String       // 2-4 предложения
+  sigil       String
+  description String
   sortOrder   Int          @default(0)
+  isCorrupted Boolean      @default(false)
   createdAt   DateTime     @default(now())
   npcs        Character[]
 }
@@ -74,12 +74,11 @@ model Character {
 }
 
 // --- Лор мира / сеттинга ---
+// folder: null = общий лор; "PANTHEON" = папка «Божества»; "SECONDARY_HEROES" = папка «Второстепенные герои»; "SECRETS" = папка «Секреты».
 model Lore {
   id             String   @id @default(cuid())
   title          String
-  // category: "Бог" | "Боги" | "Катастрофа" | "Религия" | "Ресурс" | "Болезнь" | "Эпоха" | "Артефакт" | "Лич" | "Город-государство"
   category       String
-  // system: "DND" | "PF2E"
   system         String
   description    String
   sigil          String
@@ -89,6 +88,10 @@ model Lore {
   isCorrupted    Boolean  @default(false)
   secretFragment String?
   shardWord      String?
+  folder         String?
+  imageUrl       String?
+  sortOrder      Int      @default(0)
+  status         String   @default("ALIVE")
   createdAt      DateTime @default(now())
 }
 
