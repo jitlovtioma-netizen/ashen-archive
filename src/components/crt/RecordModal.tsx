@@ -70,23 +70,8 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
       }
     };
     window.addEventListener("keydown", onKey);
-    // Сохраняем позицию скролла и фиксируем body, чтобы модалка
-    // центрировалась в видимой области без прыжка наверх.
-    const scrollY = window.scrollY;
-    document.body.style.position = "fixed";
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.left = "0";
-    document.body.style.right = "0";
-    document.body.style.width = "100%";
     return () => {
       window.removeEventListener("keydown", onKey);
-      // Восстанавливаем позицию скролла
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.left = "";
-      document.body.style.right = "";
-      document.body.style.width = "";
-      window.scrollTo(0, scrollY);
     };
   }, [onClose]);
 
@@ -194,14 +179,23 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-[9700] flex items-center justify-center p-2 sm:p-4 modal-backdrop"
+      className="fixed inset-0 z-[9700] flex items-center justify-center p-2 sm:p-4"
+      style={{
+        background: "rgba(2, 0, 2, 0.85)",
+        backdropFilter: "blur(2px)",
+      }}
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-label={record.name}
     >
       <div
-        className="modal-panel panel clip-hud brackets w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden fade-in"
+        className="panel clip-hud brackets w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden fade-in"
+        style={{
+          boxShadow:
+            "0 0 60px rgba(74, 246, 38, 0.2), 0 0 120px rgba(0, 0, 0, 0.8)",
+          animation: "modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+        }}
         onClick={(e) => e.stopPropagation()}
       >
           {/* header bar */}
