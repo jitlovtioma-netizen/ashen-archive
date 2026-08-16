@@ -107,7 +107,7 @@ export function Sidebar() {
 
         <div className="px-1">
           <div className="flex justify-between text-[10px] text-dim tracking-widest mb-1">
-            <span>ВЗГЛЯД СОЗИДАТЕЛЯ</span>
+            <span>ВЗГЛЯД БОГА</span>
             <span style={{ color: gazeColor }}>{gazePct}%</span>
           </div>
           <div className="panel-inset h-2 overflow-hidden">
@@ -127,7 +127,7 @@ export function Sidebar() {
                 ? "// взгляд становится острым"
                 : gaze >= 30
                   ? "// он замечает тебя"
-                  : "// созидатель дремлет"}
+                  : "// бог дремлет"}
           </div>
         </div>
 

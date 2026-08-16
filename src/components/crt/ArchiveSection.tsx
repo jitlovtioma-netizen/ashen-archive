@@ -12,9 +12,8 @@ interface ArchiveSectionProps<T> {
   code: string;
   blurb: string;
   normalize: (raw: T) => CardRecord;
-  columns?: 1 | 3; // 1 = карточки в одну колонку (герои/NPC), 3 = сетка (по умолчанию)
-  filter?: (raw: T) => boolean; // опциональный фильтр записей
-  // Запись с этим названием показывается только при gaze >= 100
+  columns?: 1 | 3;
+  filter?: (raw: T) => boolean;
   revealAtMaxGaze?: string;
 }
 
@@ -35,36 +34,31 @@ export function ArchiveSection<T>({
   const records = (data ?? [])
     .filter((raw) => {
       if (filter && !filter(raw)) return false;
-      // Скрываем "Отражение" пока gaze < 100
       if (revealAtMaxGaze) {
-        const title = (raw as { title?: string }).title;
+        const title = (raw as Record<string, unknown>).title as string;
         if (title === revealAtMaxGaze && gaze < 100) return false;
       }
       return true;
     })
     .slice()
     .sort((a, b) => {
-      const sa = (a as { sortOrder?: number }).sortOrder ?? 0;
-      const sb = (b as { sortOrder?: number }).sortOrder ?? 0;
+      const sa = (a as Record<string, unknown>).sortOrder as number ?? 0;
+      const sb = (b as Record<string, unknown>).sortOrder as number ?? 0;
       return sa - sb;
     })
     .map(normalize);
 
   return (
     <section className="flex flex-col gap-3 h-full">
-      {/* breadcrumb header */}
       <div className="panel clip-hud-sm px-3 py-2 flex items-center gap-2 flex-wrap">
         <span className="text-[10px] text-dim tracking-widest">
           КОРЕНЬ &gt; СЕКТОР_{system} &gt;
         </span>
         <span className="text-[11px] glow-green tracking-widest">{code}</span>
         <span className="flex-1" />
-        <span className="text-[10px] text-dim hidden sm:inline">
-          {blurb}
-        </span>
+        <span className="text-[10px] text-dim hidden sm:inline">{blurb}</span>
       </div>
 
-      {/* section title */}
       <div className="flex items-center gap-3 flex-wrap">
         <h2 className="font-medieval text-2xl glow-green-strong tracking-wider">
           {title}
@@ -74,21 +68,14 @@ export function ArchiveSection<T>({
         </span>
       </div>
 
-      {/* content */}
       {loading && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {Array.from({ length: 6 }).map((_, i) => (
+        <div className="space-y-2">
+          {Array.from({ length: 4 }).map((_, i) => (
             <div
               key={i}
-              className="panel clip-hud p-4 h-48 animate-pulse"
+              className="panel clip-hud p-4 h-20 animate-pulse"
               style={{ background: "var(--panel-2)" }}
-            >
-              <div className="h-3 w-20 bg-[var(--line)] mb-3" />
-              <div className="h-4 w-2/3 bg-[var(--line)] mb-2" />
-              <div className="h-3 w-full bg-[var(--line)] mb-1.5" />
-              <div className="h-3 w-5/6 bg-[var(--line)] mb-1.5" />
-              <div className="h-3 w-3/4 bg-[var(--line)]" />
-            </div>
+            />
           ))}
         </div>
       )}
@@ -99,7 +86,7 @@ export function ArchiveSection<T>({
             [ ОШИБКА ПОДКЛЮЧЕНИЯ ]
           </div>
           <div className="text-dim text-sm">
-            {"// не удалось получить данные архива: "}{error}{" //"}
+            {"// не удалось получить данные: "}{error}{" //"}
           </div>
         </div>
       )}

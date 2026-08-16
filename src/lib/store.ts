@@ -36,7 +36,7 @@ interface ArchiveState {
   section: Section;
   setSection: (s: Section) => void;
 
-  // total shard words (загружается с API, для вкладки «Секреты»)
+  // total shard words (loaded from API, for Secrets tab)
   totalShardWords: number;
   setTotalShardWords: (n: number) => void;
 
@@ -63,9 +63,9 @@ interface ArchiveState {
   secretRevealed: boolean;
   revealSecret: () => void;
 
-  // solved riddles (persisted) — record ids whose riddle was solved
+  // solved riddles (persisted) — record names whose riddle was solved
   solvedRiddles: string[];
-  solveRiddle: (id: string) => boolean; // returns true if newly solved
+  solveRiddle: (id: string) => boolean;
 
   // unlocked record ids (persisted) — records whose seal was broken
   unlockedIds: string[];
@@ -104,54 +104,7 @@ export const useArchive = create<ArchiveState>()(
           });
           const data = await res.json();
           if (res.ok && data.ok) {
-            const newLogin = (data.user as User).login;
-            // Устанавливаем текущий логин в localStorage ПЕРЕД set,
-            // чтобы persist записал прогрессию под правильным ключом.
-            if (typeof window !== "undefined") {
-              window.localStorage.setItem(
-                "ashen-current-login",
-                JSON.stringify(newLogin)
-              );
-            }
-            // Сбрасываем прогрессию (загрузится из storage нового пользователя
-            // при следующем persist/rehydrate).
-            set({
-              user: data.user as User,
-              booted: false,
-              section: "characters",
-              gaze: 7,
-              shards: [],
-              achievements: [],
-              konamiUnlocked: false,
-              unlockedIds: [],
-              revealedSecrets: [],
-              solvedRiddles: [],
-              toasts: [],
-            });
-            // Принудительно перезагружаем из storage нового пользователя
-            if (typeof window !== "undefined") {
-              try {
-                const raw = window.localStorage.getItem(
-                  `ashen-archive-${newLogin}`
-                );
-                if (raw) {
-                  const saved = JSON.parse(raw);
-                  if (saved?.state) {
-                    set({
-                      shards: saved.state.shards ?? [],
-                      achievements: saved.state.achievements ?? [],
-                      konamiUnlocked: saved.state.konamiUnlocked ?? false,
-                      unlockedIds: saved.state.unlockedIds ?? [],
-                      revealedSecrets: saved.state.revealedSecrets ?? [],
-                      solvedRiddles: saved.state.solvedRiddles ?? [],
-                      soundOn: saved.state.soundOn ?? true,
-                    });
-                  }
-                }
-              } catch {
-                // ignore parse errors
-              }
-            }
+            set({ user: data.user as User, booted: false, section: "characters", gaze: 7 });
             return { ok: true };
           }
           return { ok: false, error: data.error || "UNKNOWN" };
@@ -159,23 +112,14 @@ export const useArchive = create<ArchiveState>()(
           return { ok: false, error: "NETWORK" };
         }
       },
-      logout: () => {
-        // Сначала сохраняем текущую прогрессию (persist сделает это через set),
-        // потом меняем current-login на guest.
+      logout: () =>
         set({
           user: null,
           booted: false,
           section: "characters",
           gaze: 7,
           toasts: [],
-        });
-        if (typeof window !== "undefined") {
-          window.localStorage.setItem(
-            "ashen-current-login",
-            JSON.stringify("guest")
-          );
-        }
-      },
+        }),
 
       booted: false,
       setBooted: (v) => set({ booted: v }),
@@ -187,55 +131,8 @@ export const useArchive = create<ArchiveState>()(
       setTotalShardWords: (n) => set({ totalShardWords: n }),
 
       gaze: 7,
-      addGaze: (amount) => {
-        const st = get();
-        const newGaze = Math.max(0, st.gaze + amount);
-        // При достижении 140 — выкидывание + стирание прогресса + бан 12 часов
-        // Но логин "dnd" имеет иммунитет — его нельзя забанить
-        if (newGaze >= 140 && st.gaze < 140) {
-          const isImmune = st.user?.login === "dnd";
-          if (isImmune) {
-            // Иммунитет: просто сбрасываем взгляд, без бана
-            set({ gaze: 0 });
-            return;
-          }
-          // Стираем ВЕСЬ прогресс игрока
-          set({
-            gaze: 0,
-            shards: [],
-            achievements: [],
-            unlockedIds: [],
-            revealedSecrets: [],
-            solvedRiddles: [],
-            konamiUnlocked: false,
-            toasts: [],
-          });
-          // Устанавливаем бан и выкидываем
-          if (typeof window !== "undefined") {
-            const bannedUntil = Date.now() + 12 * 60 * 60 * 1000;
-            const login = window.localStorage.getItem("ashen-current-login");
-            if (login) {
-              const loginStr = JSON.parse(login);
-              window.localStorage.setItem(
-                `ashen-banned-${loginStr}`,
-                String(bannedUntil)
-              );
-            }
-            // Выкидываем пользователя через короткую задержку (даём toast показаться)
-            setTimeout(() => {
-              // Сбрасываем current-login на guest
-              window.localStorage.setItem(
-                "ashen-current-login",
-                JSON.stringify("guest")
-              );
-              // Перезагружаем страницу — вернёт на экран логина
-              window.location.href = "/";
-            }, 3000);
-          }
-        } else {
-          set({ gaze: newGaze });
-        }
-      },
+      addGaze: (amount) =>
+        set((st) => ({ gaze: Math.max(0, Math.min(100, st.gaze + amount)) })),
       resetGaze: () => set({ gaze: 7 }),
 
       soundOn: true,
@@ -308,38 +205,7 @@ export const useArchive = create<ArchiveState>()(
     }),
     {
       name: "ashen-archive",
-      // Раздельная прогрессия: storage key зависит от логина.
-      // Каждый игрок имеет свой набор осколков, достижений и т.д.
-      storage: createJSONStorage(() => {
-        // Хелпер: читаем текущий логин из localStorage
-        const getCurrentLogin = () => {
-          if (typeof window === "undefined") return "guest";
-          try {
-            const raw = window.localStorage.getItem("ashen-current-login");
-            return raw ? (JSON.parse(raw) as string) : "guest";
-          } catch {
-            return "guest";
-          }
-        };
-        // Кастомный storage: каждый логин — свой ключ в localStorage
-        return {
-          getItem: (name: string) => {
-            const login = getCurrentLogin();
-            const key = `${name}-${login}`;
-            return window.localStorage.getItem(key);
-          },
-          setItem: (name: string, value: string) => {
-            const login = getCurrentLogin();
-            const key = `${name}-${login}`;
-            window.localStorage.setItem(key, value);
-          },
-          removeItem: (name: string) => {
-            const login = getCurrentLogin();
-            const key = `${name}-${login}`;
-            window.localStorage.removeItem(key);
-          },
-        };
-      }),
+      storage: createJSONStorage(() => localStorage),
       partialize: (s) => ({
         user: s.user,
         soundOn: s.soundOn,

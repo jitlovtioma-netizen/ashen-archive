@@ -29,6 +29,7 @@ export interface CardRecord {
 
 interface RecordCardProps {
   record: CardRecord;
+  horizontal?: boolean;
 }
 
 const GLITCH_CHARS = "█▓▒░▚▞▐▌╳╲╱▀▄";
@@ -52,7 +53,7 @@ function censorText(text: string, corrupted: boolean, revealed: boolean) {
     .join(" ");
 }
 
-export function RecordCard({ record }: RecordCardProps) {
+export function RecordCard({ record, horizontal = false }: RecordCardProps) {
   const {
     unlockedIds,
     unlockRecord,
@@ -63,6 +64,7 @@ export function RecordCard({ record }: RecordCardProps) {
     addGaze,
     unlockAchievement,
     pushToast,
+    solvedRiddles,
   } = useArchive();
 
   const isSealed = record.isLocked && !unlockedIds.includes(record.id);

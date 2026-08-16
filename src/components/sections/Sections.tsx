@@ -9,11 +9,26 @@ import type {
   GameSystem,
 } from "@/lib/types";
 
-const dangerLabel = (d: number) => "▲".repeat(d) + "△".repeat(5 - d);
-
 interface SectionProps {
   system: GameSystem;
 }
+
+const loreNormalize = (r: Lore) => ({
+  id: r.id,
+  name: r.title,
+  subtitle: r.category,
+  system: r.system,
+  description: r.description,
+  sigil: r.sigil,
+  isLocked: r.isLocked,
+  isCorrupted: r.isCorrupted,
+  secretFragment: r.secretFragment,
+  shardWord: r.shardWord,
+  mapX: r.mapX,
+  mapY: r.mapY,
+  imageUrl: (r as Record<string, unknown>).imageUrl as string | null ?? null,
+  status: ((r as Record<string, unknown>).status as "ALIVE" | "DEAD" | "MISSING") ?? "ALIVE",
+});
 
 export function CharactersSection({ system }: SectionProps) {
   return (
@@ -53,23 +68,8 @@ export function LoreSection({ system }: SectionProps) {
       code="ЗАПРОС_БАЗА_ЛОРА"
       columns={1}
       blurb={`// история мира: катастрофы, эпохи, ресурсы //`}
-      filter={(r) => !r.folder}
-      normalize={(r) => ({
-        id: r.id,
-        name: r.title,
-        subtitle: r.category,
-        system: r.system,
-        description: r.description,
-        sigil: r.sigil,
-        isLocked: r.isLocked,
-        isCorrupted: r.isCorrupted,
-        secretFragment: r.secretFragment,
-        shardWord: r.shardWord,
-        mapX: r.mapX,
-        mapY: r.mapY,
-        imageUrl: r.imageUrl ?? null,
-        status: (r.status as "ALIVE" | "DEAD" | "MISSING") ?? "ALIVE",
-      })}
+      filter={(r) => !(r as Record<string, unknown>).folder}
+      normalize={loreNormalize}
     />
   );
 }
@@ -83,23 +83,8 @@ export function LoreGodsSection({ system }: SectionProps) {
       code="ЗАПРОС_ПАНТЕОН"
       columns={1}
       blurb={`// двенадцать божеств Эларии, что черпают силу из веры //`}
-      filter={(r) => r.folder === "PANTHEON"}
-      normalize={(r) => ({
-        id: r.id,
-        name: r.title,
-        subtitle: r.category,
-        system: r.system,
-        description: r.description,
-        sigil: r.sigil,
-        isLocked: r.isLocked,
-        isCorrupted: r.isCorrupted,
-        secretFragment: r.secretFragment,
-        shardWord: r.shardWord,
-        mapX: r.mapX,
-        mapY: r.mapY,
-        imageUrl: r.imageUrl ?? null,
-        status: (r.status as "ALIVE" | "DEAD" | "MISSING") ?? "ALIVE",
-      })}
+      filter={(r) => (r as Record<string, unknown>).folder === "PANTHEON"}
+      normalize={loreNormalize}
     />
   );
 }
@@ -113,24 +98,24 @@ export function LoreNpcsSection({ system }: SectionProps) {
       code="ЗАПРОС_ВТОРОСТЕПЕННЫЕ"
       columns={1}
       blurb={`// значимые NPC, встреченные партией в странствиях //`}
-      filter={(r) => r.folder === "SECONDARY_HEROES"}
+      filter={(r) => (r as Record<string, unknown>).folder === "SECONDARY_HEROES"}
       revealAtMaxGaze="Отражение"
-      normalize={(r) => ({
-        id: r.id,
-        name: r.title,
-        subtitle: r.category,
-        system: r.system,
-        description: r.description,
-        sigil: r.sigil,
-        isLocked: r.isLocked,
-        isCorrupted: r.isCorrupted,
-        secretFragment: r.secretFragment,
-        shardWord: r.shardWord,
-        mapX: r.mapX,
-        mapY: r.mapY,
-        imageUrl: r.imageUrl ?? null,
-        status: (r.status as "ALIVE" | "DEAD" | "MISSING") ?? "ALIVE",
-      })}
+      normalize={loreNormalize}
+    />
+  );
+}
+
+export function LoreSecretsSection({ system }: SectionProps) {
+  return (
+    <ArchiveSection<Lore>
+      type="lore"
+      system={system}
+      title="Секреты"
+      code="СОКРЫТОЕ"
+      columns={1}
+      blurb={`// тайны, открытые тем, кто собрал все осколки памяти //`}
+      filter={(r) => (r as Record<string, unknown>).folder === "SECRETS"}
+      normalize={loreNormalize}
     />
   );
 }
@@ -159,38 +144,4 @@ export function LocationsSection({ system }: SectionProps) {
       })}
     />
   );
-}
-
-export function LoreSecretsSection({ system }: SectionProps) {
-  return (
-    <ArchiveSection<Lore>
-      type="lore"
-      system={system}
-      title="Секреты"
-      code="СОКРЫТОЕ"
-      columns={1}
-      blurb={`// тайны, открытые тем, кто собрал все осколки памяти //`}
-      filter={(r) => r.folder === "SECRETS"}
-      normalize={(r) => ({
-        id: r.id,
-        name: r.title,
-        subtitle: r.category,
-        system: r.system,
-        description: r.description,
-        sigil: r.sigil,
-        isLocked: r.isLocked,
-        isCorrupted: r.isCorrupted,
-        secretFragment: r.secretFragment,
-        shardWord: r.shardWord,
-        mapX: r.mapX,
-        mapY: r.mapY,
-        imageUrl: r.imageUrl ?? null,
-        status: (r.status as "ALIVE" | "DEAD" | "MISSING") ?? "ALIVE",
-      })}
-    />
-  );
-}
-
-export function ChroniclesSection() {
-  return null;
 }

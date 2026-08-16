@@ -14,8 +14,6 @@ import { WitchingWatcher } from "@/components/crt/WitchingWatcher";
 import { AchievementToaster } from "@/components/crt/AchievementToaster";
 import { WitchingBanner } from "@/components/crt/WitchingBanner";
 import { SecretBanner } from "@/components/crt/SecretBanner";
-import { VoiceOfTheMaster } from "@/components/crt/VoiceOfTheMaster";
-import { UnbanHandler } from "@/components/crt/UnbanHandler";
 import {
   CharactersSection,
   LoreSection,
@@ -61,7 +59,7 @@ export default function Home() {
   const hydrated = useArchive((s) => s._hasHydrated);
   const setTotalShardWords = useArchive((s) => s.setTotalShardWords);
 
-  // Загружаем totalShardWords из API (для вкладки «Секреты»)
+  // Загружаем totalShardWords из API
   useEffect(() => {
     if (!user) return;
     fetch(`/api/stats?system=${user.system}`)
@@ -72,7 +70,7 @@ export default function Home() {
       .catch(() => {});
   }, [user, setTotalShardWords]);
 
-  // ambient gaze drift while reading
+  // ambient gaze drift
   useEffect(() => {
     if (!booted || !user) return;
     const id = setInterval(() => {
@@ -83,7 +81,6 @@ export default function Home() {
     return () => clearInterval(id);
   }, [booted, user]);
 
-  // clear gaze body classes on logout
   useEffect(() => {
     if (!user) {
       document.body.classList.remove(
@@ -96,7 +93,6 @@ export default function Home() {
     }
   }, [user]);
 
-  // Avoid hydration flash: render nothing until store hydrated
   if (!hydrated) {
     return (
       <div className="min-h-dvh flex items-center justify-center">
@@ -108,7 +104,6 @@ export default function Home() {
     );
   }
 
-  // Not authenticated → login gate
   if (!user) {
     return (
       <div className="min-h-dvh">
@@ -124,17 +119,13 @@ export default function Home() {
     <div className="h-dvh flex flex-col gap-2 p-2 max-w-[1400px] mx-auto overflow-hidden">
       <CRTOverlays />
 
-      {/* controllers (no UI) */}
       <GazeController />
       <KonamiHandler />
       <WitchingWatcher />
-      <UnbanHandler />
 
-      {/* overlays with UI */}
       <AchievementToaster />
       <WitchingBanner />
       <SecretBanner />
-      {booted && <VoiceOfTheMaster />}
 
       {!booted && <BootSequence />}
 
