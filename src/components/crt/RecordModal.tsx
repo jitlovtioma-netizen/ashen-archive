@@ -42,6 +42,8 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
     addGaze,
     unlockAchievement,
     pushToast,
+    solvedRiddles,
+    solveRiddle,
   } = useArchive();
 
   const isSealed = record.isLocked && !unlockedIds.includes(record.id);
@@ -53,8 +55,42 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
 
   const [ritualCharge, setRitualCharge] = useState(0);
   const [ritualActive, setRitualActive] = useState(false);
+  const [riddleAnswer, setRiddleAnswer] = useState("");
+  const [riddleError, setRiddleError] = useState(false);
   const readRef = useRef(false);
   const ritualRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Загадка для Мартина — показывается перед досье, пока не разгадана
+  const needsRiddle =
+    record.name === "Мартин" && !solvedRiddles.includes(record.id);
+
+  const checkRiddle = (e: React.FormEvent) => {
+    e.preventDefault();
+    const answer = riddleAnswer.trim().toLowerCase();
+    // Принимаем варианты: "саймон говорит", "симон говорит", "симон", "саймон"
+    const valid = [
+      "саймон говорит",
+      "симон говорит",
+      "саймон",
+      "симон",
+      "саймон говорит.",
+      "симон говорит.",
+    ];
+    if (valid.includes(answer)) {
+      solveRiddle(record.id);
+      sfx.unlock();
+      pushToast({
+        kind: "secret",
+        sigil: "🎯",
+        title: "ЗАГАДКА РАЗГАДАНА",
+        body: "Доступ к досье открыт.",
+      });
+    } else {
+      setRiddleError(true);
+      sfx.error();
+      setTimeout(() => setRiddleError(false), 2000);
+    }
+  };
 
   useEffect(() => {
     if (!readRef.current && !isSealed) {
@@ -185,6 +221,124 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
   // Portal: рендерим модалку прямо в document.body, а не внутри скроллимого
   // <main>. Так position: fixed гарантированно работает относительно viewport.
   if (typeof document === "undefined") return null;
+
+  // ─── Экран загадки для Мартина ───
+  if (needsRiddle) {
+    return createPortal(
+      <div
+        className="fixed inset-0 z-[9700] flex items-center justify-center p-4"
+        style={{
+          background: "rgba(2, 0, 2, 0.9)",
+          backdropFilter: "blur(3px)",
+        }}
+        onClick={onClose}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Загадка Мартина"
+      >
+        <div
+          className="panel clip-hud brackets w-full max-w-lg p-6 fade-in"
+          style={{
+            boxShadow: "0 0 40px rgba(167, 139, 250, 0.3)",
+            animation: "modalIn 0.3s ease-out forwards",
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* header */}
+          <div className="flex items-center gap-2 mb-4">
+            <span className="led led-amber" />
+            <span className="text-[10px] text-dim tracking-widest ml-2">
+              {"// ПЕЧАТЬ_ЗАГАДКИ //"}
+            </span>
+            <span className="flex-1" />
+            <button
+              onClick={onClose}
+              className="btn-crt btn-red clip-hud-sm px-2 py-0.5 text-[11px]"
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* sigil */}
+          <div className="text-center mb-4">
+            <div className="text-4xl glow-violet mb-2 pulse-slow">🌑</div>
+            <div className="font-medieval text-xl glow-violet tracking-wider">
+              МАРТИН
+            </div>
+            <div className="text-[10px] text-dim tracking-widest mt-1">
+              {"// теневой покровитель //"}
+            </div>
+          </div>
+
+          {/* riddle text */}
+          <div className="panel-inset p-4 mb-4 border-l-2 border-[var(--violet)]">
+            <div className="text-[10px] glow-violet tracking-widest mb-2">
+              ⟁ ЗАГАДКА
+            </div>
+            <div className="text-[13px] text-[var(--text)] leading-relaxed italic space-y-1">
+              <p>Он не царь и не король,</p>
+              <p>Но в игре он главный роль.</p>
+              <p>Если имя назовёт —</p>
+              <p>Каждый руки поднесёт.</p>
+              <p>А без имени приказ</p>
+              <p>Выполнять нельзя сейчас!</p>
+              <p>Кто команду отдаёт,</p>
+              <p>Угадай-ка, в тот же ждёт?</p>
+            </div>
+          </div>
+
+          {/* input */}
+          <form onSubmit={checkRiddle} className="space-y-3">
+            <div>
+              <label className="block text-[11px] glow-violet tracking-widest mb-1.5">
+                {"> ОТВЕТ:"}
+              </label>
+              <input
+                type="text"
+                value={riddleAnswer}
+                onChange={(e) => setRiddleAnswer(e.target.value)}
+                autoFocus
+                className={`w-full bg-[var(--bg-deep)] border px-3 py-2 text-sm text-[var(--green)] focus:outline-none transition-all font-mono-crt clip-hud-sm ${
+                  riddleError
+                    ? "border-[var(--red)] shadow-[0_0_10px_rgba(255,36,36,0.4)] animate-pulse"
+                    : "border-[var(--line-bright)] focus:border-[var(--violet)] focus:shadow-[0_0_10px_rgba(167,139,250,0.3)]"
+                }`}
+                placeholder="впиши ответ..."
+                disabled={riddleError}
+              />
+            </div>
+
+            {riddleError && (
+              <div className="text-center glow-red text-sm glitch" data-text="НЕВЕРНО">
+                [ НЕВЕРНО — попробуй снова ]
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <button
+                type="submit"
+                className="btn-crt btn-amber clip-hud-sm flex-1 py-2 text-xs"
+              >
+                🔑 ОТВЕТИТЬ
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="btn-crt clip-hud-sm px-4 py-2 text-xs"
+              >
+                ✕ ОТМЕНА
+              </button>
+            </div>
+          </form>
+
+          <div className="text-[9px] text-dim mt-4 text-center tracking-wider">
+            {"// разгадай загадку, чтобы открыть досье Мартина //"}
+          </div>
+        </div>
+      </div>,
+      document.body
+    );
+  }
 
   return createPortal(
     <div

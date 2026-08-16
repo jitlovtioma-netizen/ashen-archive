@@ -59,6 +59,10 @@ interface ArchiveState {
   secretRevealed: boolean;
   revealSecret: () => void;
 
+  // solved riddles (persisted) — record ids whose riddle was solved
+  solvedRiddles: string[];
+  solveRiddle: (id: string) => boolean; // returns true if newly solved
+
   // unlocked record ids (persisted) — records whose seal was broken
   unlockedIds: string[];
   unlockRecord: (id: string) => boolean; // returns true if newly unlocked
@@ -148,6 +152,14 @@ export const useArchive = create<ArchiveState>()(
       secretRevealed: false,
       revealSecret: () => set({ secretRevealed: true }),
 
+      solvedRiddles: [],
+      solveRiddle: (id) => {
+        const cur = get().solvedRiddles;
+        if (cur.includes(id)) return false;
+        set({ solvedRiddles: [...cur, id] });
+        return true;
+      },
+
       unlockedIds: [],
       unlockRecord: (id) => {
         const cur = get().unlockedIds;
@@ -195,6 +207,7 @@ export const useArchive = create<ArchiveState>()(
         konamiUnlocked: s.konamiUnlocked,
         unlockedIds: s.unlockedIds,
         revealedSecrets: s.revealedSecrets,
+        solvedRiddles: s.solvedRiddles,
       }),
       onRehydrateStorage: () => (state) => {
         state?.setHydrated();
