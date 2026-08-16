@@ -62,6 +62,7 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
     addGaze,
     unlockAchievement,
     pushToast,
+    solvedRiddles,
   } = useArchive();
 
   const isSealed = record.isLocked && !unlockedIds.includes(record.id);
@@ -70,6 +71,9 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
     ? shards.includes(record.shardWord)
     : false;
   const secretRevealed = revealedSecrets.includes(record.id);
+  // Мартин: текст скрыт пока загадка не разгадана
+  const martinLocked =
+    record.name === "Мартин" && !solvedRiddles.includes(record.id);
 
   const [expanded, setExpanded] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
@@ -282,7 +286,16 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
           </div>
 
           {/* description */}
-          {!isSealed ? (
+          {martinLocked ? (
+            <div className="panel-inset p-3 text-center">
+              <div className="font-vt323 text-lg glow-violet mb-1">
+                [ ДАННЫЕ СОКРЫТЫ ]
+              </div>
+              <div className="text-dim text-[11px]">
+                {"// разгадай загадку, чтобы открыть досье //"}
+              </div>
+            </div>
+          ) : !isSealed ? (
             <p
               className={`text-[13px] leading-relaxed ${
                 isCorrupted ? "text-[var(--red-dim)]" : "text-[var(--text)]"

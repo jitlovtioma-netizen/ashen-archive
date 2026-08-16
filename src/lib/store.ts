@@ -187,8 +187,35 @@ export const useArchive = create<ArchiveState>()(
       setTotalShardWords: (n) => set({ totalShardWords: n }),
 
       gaze: 7,
-      addGaze: (amount) =>
-        set((st) => ({ gaze: Math.max(0, Math.min(100, st.gaze + amount)) })),
+      addGaze: (amount) => {
+        const st = get();
+        const newGaze = Math.max(0, st.gaze + amount);
+        // При достижении 140 — стирание прогресса + бан 12 часов
+        if (newGaze >= 140 && st.gaze < 140) {
+          set({
+            gaze: 0,
+            shards: [],
+            achievements: [],
+            unlockedIds: [],
+            revealedSecrets: [],
+            solvedRiddles: [],
+            konamiUnlocked: false,
+            toasts: [],
+          });
+          if (typeof window !== "undefined") {
+            const bannedUntil = Date.now() + 12 * 60 * 60 * 1000;
+            const login = window.localStorage.getItem("ashen-current-login");
+            if (login) {
+              window.localStorage.setItem(
+                `ashen-banned-${JSON.parse(login)}`,
+                String(bannedUntil)
+              );
+            }
+          }
+        } else {
+          set({ gaze: newGaze });
+        }
+      },
       resetGaze: () => set({ gaze: 7 }),
 
       soundOn: true,

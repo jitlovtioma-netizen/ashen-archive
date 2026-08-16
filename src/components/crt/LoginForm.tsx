@@ -18,6 +18,24 @@ export function LoginForm() {
       sfx.error();
       return;
     }
+    // Проверка бана (12 часов после стирания при 140% взгляда)
+    if (typeof window !== "undefined") {
+      const bannedUntil = window.localStorage.getItem(
+        `ashen-banned-${loginStr.trim()}`
+      );
+      if (bannedUntil) {
+        const until = parseInt(bannedUntil, 10);
+        if (Date.now() < until) {
+          const hoursLeft = Math.ceil((until - Date.now()) / (60 * 60 * 1000));
+          setError(`Страж стёрт из архива. Возврат через ${hoursLeft} ч.`);
+          sfx.error();
+          return;
+        } else {
+          // Бан истёк — удаляем
+          window.localStorage.removeItem(`ashen-banned-${loginStr.trim()}`);
+        }
+      }
+    }
     setLoading(true);
     setError(null);
     const res = await login(loginStr.trim(), password);

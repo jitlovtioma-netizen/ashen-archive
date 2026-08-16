@@ -358,7 +358,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
       aria-label={record.name}
     >
       <div
-        className={`panel clip-hud brackets w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden fade-in ${isReflection ? "reflection-panel" : ""}`}
+        className={`panel clip-hud brackets w-full max-w-7xl max-h-[95vh] flex flex-col overflow-hidden fade-in ${isReflection ? "reflection-panel" : ""}`}
         style={{
           boxShadow: isReflection
             ? "0 0 60px rgba(167, 139, 250, 0.4), 0 0 120px rgba(40, 0, 60, 0.9)"
@@ -393,7 +393,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
           {/* body: two columns */}
           <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-y-auto crt-scroll">
             {/* LEFT: text information (60%) */}
-            <div className="md:w-3/5 p-4 sm:p-6 overflow-y-auto crt-scroll border-b md:border-b-0 md:border-r border-[var(--line)]">
+            <div className="md:w-[55%] p-4 sm:p-6 overflow-y-auto crt-scroll border-b md:border-b-0 md:border-r border-[var(--line)]">
               <div className="mb-4">
                 <h2
                   className={`font-medieval text-2xl sm:text-3xl leading-tight mb-1 ${
@@ -539,20 +539,20 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
               </div>
             </div>
 
-            {/* RIGHT: holographic portrait (40%) */}
-            <div className="md:w-2/5 p-4 sm:p-6 flex flex-col items-center justify-center bg-[var(--bg-deep)] min-h-[280px] relative">
-              <div className="text-[10px] text-dim tracking-widest mb-4 absolute top-3 left-4">
+            {/* RIGHT: holographic portrait (45%) */}
+            <div className="md:w-[45%] p-4 sm:p-6 flex flex-col bg-[var(--bg-deep)] min-h-[300px] relative">
+              <div className="text-[10px] text-dim tracking-widest mb-3 absolute top-3 left-4 z-30">
                 {"// ПРОЕКЦИЯ //"}
               </div>
 
-              <div className="flex-1 flex items-center justify-center w-full">
+              <div className="flex-1 flex items-center justify-center w-full min-h-[280px]">
                 {record.imageUrl && !isSealed ? (
                   <HoloPortrait
                     src={record.imageUrl}
                     corrupted={isCorrupted}
                     sealed={isSealed}
                     status={record.status}
-                    size={260}
+                    full
                     fallbackGlyph={record.sigil}
                   />
                 ) : (

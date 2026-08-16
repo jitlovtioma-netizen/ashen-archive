@@ -19,41 +19,14 @@ import {
   LoreSection,
   LoreGodsSection,
   LoreNpcsSection,
+  LoreSecretsSection,
   LocationsSection,
 } from "@/components/sections/Sections";
 import { FactionsSection } from "@/components/sections/FactionsSection";
 import { AchievementsSection } from "@/components/sections/AchievementsSection";
 
-function SecretsSection() {
-  return (
-    <section className="flex flex-col gap-3 h-full">
-      <div className="panel clip-hud-sm px-3 py-2 flex items-center gap-2 flex-wrap">
-        <span className="text-[10px] text-dim tracking-widest">
-          КОРЕНЬ &gt; СОКРЫТОЕ &gt;
-        </span>
-        <span className="text-[11px] glow-violet tracking-widest">
-          СЕКРЕТЫ
-        </span>
-      </div>
-      <div className="flex items-center gap-3 flex-wrap">
-        <h2 className="font-medieval text-2xl glow-violet tracking-wider">
-          Секреты
-        </h2>
-      </div>
-      <div className="panel clip-hud brackets p-8 text-center">
-        <div className="text-4xl glow-violet mb-3 pulse-slow">🔓</div>
-        <div className="font-vt323 text-xl glow-violet mb-2">
-          [ СОКРЫТОЕ ОЖИДАЕТ ]
-        </div>
-        <div className="text-dim text-sm">
-          {"// вы собрали все осколки памяти. но тайны ещё не раскрыты. //"}
-        </div>
-        <div className="text-dim text-xs mt-4">
-          {"// содержимое появится в будущих обновлениях архива //"}
-        </div>
-      </div>
-    </section>
-  );
+function SecretsSection({ system }: { system: "DND" | "PF2E" }) {
+  return <LoreSecretsSection system={system} />;
 }
 
 function Viewport({ system }: { system: "DND" | "PF2E" }) {
@@ -72,7 +45,7 @@ function Viewport({ system }: { system: "DND" | "PF2E" }) {
     case "locations":
       return <LocationsSection system={system} />;
     case "secrets":
-      return <SecretsSection />;
+      return <SecretsSection system={system} />;
     case "achievements":
       return <AchievementsSection system={system} />;
     default:

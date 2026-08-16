@@ -161,6 +161,36 @@ export function LocationsSection({ system }: SectionProps) {
   );
 }
 
+export function LoreSecretsSection({ system }: SectionProps) {
+  return (
+    <ArchiveSection<Lore>
+      type="lore"
+      system={system}
+      title="Секреты"
+      code="СОКРЫТОЕ"
+      columns={1}
+      blurb={`// тайны, открытые тем, кто собрал все осколки памяти //`}
+      filter={(r) => r.folder === "SECRETS"}
+      normalize={(r) => ({
+        id: r.id,
+        name: r.title,
+        subtitle: r.category,
+        system: r.system,
+        description: r.description,
+        sigil: r.sigil,
+        isLocked: r.isLocked,
+        isCorrupted: r.isCorrupted,
+        secretFragment: r.secretFragment,
+        shardWord: r.shardWord,
+        mapX: r.mapX,
+        mapY: r.mapY,
+        imageUrl: r.imageUrl ?? null,
+        status: (r.status as "ALIVE" | "DEAD" | "MISSING") ?? "ALIVE",
+      })}
+    />
+  );
+}
+
 export function ChroniclesSection() {
   return null;
 }
