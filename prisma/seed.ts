@@ -738,7 +738,7 @@ async function main() {
         name: 'Эйри',
         title: 'Мёртвая · Тень, забравшая свет',
         system: 'DND',
-        category: 'Следопыт Теней',
+        category: 'Плут',
         race: 'Алар',
         description:
           'Девушка-алар с рогами, похожими на бивни моржа. Легкомысленная и туповатая — её нашли в винной бочке, и с тех пор она брела по чужим судьбам, точно по чужой воле. Заключила контракт с Мерикой и передала тварь на попечение Раудону, словно переложила часть своего проклятия. Последней её миссией стал План Теней: там она выстрелила в темноту из пистолета — и темнота ответила. Тени высосали её силу досуха, обратив в одну из себя. Товарищу Динамо пришлось убить собственную подругу. Теперь она ходит по краю архива полупризраком — и иногда шепчет.',
@@ -757,7 +757,7 @@ async function main() {
         name: 'Реми',
         title: 'Друид Пепельных Лесов',
         system: 'DND',
-        category: 'Друид Круга Луны',
+        category: 'Друид Круга Пастырей',
         race: 'Полуэльф',
         description:
           'Вырос в лесах Феррумгарда, не зная ни отца, ни матери — только ветер и звериные тропы. Бродит по миру с фамильяром Пинки, лечит раненых и говорит с дубами, что помнят рождение гор. Способен обернуться любым зверем — и говорят, иногда забывает вернуться. Ищет способ исцелить кристаллическую болезнь, от которой умер его дед Ганс: болезнь, что точит Ван изнутри. Жив. Пока.',
@@ -775,7 +775,7 @@ async function main() {
         name: 'Бруно',
         title: 'Спящий Пять Веков',
         system: 'DND',
-        category: 'Волшебник · Кукловод',
+        category: 'Чародей · Кукловод',
         race: 'Эльф',
         description:
           'Мужчина-эльф, что встречался с самим основателем и учился у него искусству рисунка. У него было двое друзей: Тургонвэ Аулендил Оромэар Таурингвэнтиль — кузнец чьё имя длиннее его клинка, и Натори — бард, чьи песни останавливали реки. Когда Творец пал, Бруно попал под магическое влияние и уснул на пятьсот лет. Его разбудила девушка Амелия — по приказу божественной сущности по имени Кали, о которой никто не смеет говорить. Тело его парализовано, но разум владеет куклами: Чинчиро и Динамо — его руки в этом мире.',
@@ -793,7 +793,7 @@ async function main() {
         name: 'Раудон Пасекеяс',
         title: 'Носитель Метки',
         system: 'DND',
-        category: 'Чародей',
+        category: 'Волшебник',
         race: 'Тифлинг',
         description:
           'Выходец из Академии имени Морденкайнена, с врождённой магией и амбициями, что темнее, чем он сам признаёт. Рассудителен — но слишком часто полагается на удачу, и удача уже начала на него коситься. Недавняя встреча оставила на нём метку: она сосёт из него силу и поит ею Мерику — мелкое, крайне неприятное существо, что теперь привязано к нему, как тень к свету. Иная магия переменила его тело, сделав его женским, — но Раудон(а) не отчаивается. Цели его не ясны даже ему самому.',
@@ -888,8 +888,7 @@ async function main() {
         mapY: 200,
         isLocked: true,
         shardWord: null,
-        secretFragment:
-          'У самого края Разлома, по слухам, Радна Ванский нашёл осколок ядра Аларуса — источник кристаллической болезни.',
+        secretFragment: null,
       },
       {
         title: 'Пантеон Эларии',
@@ -923,8 +922,7 @@ async function main() {
         mapX: 800,
         mapY: 170,
         isCorrupted: true,
-        secretFragment:
-          'В глубине кратера Таргона, говорят, Радна хранит «Сердце Кристалла» — источник всей болезни и ключ к её контролю.',
+        secretFragment: null,
       },
       {
         title: 'Эпоха Угасающего Света',
@@ -953,8 +951,7 @@ async function main() {
         sortOrder: 1,
         status: 'DEAD',
         shardWord: 'Мощь',
-        secretFragment:
-          'Алдуин частично запечатал Разлом, но равновесие не вернулось. Чтобы оживить Творца, нужно ядро — а оно спит там, куда не смотрит ни один бог.',
+        secretFragment: null,
       },
       {
         title: 'Лунарт',
@@ -969,8 +966,7 @@ async function main() {
         imageUrl: img('gods/lunart.png'),
         sortOrder: 2,
         shardWord: null,
-        secretFragment:
-          'Глаз Лунарта, что даровал ему Аларус, до сих пор смотрит сквозь ночь. Никто не знает, куда смотрит второй.',
+        secretFragment: null,
       },
       {
         title: 'Элианна',
@@ -985,8 +981,7 @@ async function main() {
         imageUrl: img('gods/elianna.png'),
         sortOrder: 3,
         shardWord: 'Свет',
-        secretFragment:
-          'Солнце на небе Эларии, по вере Спарды, — украденный свет. Истинный свет исходит только от веры в Абнера.',
+        secretFragment: null,
       },
       {
         title: 'Алдуин',
@@ -1001,8 +996,7 @@ async function main() {
         imageUrl: img('gods/alduin.png'),
         sortOrder: 4,
         shardWord: null,
-        secretFragment:
-          'Пакт не даёт Алдуину убить предателей. Но он ищет Избранного, на которого Пакт не распространяется.',
+        secretFragment: null,
       },
       {
         title: 'Абнер',
@@ -1017,8 +1011,7 @@ async function main() {
         imageUrl: img('gods/abner.png'),
         sortOrder: 5,
         shardWord: null,
-        secretFragment:
-          'В Спарде лжецов клеймят магическими печатями. Говорят, само клеймо — осколок взгляда Абнера.',
+        secretFragment: null,
       },
       {
         title: 'Ксу',
@@ -1033,8 +1026,7 @@ async function main() {
         imageUrl: img('gods/xu.png'),
         sortOrder: 6,
         shardWord: null,
-        secretFragment:
-          'Ксу спит подо льдом северных морей. Когда она ворочается во сне, бывают вьюги, что длятся неделями.',
+        secretFragment: null,
       },
       {
         title: 'Меремот',
@@ -1050,8 +1042,7 @@ async function main() {
         imageUrl: img('gods/meremot.png'),
         sortOrder: 7,
         shardWord: 'Тьма',
-        secretFragment:
-          'Меремот не создаёт нежить — он лишь открывает двери. Что входит через них, зависит от того, кто стучит.',
+        secretFragment: null,
       },
       {
         title: 'Келемвор',
@@ -1066,8 +1057,7 @@ async function main() {
         imageUrl: img('gods/kelemvor.png'),
         sortOrder: 8,
         shardWord: null,
-        secretFragment:
-          'Келемвор не решает, жить или умереть. Он лишь решает, куда душа пойдёт после — и иногда это страшнее смерти.',
+        secretFragment: null,
       },
       {
         title: 'Менциса',
@@ -1082,8 +1072,7 @@ async function main() {
         imageUrl: img('gods/mencisa.png'),
         sortOrder: 9,
         shardWord: null,
-        secretFragment:
-          'Менциса не исцеляет — она даёт силу расти. Раненый, что молится ей, должен сам выбрать жить.',
+        secretFragment: null,
       },
       {
         title: 'Радна',
@@ -1099,8 +1088,7 @@ async function main() {
         imageUrl: img('gods/radna.png'),
         sortOrder: 10,
         shardWord: null,
-        secretFragment:
-          'Радна — единственный бог, что правит земным царством. Говорят, он ищет способ убить Лунарта и Элианну, чего не может Алдуин из-за Пакта.',
+        secretFragment: null,
       },
       {
         title: 'Прокесс',
@@ -1115,8 +1103,7 @@ async function main() {
         imageUrl: img('gods/prokess.png'),
         sortOrder: 11,
         shardWord: null,
-        secretFragment:
-          'Прокесс верит, что Разлом можно закрыть не магией, а изобретением. Его последователи строят машину, чьё назначение скрывают от всех богов.',
+        secretFragment: null,
       },
       {
         title: 'Рахиш',
@@ -1131,8 +1118,7 @@ async function main() {
         imageUrl: img('gods/rahish.png'),
         sortOrder: 12,
         shardWord: null,
-        secretFragment:
-          'Рахиш знает цену всему — даже смерти Аларуса. Говорят, он ведёт счёт, кому из богов сколько веры осталось.',
+        secretFragment: null,
       },
       // ─── Папка «Второстепенные герои» (folder=SECONDARY_HEROES) — 8 NPC ───
       {
@@ -1149,8 +1135,7 @@ async function main() {
         sortOrder: 1,
         status: 'DEAD',
         shardWord: null,
-        secretFragment:
-          'Амелия действовала по приказу Кали. Было ли спасение Бруно милостью — или ловушкой, в которую угодила сама Амелия?',
+        secretFragment: null,
       },
       {
         title: 'Мерика',
@@ -1166,8 +1151,7 @@ async function main() {
         imageUrl: img('heroes/merika.png'),
         sortOrder: 2,
         shardWord: null,
-        secretFragment:
-          'Мерика пережила удар бабки и встречу с Увитаром. Невероятная удача — или чья-то воля, что хранит её для чего-то худшего?',
+        secretFragment: null,
       },
       {
         title: 'Мартин',
@@ -1183,8 +1167,7 @@ async function main() {
         imageUrl: img('heroes/martin.png'),
         sortOrder: 3,
         shardWord: 'Время',
-        secretFragment:
-          'Мартин — покровитель Мерики и Увитара. Но кто покровительствует ему самому? Имени его хозяина не знает ни один бог.',
+        secretFragment: null,
       },
       {
         title: 'Кали',
@@ -1201,8 +1184,7 @@ async function main() {
         imageUrl: img('heroes/kali.png'),
         sortOrder: 4,
         shardWord: 'Реальность',
-        secretFragment:
-          'Кали приказала спасти Бруно. Но было ли это спасением — или пробуждением оружия, которое однажды обратится против богов?',
+        secretFragment: null,
       },
       {
         title: 'Увитар',
@@ -1218,8 +1200,7 @@ async function main() {
         sortOrder: 5,
         status: 'DEAD',
         shardWord: null,
-        secretFragment:
-          'Увитар пал от мечей драконоборцев — тех, кого когда-то презирал. Мерика не причастна к его гибели, хотя многие ошибочно винят её.',
+        secretFragment: null,
       },
       {
         title: 'Мика и Мифита',
@@ -1235,8 +1216,7 @@ async function main() {
         imageUrl: img('heroes/mika_mifita.png'),
         sortOrder: 6,
         shardWord: null,
-        secretFragment:
-          'Мифита меняет форму бесконтрольно. Говорят, в её истинном облике нет ни одного знакомого чертежа — и тот, кто увидит его, сходит с ума.',
+        secretFragment: null,
       },
       {
         title: 'Югвих Эмпрес',
@@ -1252,8 +1232,7 @@ async function main() {
         sortOrder: 7,
         status: 'DEAD',
         shardWord: null,
-        secretFragment:
-          'Югвих пал от руки Мартина. Но перед смертью он, говорят, успел передать Избранному Алдуина тайну, которую не знал даже сам Алдуин.',
+        secretFragment: null,
       },
       {
         title: 'Ирем',
@@ -1269,8 +1248,7 @@ async function main() {
         imageUrl: img('heroes/irem.png'),
         sortOrder: 8,
         shardWord: null,
-        secretFragment:
-          'Ирем носит лицо Реми. Но если Реми — друид, что слышит корни, то Ирем — тот, кто слышит тьму. Один из них не настоящий.',
+        secretFragment: null,
       },
       // ─── Пинки — фея-волшебница, фамильяр Реми ───
       {
@@ -1289,8 +1267,7 @@ async function main() {
         sortOrder: 10,
         status: 'MISSING',
         shardWord: null,
-        secretFragment:
-          'Пинки не умерла. Но она и не жива. Она — в месте, где время течёт иначе, и где её ждёт нечто, чего она не может покинуть сама.',
+        secretFragment: null,
       },
       // ─── Сан-Тел — эльф-военачальник Спарды ───
       {
@@ -1309,8 +1286,7 @@ async function main() {
         sortOrder: 11,
         status: 'ALIVE',
         shardWord: null,
-        secretFragment:
-          'Сан-Тел потерял Клинок Кайма — но не случайно. Клинок выбрал момент, когда паладин отвлёкся, и ушёл сам. К чему он стремится — Сан-Тел не знает, но чувствует: скоро узнают все.',
+        secretFragment: null,
       },
       // ─── Отражение — открывается при 100% взгляда созидателя ───
       {
@@ -1329,8 +1305,7 @@ async function main() {
         sortOrder: 9,
         status: 'ALIVE',
         shardWord: null,
-        secretFragment:
-          '▓▒░ Отражение — это не имя. Это приговор. Она ждёт, когда ты посмотришь слишком долго. ░▒▓',
+        secretFragment: null,
       },
       // ─── Клинок Кайма — в Секретах (folder=SECRETS) ───
       {
@@ -1349,8 +1324,7 @@ async function main() {
         sortOrder: 1,
         status: 'ALIVE',
         shardWord: null,
-        secretFragment:
-          'Клинок не утерян. Он ждёт. Тот, кто соберёт все осколки, услышит его зов — и клинок найдёт своего нового хозяина.',
+        secretFragment: null,
       },
       // ─── Внешний План — с загадкой (как Мартин) ───
       {
@@ -1369,8 +1343,7 @@ async function main() {
         sortOrder: 2,
         status: 'ALIVE',
         shardWord: null,
-        secretFragment:
-          'Хозяин кукл — не Мартин. И не Кали. Тот, чьего имени нет ни в одном архиве. Он создал их не для охраны дома. Он создал их, чтобы они ждали. Ждали тебя.',
+        secretFragment: null,
       },
     ],
   })
@@ -1666,6 +1639,12 @@ async function main() {
         name: 'Волосы',
         description: 'Разгадать загадку Внешнего Плана.',
         sigil: '🏚',
+      },
+      {
+        code: 'KONAMI_MASTER',
+        name: 'Игрок',
+        description: 'Ввести Konami-код в досье Мартина и узнать правила игры.',
+        sigil: '🎮',
       },
     ],
   })

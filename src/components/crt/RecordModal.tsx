@@ -57,6 +57,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
   const [ritualActive, setRitualActive] = useState(false);
   const [riddleAnswer, setRiddleAnswer] = useState("");
   const [riddleError, setRiddleError] = useState(false);
+  const [konamiSecret, setKonamiSecret] = useState(false);
   const readRef = useRef(false);
   const ritualRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -256,6 +257,34 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
   };
 
   const corruptedDisplay = censorText(record.description);
+
+  // ─── Konami-пасхалка для Мартина ───
+  // Комбинация: ↑↑↓↓←→←→ba — показывает скрытую информацию на 10 секунд
+  useEffect(() => {
+    if (record.name !== "Мартин") return;
+    const KONAMI = ["ArrowUp","ArrowUp","ArrowDown","ArrowDown","ArrowLeft","ArrowRight","ArrowLeft","ArrowRight","b","a"];
+    let seq: string[] = [];
+    const onKey = (e: KeyboardEvent) => {
+      const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+      seq.push(k);
+      if (seq.length > KONAMI.length) seq.shift();
+      if (seq.join(",") === KONAMI.join(",")) {
+        seq = [];
+        setKonamiSecret(true);
+        sfx.glitch();
+        unlockAchievement("KONAMI_MASTER");
+        pushToast({
+          kind: "secret",
+          sigil: "🎮",
+          title: "ИГРА РАСКРЫТА",
+          body: "Правила Мартина видны. У тебя 10 секунд.",
+        });
+        setTimeout(() => setKonamiSecret(false), 10000);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [record.name, unlockAchievement, pushToast]);
 
   // Portal: рендерим модалку прямо в document.body, а не внутри скроллимого
   // <main>. Так position: fixed гарантированно работает относительно viewport.
@@ -641,6 +670,51 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
             </div>
           </div>
         </div>
+
+        {/* Konami-секрет для Мартина — overlay на 10 секунд */}
+        {konamiSecret && (
+          <div
+            className="absolute inset-0 z-[9800] flex items-center justify-center p-4"
+            style={{
+              background: "rgba(20, 0, 30, 0.95)",
+              backdropFilter: "blur(4px)",
+              animation: "reflectionGlitch 0.1s steps(2) infinite",
+            }}
+            onClick={() => setKonamiSecret(false)}
+          >
+            <div
+              className="max-w-2xl w-full p-6 text-center"
+              style={{
+                background: "rgba(15, 0, 25, 0.95)",
+                border: "1px solid rgba(167, 139, 250, 0.6)",
+                boxShadow: "0 0 60px rgba(167, 139, 250, 0.5)",
+                animation: "reflectionGlitch 0.12s steps(2) infinite",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="text-3xl mb-3 glow-violet pulse-slow">🎮</div>
+              <div className="font-medieval text-xl glow-violet mb-4 tracking-wider">
+                СКРЫТАЯ СИЛА МАРТИНА
+              </div>
+              <div className="reflection-text text-[14px] leading-relaxed space-y-3">
+                <p>Его сила — это <span className="reflection-warning">ИГРА</span>.</p>
+                <p>Не магия. Не божество. Не проклятие.</p>
+                <p>Игра, в которую <span className="reflection-warning">ВСЕ</span> играют по правилам.</p>
+                <p>Даже он.</p>
+                <p>Особенно он.</p>
+                <p>Мерика — фигура. Увитар — фигура. Куклы — фигуры.</p>
+                <p>Партия — фигуры.</p>
+                <p><span className="reflection-warning">Ты</span> — фигура.</p>
+                <p>Правила просты: каждый ход имеет цену.</p>
+                <p>И Мартин знает цену каждого хода.</p>
+                <p>Кроме одного — твоего следующего.</p>
+              </div>
+              <div className="mt-4 text-[10px] text-dim tracking-widest">
+                {"// 10 секунд до закрытия //"}
+              </div>
+            </div>
+          </div>
+        )}
     </div>,
     document.body
   );
