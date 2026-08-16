@@ -10,9 +10,7 @@ import { Sidebar } from "@/components/crt/Sidebar";
 import { StatusBar } from "@/components/crt/StatusBar";
 import { GazeController } from "@/components/crt/GazeController";
 import { KonamiHandler } from "@/components/crt/KonamiHandler";
-import { WitchingWatcher } from "@/components/crt/WitchingWatcher";
 import { AchievementToaster } from "@/components/crt/AchievementToaster";
-import { WitchingBanner } from "@/components/crt/WitchingBanner";
 import { SecretBanner } from "@/components/crt/SecretBanner";
 import {
   CharactersSection,
@@ -121,10 +119,8 @@ export default function Home() {
 
       <GazeController />
       <KonamiHandler />
-      <WitchingWatcher />
 
       <AchievementToaster />
-      <WitchingBanner />
       <SecretBanner />
 
       {!booted && <BootSequence />}

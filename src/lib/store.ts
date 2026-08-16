@@ -104,7 +104,21 @@ export const useArchive = create<ArchiveState>()(
           });
           const data = await res.json();
           if (res.ok && data.ok) {
-            set({ user: data.user as User, booted: false, section: "characters", gaze: 7 });
+            // Сбрасываем ВСЮ прогрессию при каждом входе
+            set({
+              user: data.user as User,
+              booted: false,
+              section: "characters",
+              gaze: 7,
+              shards: [],
+              achievements: [],
+              konamiUnlocked: false,
+              unlockedIds: [],
+              revealedSecrets: [],
+              solvedRiddles: [],
+              toasts: [],
+              soundOn: true,
+            });
             return { ok: true };
           }
           return { ok: false, error: data.error || "UNKNOWN" };
@@ -206,15 +220,11 @@ export const useArchive = create<ArchiveState>()(
     {
       name: "ashen-archive",
       storage: createJSONStorage(() => localStorage),
+      // Сохраняем ТОЛЬКО user (чтобы не логиниться заново при перезагрузке).
+      // Вся прогрессия (осколки, достижения, загадки) сбрасывается при каждом входе.
       partialize: (s) => ({
         user: s.user,
         soundOn: s.soundOn,
-        shards: s.shards,
-        achievements: s.achievements,
-        konamiUnlocked: s.konamiUnlocked,
-        unlockedIds: s.unlockedIds,
-        revealedSecrets: s.revealedSecrets,
-        solvedRiddles: s.solvedRiddles,
       }),
       onRehydrateStorage: () => (state) => {
         state?.setHydrated();
