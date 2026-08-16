@@ -150,11 +150,12 @@ export function FactionsSection({ system }: FactionSectionProps) {
                         {"/// значимые персонажи не записаны. данные ожидаются. ///"}
                       </div>
                     ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-3">
                         {f.npcs.map((npc) => (
                           <RecordCard
                             key={npc.id}
                             record={npcToCard(npc)}
+                            horizontal
                           />
                         ))}
                       </div>

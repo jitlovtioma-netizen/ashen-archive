@@ -5,7 +5,7 @@ import { HoloPortrait } from "./HoloPortrait";
 import { Sigil } from "./Sigil";
 import { useArchive } from "@/lib/store";
 import { sfx } from "@/lib/audio";
-import { SYSTEM_LABEL, SYSTEM_COLOR, type GameSystem } from "@/lib/types";
+import { SYSTEM_LABEL, SYSTEM_COLOR } from "@/lib/types";
 import type { CardRecord } from "./RecordCard";
 
 const GLITCH_CHARS = "█▓▒░▚▞▐▌╳╲╱▀▄";
@@ -215,7 +215,6 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
           <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-y-auto crt-scroll">
             {/* LEFT: text information (60%) */}
             <div className="md:w-3/5 p-4 sm:p-6 overflow-y-auto crt-scroll border-b md:border-b-0 md:border-r border-[var(--line)]">
-              {/* name + subtitle */}
               <div className="mb-4">
                 <h2
                   className={`font-medieval text-2xl sm:text-3xl leading-tight mb-1 ${
@@ -230,7 +229,6 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
                 </div>
               </div>
 
-              {/* status chips */}
               <div className="flex items-center gap-1.5 mb-4 flex-wrap">
                 <span
                   className="chip"
@@ -241,12 +239,8 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
                 >
                   {SYSTEM_LABEL[record.system]}
                 </span>
-                {isSealed && (
-                  <span className="chip chip-warn">🔒 ОПЕЧАТАНО</span>
-                )}
-                {isCorrupted && (
-                  <span className="chip chip-err">⚠ ИСКАЖЕНО</span>
-                )}
+                {isSealed && <span className="chip chip-warn">🔒 ОПЕЧАТАНО</span>}
+                {isCorrupted && <span className="chip chip-err">⚠ ИСКАЖЕНО</span>}
                 {!isSealed && !isCorrupted && (
                   <span className="chip chip-ok">✓ ДОСТУПНО</span>
                 )}
@@ -258,7 +252,6 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
                 )}
               </div>
 
-              {/* description */}
               <div className="divider-glow mb-3" />
               <div className="text-[10px] text-dim tracking-widest mb-2">
                 {"// ОПИСАНИЕ //"}
@@ -283,7 +276,6 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
                 </div>
               )}
 
-              {/* secret fragment (revealed) */}
               {secretRevealed && record.secretFragment && (
                 <div className="mt-4 panel-inset p-3 border-l-2 border-[var(--violet)]">
                   <div className="text-[10px] glow-violet tracking-widest mb-1">
@@ -295,7 +287,6 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
                 </div>
               )}
 
-              {/* actions */}
               <div className="flex items-center gap-2 mt-5 flex-wrap">
                 {isSealed ? (
                   <button
@@ -354,7 +345,6 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
                   <button
                     onClick={onRevealSecret}
                     className="btn-crt btn-amber clip-hud-sm px-4 py-2 text-xs"
-                    title="Сокрытое"
                   >
                     ⟁ РАСКРЫТЬ СОКРЫТОЕ
                   </button>
@@ -368,7 +358,6 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
                 {"// ПРОЕКЦИЯ //"}
               </div>
 
-              {/* large hologram */}
               <div className="flex-1 flex items-center justify-center w-full">
                 {record.imageUrl && !isSealed ? (
                   <HoloPortrait
@@ -400,7 +389,6 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
                 )}
               </div>
 
-              {/* coordinates / metadata footer */}
               <div className="mt-4 w-full panel-inset p-2 text-[9px] text-dim tracking-wider">
                 <div className="flex justify-between">
                   <span>SIGIL</span>

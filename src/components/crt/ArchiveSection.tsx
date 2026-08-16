@@ -14,6 +14,7 @@ interface ArchiveSectionProps<T> {
   code: string;
   blurb: string;
   normalize: (raw: T) => CardRecord;
+  columns?: 1 | 3; // 1 = карточки в одну колонку (герои/NPC), 3 = сетка (по умолчанию)
 }
 
 export function ArchiveSection<T>({
@@ -23,6 +24,7 @@ export function ArchiveSection<T>({
   code,
   blurb,
   normalize,
+  columns = 3,
 }: ArchiveSectionProps<T>) {
   const { data, loading, error } = useArchiveData<T>(type, system);
   const [view, setView] = useState<"list" | "map">("list");
@@ -107,9 +109,15 @@ export function ArchiveSection<T>({
       )}
 
       {!loading && !error && view === "list" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 content-start pb-2">
+        <div
+          className={
+            columns === 1
+              ? "flex flex-col gap-3 content-start pb-2"
+              : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 content-start pb-2"
+          }
+        >
           {records.map((r) => (
-            <RecordCard key={r.id} record={r} />
+            <RecordCard key={r.id} record={r} horizontal={columns === 1} />
           ))}
         </div>
       )}
