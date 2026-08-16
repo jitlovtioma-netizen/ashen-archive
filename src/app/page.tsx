@@ -14,6 +14,8 @@ import { WitchingWatcher } from "@/components/crt/WitchingWatcher";
 import { AchievementToaster } from "@/components/crt/AchievementToaster";
 import { WitchingBanner } from "@/components/crt/WitchingBanner";
 import { SecretBanner } from "@/components/crt/SecretBanner";
+import { VoiceOfTheMaster } from "@/components/crt/VoiceOfTheMaster";
+import { UnbanHandler } from "@/components/crt/UnbanHandler";
 import {
   CharactersSection,
   LoreSection,
@@ -126,11 +128,13 @@ export default function Home() {
       <GazeController />
       <KonamiHandler />
       <WitchingWatcher />
+      <UnbanHandler />
 
       {/* overlays with UI */}
       <AchievementToaster />
       <WitchingBanner />
       <SecretBanner />
+      {booted && <VoiceOfTheMaster />}
 
       {!booted && <BootSequence />}
 

@@ -58,6 +58,8 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
   const [riddleAnswer, setRiddleAnswer] = useState("");
   const [riddleError, setRiddleError] = useState(false);
   const [konamiSecret, setKonamiSecret] = useState(false);
+  const [reflectionCloseAttempts, setReflectionCloseAttempts] = useState(0);
+  const [closeBtnPos, setCloseBtnPos] = useState({ x: 0, y: 0 });
   const readRef = useRef(false);
   const ritualRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -444,13 +446,49 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
               <span className="glow-green">{record.name}</span>
             </span>
             <span className="flex-1" />
-            <button
-              onClick={onClose}
-              className="btn-crt btn-red clip-hud-sm px-2 py-0.5 text-[11px]"
-              aria-label="Закрыть"
-            >
-              ✕ ЗАКРЫТЬ
-            </button>
+            {isReflection && reflectionCloseAttempts < 6 ? (
+              <button
+                onMouseEnter={() => {
+                  // Кнопка убегает при наведении
+                  const x = (Math.random() - 0.5) * 300;
+                  const y = (Math.random() - 0.5) * 200;
+                  setCloseBtnPos({ x, y });
+                  setReflectionCloseAttempts((a) => a + 1);
+                  sfx.glitch();
+                }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  // При клике тоже убегает
+                  const x = (Math.random() - 0.5) * 400;
+                  const y = (Math.random() - 0.5) * 300;
+                  setCloseBtnPos({ x, y });
+                  setReflectionCloseAttempts((a) => a + 1);
+                  sfx.error();
+                }}
+                className="btn-crt btn-red clip-hud-sm px-2 py-0.5 text-[11px] transition-all duration-150"
+                style={{
+                  transform: `translate(${closeBtnPos.x}px, ${closeBtnPos.y}px)`,
+                  position: "relative",
+                  zIndex: 50,
+                }}
+                aria-label="Закрыть"
+              >
+                {reflectionCloseAttempts < 3
+                  ? "✕ ЗАКРЫТЬ"
+                  : reflectionCloseAttempts < 5
+                    ? "✕ НЕ УЙДЁШЬ"
+                    : "✕ ОНА НЕ ОТПУСКАЕТ"}
+              </button>
+            ) : (
+              <button
+                onClick={onClose}
+                className="btn-crt btn-red clip-hud-sm px-2 py-0.5 text-[11px]"
+                aria-label="Закрыть"
+              >
+                ✕ ЗАКРЫТЬ
+              </button>
+            )}
           </div>
 
           {/* body: two columns */}

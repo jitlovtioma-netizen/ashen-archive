@@ -190,8 +190,9 @@ export const useArchive = create<ArchiveState>()(
       addGaze: (amount) => {
         const st = get();
         const newGaze = Math.max(0, st.gaze + amount);
-        // При достижении 140 — стирание прогресса + бан 12 часов
+        // При достижении 140 — выкидывание + стирание прогресса + бан 12 часов
         if (newGaze >= 140 && st.gaze < 140) {
+          // Стираем ВЕСЬ прогресс игрока
           set({
             gaze: 0,
             shards: [],
@@ -202,15 +203,27 @@ export const useArchive = create<ArchiveState>()(
             konamiUnlocked: false,
             toasts: [],
           });
+          // Устанавливаем бан и выкидываем
           if (typeof window !== "undefined") {
             const bannedUntil = Date.now() + 12 * 60 * 60 * 1000;
             const login = window.localStorage.getItem("ashen-current-login");
             if (login) {
+              const loginStr = JSON.parse(login);
               window.localStorage.setItem(
-                `ashen-banned-${JSON.parse(login)}`,
+                `ashen-banned-${loginStr}`,
                 String(bannedUntil)
               );
             }
+            // Выкидываем пользователя через короткую задержку (даём toast показаться)
+            setTimeout(() => {
+              // Сбрасываем current-login на guest
+              window.localStorage.setItem(
+                "ashen-current-login",
+                JSON.stringify("guest")
+              );
+              // Перезагружаем страницу — вернёт на экран логина
+              window.location.href = "/";
+            }, 3000);
           }
         } else {
           set({ gaze: newGaze });
