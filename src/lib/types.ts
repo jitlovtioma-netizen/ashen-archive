@@ -47,6 +47,10 @@ export interface Faction {
 export interface Lore extends BaseRecord {
   title: string;
   category: string;
+  folder?: string | null;
+  imageUrl?: string | null;
+  sortOrder?: number;
+  status?: "ALIVE" | "DEAD" | "MISSING";
 }
 
 export interface Location extends BaseRecord {

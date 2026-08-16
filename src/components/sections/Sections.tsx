@@ -2,9 +2,9 @@
 
 import { ArchiveSection } from "@/components/crt/ArchiveSection";
 import type { CardRecord } from "@/components/crt/RecordCard";
+import { LoreSection } from "./LoreSection";
 import type {
   Character,
-  Lore,
   Location,
   Chronicle,
   GameSystem,
@@ -44,31 +44,7 @@ export function CharactersSection({ system }: SectionProps) {
   );
 }
 
-export function LoreSection({ system }: SectionProps) {
-  return (
-    <ArchiveSection<Lore>
-      type="lore"
-      system={system}
-      title="База Лора"
-      code="ЗАПРОС_БАЗА_ЛОРА"
-      blurb={`// история мира: боги, катастрофы, эпохи //`}
-      normalize={(r) => ({
-        id: r.id,
-        name: r.title,
-        subtitle: r.category,
-        system: r.system,
-        description: r.description,
-        sigil: r.sigil,
-        isLocked: r.isLocked,
-        isCorrupted: r.isCorrupted,
-        secretFragment: r.secretFragment,
-        shardWord: r.shardWord,
-        mapX: r.mapX,
-        mapY: r.mapY,
-      })}
-    />
-  );
-}
+export { LoreSection } from "./LoreSection";
 
 export function LocationsSection({ system }: SectionProps) {
   return (
