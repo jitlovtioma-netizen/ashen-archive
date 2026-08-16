@@ -55,7 +55,6 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
   const readRef = useRef(false);
   const ritualRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // reading gaze (once per session)
   useEffect(() => {
     if (!readRef.current && !isSealed) {
       readRef.current = true;
@@ -63,7 +62,6 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
     }
   }, [isSealed, addGaze]);
 
-  // close on Escape
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -72,7 +70,6 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
       }
     };
     window.addEventListener("keydown", onKey);
-    // lock body scroll
     document.body.style.overflow = "hidden";
     return () => {
       window.removeEventListener("keydown", onKey);
@@ -184,251 +181,253 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-[9700] flex items-center justify-center p-2 sm:p-4 modal-backdrop"
+      className="fixed inset-0 z-[9700] overflow-y-auto crt-scroll modal-backdrop"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-label={record.name}
     >
-      <div
-        className="modal-panel panel clip-hud brackets w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden fade-in"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* header bar */}
-        <div className="flex items-center gap-2 px-4 py-2 border-b border-[var(--line-bright)] shrink-0 bg-[var(--panel-2)]">
-          <span className="led led-red" />
-          <span className="led led-amber" />
-          <span className="led led-green" />
-          <span className="text-[10px] text-dim tracking-widest ml-2 truncate">
-            {"// ПРОТОКОЛ_ДОСЬЕ // "}
-            <span className="glow-green">{record.name}</span>
-          </span>
-          <span className="flex-1" />
-          <button
-            onClick={onClose}
-            className="btn-crt btn-red clip-hud-sm px-2 py-0.5 text-[11px]"
-            aria-label="Закрыть"
-          >
-            ✕ ЗАКРЫТЬ
-          </button>
-        </div>
-
-        {/* body: two columns */}
-        <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-y-auto crt-scroll">
-          {/* LEFT: text information (60%) */}
-          <div className="md:w-3/5 p-4 sm:p-6 overflow-y-auto crt-scroll border-b md:border-b-0 md:border-r border-[var(--line)]">
-            {/* name + subtitle */}
-            <div className="mb-4">
-              <h2
-                className={`font-medieval text-2xl sm:text-3xl leading-tight mb-1 ${
-                  isCorrupted ? "glow-red glitch" : "glow-green"
-                }`}
-                data-text={record.name}
-              >
-                {record.name}
-              </h2>
-              <div className="text-dim text-sm tracking-wider">
-                {record.subtitle}
-              </div>
-            </div>
-
-            {/* status chips */}
-            <div className="flex items-center gap-1.5 mb-4 flex-wrap">
-              <span
-                className="chip"
-                style={{
-                  color: SYSTEM_COLOR[record.system],
-                  borderColor: `color-mix(in srgb, ${SYSTEM_COLOR[record.system]} 40%, transparent)`,
-                }}
-              >
-                {SYSTEM_LABEL[record.system]}
-              </span>
-              {isSealed && (
-                <span className="chip chip-warn">🔒 ОПЕЧАТАНО</span>
-              )}
-              {isCorrupted && (
-                <span className="chip chip-err">⚠ ИСКАЖЕНО</span>
-              )}
-              {!isSealed && !isCorrupted && (
-                <span className="chip chip-ok">✓ ДОСТУПНО</span>
-              )}
-              {record.status === "DEAD" && (
-                <span className="chip chip-err">💀 ПАЛ</span>
-              )}
-              {record.status === "MISSING" && (
-                <span className="chip chip-warn">? ПРОПАЛ</span>
-              )}
-            </div>
-
-            {/* description */}
-            <div className="divider-glow mb-3" />
-            <div className="text-[10px] text-dim tracking-widest mb-2">
-              {"// ОПИСАНИЕ //"}
-            </div>
-            {!isSealed ? (
-              <p
-                className="text-[14px] leading-relaxed text-[var(--text)]"
-                dangerouslySetInnerHTML={
-                  isCorrupted ? { __html: corruptedDisplay } : undefined
-                }
-              >
-                {isCorrupted ? undefined : record.description}
-              </p>
-            ) : (
-              <div className="panel-inset p-4 text-center">
-                <div className="font-vt323 text-xl glow-amber mb-1">
-                  [ ДАННЫЕ ОПЕЧАТАНЫ ]
-                </div>
-                <div className="text-dim text-xs">
-                  {"// для доступа требуется ритуал снятия печати //"}
-                </div>
-              </div>
-            )}
-
-            {/* secret fragment (revealed) */}
-            {secretRevealed && record.secretFragment && (
-              <div className="mt-4 panel-inset p-3 border-l-2 border-[var(--violet)]">
-                <div className="text-[10px] glow-violet tracking-widest mb-1">
-                  ⟁ СОКРЫТОЕ
-                </div>
-                <div className="text-[13px] italic text-[var(--text)] leading-relaxed">
-                  {record.secretFragment}
-                </div>
-              </div>
-            )}
-
-            {/* actions */}
-            <div className="flex items-center gap-2 mt-5 flex-wrap">
-              {isSealed ? (
-                <button
-                  className="btn-crt btn-amber clip-hud-sm px-4 py-2 text-xs relative overflow-hidden"
-                  onMouseDown={startRitual}
-                  onMouseUp={stopRitual}
-                  onMouseLeave={stopRitual}
-                  onTouchStart={(e) => {
-                    e.preventDefault();
-                    startRitual();
-                  }}
-                  onTouchEnd={stopRitual}
-                  aria-label="Снятие печати"
-                >
-                  {ritualActive || ritualCharge > 0 ? (
-                    <span className="relative z-10">
-                      РИТУАЛ... {Math.round(ritualCharge)}%
-                    </span>
-                  ) : (
-                    <span>🔑 СНЯТИЕ ПЕЧАТИ</span>
-                  )}
-                  {(ritualActive || ritualCharge > 0) && (
-                    <span
-                      className="absolute inset-0"
-                      style={{
-                        background:
-                          "linear-gradient(90deg, rgba(232,161,58,0.3), rgba(232,161,58,0.1))",
-                        width: `${ritualCharge}%`,
-                        transition: "width 0.05s linear",
-                      }}
-                    />
-                  )}
-                </button>
-              ) : (
-                <button
-                  onClick={onClose}
-                  className="btn-crt clip-hud-sm px-4 py-2 text-xs"
-                >
-                  ◂ ЗАКРЫТЬ ДОСЬЕ
-                </button>
-              )}
-
-              {!isSealed && record.shardWord && (
-                <button
-                  onClick={onCollectShard}
-                  disabled={shardCollected}
-                  className={`btn-crt clip-hud-sm px-4 py-2 text-xs ${
-                    shardCollected ? "opacity-50 cursor-default" : ""
-                  }`}
-                >
-                  {shardCollected ? "✓ ОСКОЛОК СОБРАН" : "🧩 ОСКОЛОК ПАМЯТИ"}
-                </button>
-              )}
-
-              {!isSealed && record.secretFragment && !secretRevealed && (
-                <button
-                  onClick={onRevealSecret}
-                  className="btn-crt btn-amber clip-hud-sm px-4 py-2 text-xs"
-                  title="Сокрытое"
-                >
-                  ⟁ РАСКРЫТЬ СОКРЫТОЕ
-                </button>
-              )}
-            </div>
+      <div className="min-h-full flex items-center justify-center p-2 sm:p-4">
+        <div
+          className="modal-panel panel clip-hud brackets w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden fade-in"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* header bar */}
+          <div className="flex items-center gap-2 px-4 py-2 border-b border-[var(--line-bright)] shrink-0 bg-[var(--panel-2)]">
+            <span className="led led-red" />
+            <span className="led led-amber" />
+            <span className="led led-green" />
+            <span className="text-[10px] text-dim tracking-widest ml-2 truncate">
+              {"// ПРОТОКОЛ_ДОСЬЕ // "}
+              <span className="glow-green">{record.name}</span>
+            </span>
+            <span className="flex-1" />
+            <button
+              onClick={onClose}
+              className="btn-crt btn-red clip-hud-sm px-2 py-0.5 text-[11px]"
+              aria-label="Закрыть"
+            >
+              ✕ ЗАКРЫТЬ
+            </button>
           </div>
 
-          {/* RIGHT: holographic portrait (40%) */}
-          <div className="md:w-2/5 p-4 sm:p-6 flex flex-col items-center justify-center bg-[var(--bg-deep)] min-h-[280px] relative">
-            <div className="text-[10px] text-dim tracking-widest mb-4 absolute top-3 left-4">
-              {"// ПРОЕКЦИЯ //"}
-            </div>
-
-            {/* large hologram */}
-            <div className="flex-1 flex items-center justify-center w-full">
-              {record.imageUrl && !isSealed ? (
-                <HoloPortrait
-                  src={record.imageUrl}
-                  corrupted={isCorrupted}
-                  sealed={isSealed}
-                  status={record.status}
-                  size={260}
-                  fallbackGlyph={record.sigil}
-                />
-              ) : (
-                <div className="flex flex-col items-center gap-4">
-                  <Sigil
-                    glyph={record.sigil}
-                    corrupted={isCorrupted}
-                    size={180}
-                  />
-                  {isSealed && (
-                    <div className="text-center">
-                      <div className="font-vt323 text-xl glow-amber">
-                        [ ПЕЧАТЬ ]
-                      </div>
-                      <div className="text-dim text-[10px] tracking-wider mt-1">
-                        {"// проекция недоступна //"}
-                      </div>
-                    </div>
-                  )}
+          {/* body: two columns */}
+          <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-y-auto crt-scroll">
+            {/* LEFT: text information (60%) */}
+            <div className="md:w-3/5 p-4 sm:p-6 overflow-y-auto crt-scroll border-b md:border-b-0 md:border-r border-[var(--line)]">
+              {/* name + subtitle */}
+              <div className="mb-4">
+                <h2
+                  className={`font-medieval text-2xl sm:text-3xl leading-tight mb-1 ${
+                    isCorrupted ? "glow-red glitch" : "glow-green"
+                  }`}
+                  data-text={record.name}
+                >
+                  {record.name}
+                </h2>
+                <div className="text-dim text-sm tracking-wider">
+                  {record.subtitle}
                 </div>
-              )}
-            </div>
+              </div>
 
-            {/* coordinates / metadata footer */}
-            <div className="mt-4 w-full panel-inset p-2 text-[9px] text-dim tracking-wider">
-              <div className="flex justify-between">
-                <span>SIGIL</span>
-                <span className="glow-green">{record.sigil}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>MAP_X</span>
-                <span>{record.mapX}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>MAP_Y</span>
-                <span>{record.mapY}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>STATUS</span>
+              {/* status chips */}
+              <div className="flex items-center gap-1.5 mb-4 flex-wrap">
                 <span
-                  className={
-                    record.status === "DEAD"
-                      ? "glow-red"
-                      : record.status === "MISSING"
-                        ? "glow-amber"
-                        : "glow-green"
+                  className="chip"
+                  style={{
+                    color: SYSTEM_COLOR[record.system],
+                    borderColor: `color-mix(in srgb, ${SYSTEM_COLOR[record.system]} 40%, transparent)`,
+                  }}
+                >
+                  {SYSTEM_LABEL[record.system]}
+                </span>
+                {isSealed && (
+                  <span className="chip chip-warn">🔒 ОПЕЧАТАНО</span>
+                )}
+                {isCorrupted && (
+                  <span className="chip chip-err">⚠ ИСКАЖЕНО</span>
+                )}
+                {!isSealed && !isCorrupted && (
+                  <span className="chip chip-ok">✓ ДОСТУПНО</span>
+                )}
+                {record.status === "DEAD" && (
+                  <span className="chip chip-err">💀 ПАЛ</span>
+                )}
+                {record.status === "MISSING" && (
+                  <span className="chip chip-warn">? ПРОПАЛ</span>
+                )}
+              </div>
+
+              {/* description */}
+              <div className="divider-glow mb-3" />
+              <div className="text-[10px] text-dim tracking-widest mb-2">
+                {"// ОПИСАНИЕ //"}
+              </div>
+              {!isSealed ? (
+                <p
+                  className="text-[14px] leading-relaxed text-[var(--text)]"
+                  dangerouslySetInnerHTML={
+                    isCorrupted ? { __html: corruptedDisplay } : undefined
                   }
                 >
-                  {record.status ?? "ALIVE"}
-                </span>
+                  {isCorrupted ? undefined : record.description}
+                </p>
+              ) : (
+                <div className="panel-inset p-4 text-center">
+                  <div className="font-vt323 text-xl glow-amber mb-1">
+                    [ ДАННЫЕ ОПЕЧАТАНЫ ]
+                  </div>
+                  <div className="text-dim text-xs">
+                    {"// для доступа требуется ритуал снятия печати //"}
+                  </div>
+                </div>
+              )}
+
+              {/* secret fragment (revealed) */}
+              {secretRevealed && record.secretFragment && (
+                <div className="mt-4 panel-inset p-3 border-l-2 border-[var(--violet)]">
+                  <div className="text-[10px] glow-violet tracking-widest mb-1">
+                    ⟁ СОКРЫТОЕ
+                  </div>
+                  <div className="text-[13px] italic text-[var(--text)] leading-relaxed">
+                    {record.secretFragment}
+                  </div>
+                </div>
+              )}
+
+              {/* actions */}
+              <div className="flex items-center gap-2 mt-5 flex-wrap">
+                {isSealed ? (
+                  <button
+                    className="btn-crt btn-amber clip-hud-sm px-4 py-2 text-xs relative overflow-hidden"
+                    onMouseDown={startRitual}
+                    onMouseUp={stopRitual}
+                    onMouseLeave={stopRitual}
+                    onTouchStart={(e) => {
+                      e.preventDefault();
+                      startRitual();
+                    }}
+                    onTouchEnd={stopRitual}
+                    aria-label="Снятие печати"
+                  >
+                    {ritualActive || ritualCharge > 0 ? (
+                      <span className="relative z-10">
+                        РИТУАЛ... {Math.round(ritualCharge)}%
+                      </span>
+                    ) : (
+                      <span>🔑 СНЯТИЕ ПЕЧАТИ</span>
+                    )}
+                    {(ritualActive || ritualCharge > 0) && (
+                      <span
+                        className="absolute inset-0"
+                        style={{
+                          background:
+                            "linear-gradient(90deg, rgba(232,161,58,0.3), rgba(232,161,58,0.1))",
+                          width: `${ritualCharge}%`,
+                          transition: "width 0.05s linear",
+                        }}
+                      />
+                    )}
+                  </button>
+                ) : (
+                  <button
+                    onClick={onClose}
+                    className="btn-crt clip-hud-sm px-4 py-2 text-xs"
+                  >
+                    ◂ ЗАКРЫТЬ ДОСЬЕ
+                  </button>
+                )}
+
+                {!isSealed && record.shardWord && (
+                  <button
+                    onClick={onCollectShard}
+                    disabled={shardCollected}
+                    className={`btn-crt clip-hud-sm px-4 py-2 text-xs ${
+                      shardCollected ? "opacity-50 cursor-default" : ""
+                    }`}
+                  >
+                    {shardCollected ? "✓ ОСКОЛОК СОБРАН" : "🧩 ОСКОЛОК ПАМЯТИ"}
+                  </button>
+                )}
+
+                {!isSealed && record.secretFragment && !secretRevealed && (
+                  <button
+                    onClick={onRevealSecret}
+                    className="btn-crt btn-amber clip-hud-sm px-4 py-2 text-xs"
+                    title="Сокрытое"
+                  >
+                    ⟁ РАСКРЫТЬ СОКРЫТОЕ
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* RIGHT: holographic portrait (40%) */}
+            <div className="md:w-2/5 p-4 sm:p-6 flex flex-col items-center justify-center bg-[var(--bg-deep)] min-h-[280px] relative">
+              <div className="text-[10px] text-dim tracking-widest mb-4 absolute top-3 left-4">
+                {"// ПРОЕКЦИЯ //"}
+              </div>
+
+              {/* large hologram */}
+              <div className="flex-1 flex items-center justify-center w-full">
+                {record.imageUrl && !isSealed ? (
+                  <HoloPortrait
+                    src={record.imageUrl}
+                    corrupted={isCorrupted}
+                    sealed={isSealed}
+                    status={record.status}
+                    size={260}
+                    fallbackGlyph={record.sigil}
+                  />
+                ) : (
+                  <div className="flex flex-col items-center gap-4">
+                    <Sigil
+                      glyph={record.sigil}
+                      corrupted={isCorrupted}
+                      size={180}
+                    />
+                    {isSealed && (
+                      <div className="text-center">
+                        <div className="font-vt323 text-xl glow-amber">
+                          [ ПЕЧАТЬ ]
+                        </div>
+                        <div className="text-dim text-[10px] tracking-wider mt-1">
+                          {"// проекция недоступна //"}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* coordinates / metadata footer */}
+              <div className="mt-4 w-full panel-inset p-2 text-[9px] text-dim tracking-wider">
+                <div className="flex justify-between">
+                  <span>SIGIL</span>
+                  <span className="glow-green">{record.sigil}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>MAP_X</span>
+                  <span>{record.mapX}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>MAP_Y</span>
+                  <span>{record.mapY}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>STATUS</span>
+                  <span
+                    className={
+                      record.status === "DEAD"
+                        ? "glow-red"
+                        : record.status === "MISSING"
+                          ? "glow-amber"
+                          : "glow-green"
+                    }
+                  >
+                    {record.status ?? "ALIVE"}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
