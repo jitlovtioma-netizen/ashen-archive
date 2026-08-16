@@ -74,8 +74,7 @@ model Character {
 }
 
 // --- Лор мира / сеттинга ---
-// folder: null = обычная запись (плоский список); "PANTHEON" = папка «Пантеон» (боги);
-// "SECONDARY_HEROES" = папка «Второстепенные герои» (важные NPC с портретами).
+// folder: null = общий лор; "PANTHEON" = папка «Божества»; "SECONDARY_HEROES" = папка «Второстепенные герои».
 model Lore {
   id             String   @id @default(cuid())
   title          String
@@ -91,11 +90,11 @@ model Lore {
   isCorrupted    Boolean  @default(false)
   secretFragment String?
   shardWord      String?
-  // folder: null | "PANTHEON" | "SECONDARY_HEROES" — группировка в папки во вкладке «Лор»
+  // группировка в папки во вкладке «Лор»
   folder         String?
   // путь к портрету в Supabase Storage (публичный URL) или null — показать сигил
   imageUrl       String?
-  // sortOrder внутри папки (для упорядочивания)
+  // порядок внутри папки
   sortOrder      Int      @default(0)
   // status: "ALIVE" | "DEAD" | "MISSING" — судьба (для второстепенных героев)
   status         String   @default("ALIVE")
