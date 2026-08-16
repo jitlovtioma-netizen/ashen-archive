@@ -63,7 +63,8 @@ export function AchievementsSection({ system }: { system: GameSystem }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 content-start pb-2">
           {list.map((a) => {
             const isUnlocked = unlocked.includes(a.code);
-            const isSecret = !isUnlocked && a.code !== "SECRETS_OPENED";
+            // Все достижения показываются с именем и описанием (не скрываем)
+            const isSecret = false;
             return (
               <div
                 key={a.id}
@@ -91,11 +92,9 @@ export function AchievementsSection({ system }: { system: GameSystem }) {
                     {isSecret ? "??? СОКРЫТОЕ ДОСТИЖЕНИЕ" : a.name}
                   </h3>
                   <p className="text-[12px] text-dim mt-1 leading-relaxed">
-                    {isSecret
-                      ? "// условие открытия неизвестно. продолжайте исследовать архив. //"
-                      : a.description}
+                    {a.description}
                   </p>
-                  {/* Подсказка (secretFragment) — видна ВСЕГДА, даже если достижение закрыто */}
+                  {/* Подсказка — видна ВСЕГДА */}
                   {a.secretFragment && (
                     <div className="mt-2 panel-inset p-2 border-l-2 border-[var(--violet)]">
                       <div className="text-[9px] glow-violet tracking-widest mb-0.5">
