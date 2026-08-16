@@ -30,7 +30,6 @@ async function main() {
   await db.faction.deleteMany()
   await db.lore.deleteMany()
   await db.location.deleteMany()
-  await db.chronicle.deleteMany()
   await db.achievement.deleteMany()
   await db.user.deleteMany()
 
@@ -51,6 +50,31 @@ async function main() {
         password: 'ashen',
         displayName: 'Страж Голариона',
         system: 'PF2E',
+      },
+      // ─── Игроки партии D&D (Элария) ───
+      {
+        login: 'IlyaKazakhStrong',
+        password: 'Qotaq667',
+        displayName: 'Илья',
+        system: 'DND',
+      },
+      {
+        login: 'ps1x0k1d',
+        password: '676767',
+        displayName: 'Игрок',
+        system: 'DND',
+      },
+      {
+        login: 'sashakarev1809',
+        password: '1411Masha!',
+        displayName: 'Саша',
+        system: 'DND',
+      },
+      {
+        login: 'NiT',
+        password: 'Tihe123',
+        displayName: 'Никита',
+        system: 'DND',
       },
     ],
   })
@@ -1519,75 +1543,6 @@ async function main() {
   })
 
   // ───────────────────────────────────────────────────────────────────────
-  // ХРОНИКИ — 3 на систему
-  // ───────────────────────────────────────────────────────────────────────
-  console.log('▸ Запись хроник...')
-  await db.chronicle.createMany({
-    data: [
-      // ─── DND ───
-      {
-        sessionNumber: 1,
-        title: 'Сессия I — Пробуждение под Пеплом',
-        summary:
-          '/// полный отчёт ожидается /// Партия пробудилась в пепельных руинах у границы Феррумгарда, не помня, как сюда попала. Под обломками обнаружен знак Ордена Драконоборцев. Твари Разлома бродили во мраке.',
-        date: '2024-03-15',
-        system: 'DND',
-        shardWord: 'пробуждение',
-      },
-      {
-        sessionNumber: 2,
-        title: 'Сессия II — Шёпот Разлома',
-        summary:
-          '/// полный отчёт ожидается /// Стражи услышали шёпот из трещины печати Алдуина. Радна Ванский, по слухам, послал своего капитана к границе. Кузнец из Ордена расшифровал часть древнего свитка.',
-        date: '2024-04-12',
-        system: 'DND',
-        isCorrupted: true,
-        secretFragment: 'В шёпоте Разлома, по слухам, звучит голос убитого Аларуса, призывающий Избранного.',
-      },
-      {
-        sessionNumber: 3,
-        title: 'Сессия III — Звёздная Руда',
-        summary:
-          '/// полный отчёт ожидается /// Партия добралась до Хамельтона и вступила в переговоры с Советом Пяти. Звёздная Руда обещана в обмен на услугу, о которой стражи пока молчат.',
-        date: '2024-05-24',
-        system: 'DND',
-        isLocked: true,
-        shardWord: 'руда',
-      },
-      // ─── PF2E ───
-      {
-        sessionNumber: 1,
-        title: 'Сессия I — Прибытие в Абсалом',
-        summary:
-          '/// полный отчёт ожидается /// Партия сошла с корабля в порту Абсалома и зарегистрировалась в Великой Ложе Общества Искателей. Венчур-капитан Амика Эль-Салаам выдала первое задание.',
-        date: '2024-03-22',
-        system: 'PF2E',
-        shardWord: 'прибытие',
-      },
-      {
-        sessionNumber: 2,
-        title: 'Сессия II — Тени Отари',
-        summary:
-          '/// полный отчёт ожидается /// Партия прибыла в Отари, чтобы исследовать Хранилища Скверны. Маяк Gauntlight пульсировал зловещим светом, и в таверне «Изогнутый котёл» исчезли трое искателей.',
-        date: '2024-04-19',
-        system: 'PF2E',
-        isCorrupted: true,
-        secretFragment: 'Свет маяка, по слухам, зажигает сама Аразни, насильно воскрешённая королём нежити Гебом.',
-      },
-      {
-        sessionNumber: 3,
-        title: 'Сессия III — Каирны',
-        summary:
-          '/// полный отчёт ожидается /// Партия отправилась в Земли Каирнов за утраченным фолиантом. У Хватки Тирана замечены культисты Шепчущего Пути.',
-        date: '2024-05-31',
-        system: 'PF2E',
-        isLocked: true,
-        shardWord: 'каирн',
-      },
-    ],
-  })
-
-  // ───────────────────────────────────────────────────────────────────────
   // ДОСТИЖЕНИЯ (8, без изменений)
   // ───────────────────────────────────────────────────────────────────────
   console.log('▸ Запись достижений...')
@@ -1655,7 +1610,6 @@ async function main() {
     npcs,
     lore,
     locations,
-    chronicles,
     achievements,
   ] = await Promise.all([
     db.user.count(),
@@ -1665,7 +1619,6 @@ async function main() {
     db.character.count({ where: { kind: 'NPC' } }),
     db.lore.count(),
     db.location.count(),
-    db.chronicle.count(),
     db.achievement.count(),
   ])
 
@@ -1676,7 +1629,6 @@ async function main() {
   console.log(`  characters:   ${characters} (heroes=${heroes}, npcs=${npcs})`)
   console.log(`  lore:         ${lore}`)
   console.log(`  locations:    ${locations}`)
-  console.log(`  chronicles:   ${chronicles}`)
   console.log(`  achievements: ${achievements}`)
   console.log('────────────────────────────────────────')
 }

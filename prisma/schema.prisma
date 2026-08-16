@@ -120,22 +120,6 @@ model Location {
   createdAt      DateTime @default(now())
 }
 
-// --- Хроники: записи о сессиях партии ---
-model Chronicle {
-  id             String   @id @default(cuid())
-  sessionNumber  Int
-  title          String
-  summary        String   // длинный текст — что произошло в сессию
-  date           String   // ISO-дата строкой, напр. "2024-03-15"
-  // system: "DND" | "PF2E"
-  system         String
-  isLocked       Boolean  @default(false)
-  isCorrupted    Boolean  @default(false)
-  secretFragment String?
-  shardWord      String?
-  createdAt      DateTime @default(now())
-}
-
 // --- Достижения (определения; прогресс хранится в localStorage клиента) ---
 model Achievement {
   id          String   @id @default(cuid())

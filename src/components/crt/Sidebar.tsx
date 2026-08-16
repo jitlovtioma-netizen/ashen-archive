@@ -17,7 +17,6 @@ const NAV: NavItem[] = [
   { key: "lore_gods", label: "Божества", code: "ЛОР_ПАНТЕОН", sigil: "✦" },
   { key: "lore_npcs", label: "Второстеп. герои", code: "ЛОР_НПС", sigil: "🎭" },
   { key: "locations", label: "Локации", code: "РЕЕСТР_МЕСТ", sigil: "🗺" },
-  { key: "chronicles", label: "Хроники", code: "ХРОНИКИ_ПАРТИЙ", sigil: "📜" },
   { key: "achievements", label: "Достижения", code: "ДОСТИЖЕНИЯ", sigil: "🏆" },
 ];
 
@@ -27,6 +26,7 @@ export function Sidebar() {
   const shards = useArchive((s) => s.shards);
   const gaze = useArchive((s) => s.gaze);
   const user = useArchive((s) => s.user);
+  const totalShardWords = useArchive((s) => s.totalShardWords);
 
   const onNav = (k: Section) => {
     if (k === section) return;
@@ -38,6 +38,22 @@ export function Sidebar() {
   const gazeColor =
     gaze >= 90 ? "var(--red)" : gaze >= 60 ? "var(--amber)" : "var(--green)";
 
+  // Вкладка «Секреты» появляется только когда собраны ВСЕ осколки памяти
+  const allShardsCollected =
+    totalShardWords > 0 && shards.length >= totalShardWords;
+
+  const fullNav = allShardsCollected
+    ? [
+        ...NAV,
+        {
+          key: "secrets" as Section,
+          label: "Секреты",
+          code: "СОКРЫТОЕ",
+          sigil: "🔓",
+        },
+      ]
+    : NAV;
+
   return (
     <nav
       className="panel clip-hud-sm flex md:flex-col gap-1 p-2 md:w-60 md:min-w-[15rem] shrink-0 overflow-x-auto md:overflow-x-hidden md:overflow-y-auto md:min-h-0 crt-scroll"
@@ -47,7 +63,7 @@ export function Sidebar() {
         {"// АРХИВНЫЙ_ИНДЕКС"}
       </div>
 
-      {NAV.map((item) => (
+      {fullNav.map((item) => (
         <button
           key={item.key}
           data-active={section === item.key}

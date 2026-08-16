@@ -58,13 +58,6 @@ export interface Location extends BaseRecord {
   type: string;
 }
 
-export interface Chronicle extends BaseRecord {
-  sessionNumber: number;
-  title: string;
-  summary: string;
-  date: string;
-}
-
 export interface Achievement {
   id: string;
   code: string;
@@ -76,8 +69,7 @@ export interface Achievement {
 export type ArchiveType =
   | "characters"
   | "lore"
-  | "locations"
-  | "chronicles";
+  | "locations";
 
 export interface Stats {
   totalRecords: number;
@@ -88,7 +80,6 @@ export interface Stats {
     characters: number;
     lore: number;
     locations: number;
-    chronicles: number;
     factions: number;
   };
 }

@@ -18,7 +18,6 @@ export async function GET(request: NextRequest) {
     'characters',
     'lore',
     'locations',
-    'chronicles',
   ] as const
   type ArchiveType = (typeof VALID_TYPES)[number]
 
@@ -69,13 +68,6 @@ export async function GET(request: NextRequest) {
       const rows = await db.location.findMany({
         where: { system },
         orderBy: { name: 'asc' },
-      })
-      return NextResponse.json(rows)
-    }
-    case 'chronicles': {
-      const rows = await db.chronicle.findMany({
-        where: { system },
-        orderBy: { sessionNumber: 'asc' },
       })
       return NextResponse.json(rows)
     }

@@ -6,7 +6,6 @@ import type {
   Character,
   Lore,
   Location,
-  Chronicle,
   GameSystem,
 } from "@/lib/types";
 
@@ -161,28 +160,6 @@ export function LocationsSection({ system }: SectionProps) {
   );
 }
 
-export function ChroniclesSection({ system }: SectionProps) {
-  return (
-    <ArchiveSection<Chronicle>
-      type="chronicles"
-      system={system}
-      title="Хроники Партий"
-      code="ЗАПРОС_ХРОНИКИ_ПАРТИЙ"
-      blurb={`// летопись сессий партии //`}
-      normalize={(r) => ({
-        id: r.id,
-        name: r.title,
-        subtitle: `СЕССИЯ ${String(r.sessionNumber).padStart(2, "0")} · ${r.date} · ${r.system}`,
-        system: r.system,
-        description: r.summary,
-        sigil: r.sigil,
-        isLocked: r.isLocked,
-        isCorrupted: r.isCorrupted,
-        secretFragment: r.secretFragment,
-        shardWord: r.shardWord,
-        mapX: r.mapX,
-        mapY: r.mapY,
-      })}
-    />
-  );
+export function ChroniclesSection() {
+  return null;
 }

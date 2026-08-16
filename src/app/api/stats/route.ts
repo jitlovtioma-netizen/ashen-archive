@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic'
 // GET /api/stats?system=DND|PF2E
 // Возвращает агрегированную статистику для статус-бара:
 // { totalRecords, sealedRecords, corruptedRecords, gazeBase, breakdown }
-// breakdown: { characters (kind=HERO only), lore, locations, chronicles, factions }
+// breakdown: { characters (kind=HERO only), lore, locations, factions }
 // Все фильтры по `system`. gazeBase=7 фиксированный. По умолчанию system=DND.
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -34,59 +34,67 @@ export async function GET(request: NextRequest) {
     charactersCount,
     loreCount,
     locationsCount,
-    chroniclesCount,
     factionsCount,
     charactersSealed,
     loreSealed,
     locationsSealed,
-    chroniclesSealed,
     charactersCorrupted,
     loreCorrupted,
     locationsCorrupted,
-    chroniclesCorrupted,
+    totalShardWords,
   ] = await Promise.all([
     db.character.count({ where: { ...where, kind: 'HERO' } }),
     db.lore.count({ where }),
     db.location.count({ where }),
-    db.chronicle.count({ where }),
     db.faction.count({ where }),
     db.character.count({ where: { ...where, kind: 'HERO', isLocked: true } }),
     db.lore.count({ where: { ...where, isLocked: true } }),
     db.location.count({ where: { ...where, isLocked: true } }),
-    db.chronicle.count({ where: { ...where, isLocked: true } }),
     db.character.count({
       where: { ...where, kind: 'HERO', isCorrupted: true },
     }),
     db.lore.count({ where: { ...where, isCorrupted: true } }),
     db.location.count({ where: { ...where, isCorrupted: true } }),
-    db.chronicle.count({ where: { ...where, isCorrupted: true } }),
+    // Количество уникальных shardWord во всех таблицах (для вкладки «Секреты»)
+    db.character.count({
+      where: { ...where, kind: 'HERO', shardWord: { not: null } },
+    }).then(async (n) => {
+      const [chars, lore, locs] = await Promise.all([
+        db.character.findMany({ where: { ...where, kind: 'HERO', shardWord: { not: null } }, select: { shardWord: true } }),
+        db.lore.findMany({ where: { ...where, shardWord: { not: null } }, select: { shardWord: true } }),
+        db.location.findMany({ where: { ...where, shardWord: { not: null } }, select: { shardWord: true } }),
+      ])
+      const unique = new Set<string>()
+      ;[...chars, ...lore, ...locs].forEach((r) => {
+        if (r.shardWord) unique.add(r.shardWord)
+      })
+      return unique.size
+    }),
   ])
 
   const totalRecords =
-    charactersCount + loreCount + locationsCount + chroniclesCount + factionsCount
+    charactersCount + loreCount + locationsCount + factionsCount
 
   const sealedRecords =
     charactersSealed +
     loreSealed +
-    locationsSealed +
-    chroniclesSealed
+    locationsSealed
 
   const corruptedRecords =
     charactersCorrupted +
     loreCorrupted +
-    locationsCorrupted +
-    chroniclesCorrupted
+    locationsCorrupted
 
   return NextResponse.json({
     totalRecords,
     sealedRecords,
     corruptedRecords,
     gazeBase: 7,
+    totalShardWords,
     breakdown: {
       characters: charactersCount,
       lore: loreCount,
       locations: locationsCount,
-      chronicles: chroniclesCount,
       factions: factionsCount,
     },
   })

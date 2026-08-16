@@ -20,10 +20,41 @@ import {
   LoreGodsSection,
   LoreNpcsSection,
   LocationsSection,
-  ChroniclesSection,
 } from "@/components/sections/Sections";
 import { FactionsSection } from "@/components/sections/FactionsSection";
 import { AchievementsSection } from "@/components/sections/AchievementsSection";
+
+function SecretsSection() {
+  return (
+    <section className="flex flex-col gap-3 h-full">
+      <div className="panel clip-hud-sm px-3 py-2 flex items-center gap-2 flex-wrap">
+        <span className="text-[10px] text-dim tracking-widest">
+          КОРЕНЬ &gt; СОКРЫТОЕ &gt;
+        </span>
+        <span className="text-[11px] glow-violet tracking-widest">
+          СЕКРЕТЫ
+        </span>
+      </div>
+      <div className="flex items-center gap-3 flex-wrap">
+        <h2 className="font-medieval text-2xl glow-violet tracking-wider">
+          Секреты
+        </h2>
+      </div>
+      <div className="panel clip-hud brackets p-8 text-center">
+        <div className="text-4xl glow-violet mb-3 pulse-slow">🔓</div>
+        <div className="font-vt323 text-xl glow-violet mb-2">
+          [ СОКРЫТОЕ ОЖИДАЕТ ]
+        </div>
+        <div className="text-dim text-sm">
+          {"// вы собрали все осколки памяти. но тайны ещё не раскрыты. //"}
+        </div>
+        <div className="text-dim text-xs mt-4">
+          {"// содержимое появится в будущих обновлениях архива //"}
+        </div>
+      </div>
+    </section>
+  );
+}
 
 function Viewport({ system }: { system: "DND" | "PF2E" }) {
   const section = useArchive((s) => s.section);
@@ -40,8 +71,8 @@ function Viewport({ system }: { system: "DND" | "PF2E" }) {
       return <LoreNpcsSection system={system} />;
     case "locations":
       return <LocationsSection system={system} />;
-    case "chronicles":
-      return <ChroniclesSection system={system} />;
+    case "secrets":
+      return <SecretsSection />;
     case "achievements":
       return <AchievementsSection system={system} />;
     default:
@@ -53,6 +84,18 @@ export default function Home() {
   const booted = useArchive((s) => s.booted);
   const user = useArchive((s) => s.user);
   const hydrated = useArchive((s) => s._hasHydrated);
+  const setTotalShardWords = useArchive((s) => s.setTotalShardWords);
+
+  // Загружаем totalShardWords из API (для вкладки «Секреты»)
+  useEffect(() => {
+    if (!user) return;
+    fetch(`/api/stats?system=${user.system}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.totalShardWords) setTotalShardWords(d.totalShardWords);
+      })
+      .catch(() => {});
+  }, [user, setTotalShardWords]);
 
   // ambient gaze drift while reading
   useEffect(() => {
