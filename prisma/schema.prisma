@@ -41,6 +41,7 @@ model Faction {
   sigil       String       // один эмодзи/глиф, напр. "⚙", "⭐"
   description String       // 2-4 предложения
   sortOrder   Int          @default(0)
+  isCorrupted Boolean      @default(false)
   createdAt   DateTime     @default(now())
   npcs        Character[]
 }

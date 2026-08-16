@@ -143,20 +143,27 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // Для Отражения: Escape не работает, пока не пройдены 6 попыток
       if (e.key === "Escape") {
+        if (record.name === "Отражение" && reflectionCloseAttempts < 6) {
+          e.preventDefault();
+          e.stopPropagation();
+          sfx.glitch();
+          return;
+        }
         sfx.blip();
         onClose();
       }
     };
-    window.addEventListener("keydown", onKey);
+    window.addEventListener("keydown", onKey, true);
     // Блокируем скролл body, чтобы модалка оставалась статичной
     // по центру экрана и не "уезжала" при скролле.
     document.body.style.overflow = "hidden";
     return () => {
-      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("keydown", onKey, true);
       document.body.style.overflow = "";
     };
-  }, [onClose]);
+  }, [onClose, record.name, reflectionCloseAttempts]);
 
   const completeRitual = useCallback(() => {
     setRitualActive(false);
@@ -294,6 +301,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
 
   // ─── Специальное досье для «Отражения» — фиолетовый glitch ───
   const isReflection = record.name === "Отражение";
+  const isUnknown = record.name === "Неизвестность";
 
   // ─── Экран загадки (Мартин / Внешний План) ───
   if (needsRiddle && riddleData) {
@@ -449,9 +457,9 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
             {isReflection && reflectionCloseAttempts < 6 ? (
               <button
                 onMouseEnter={() => {
-                  // Кнопка убегает при наведении
-                  const x = (Math.random() - 0.5) * 300;
-                  const y = (Math.random() - 0.5) * 200;
+                  // Кнопка убегает при наведении (ограничено рамками модалки)
+                  const x = Math.max(-150, Math.min(150, (Math.random() - 0.5) * 300));
+                  const y = Math.max(-80, Math.min(80, (Math.random() - 0.5) * 200));
                   setCloseBtnPos({ x, y });
                   setReflectionCloseAttempts((a) => a + 1);
                   sfx.glitch();
@@ -459,9 +467,8 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  // При клике тоже убегает
-                  const x = (Math.random() - 0.5) * 400;
-                  const y = (Math.random() - 0.5) * 300;
+                  const x = Math.max(-200, Math.min(200, (Math.random() - 0.5) * 400));
+                  const y = Math.max(-120, Math.min(120, (Math.random() - 0.5) * 300));
                   setCloseBtnPos({ x, y });
                   setReflectionCloseAttempts((a) => a + 1);
                   sfx.error();
@@ -545,14 +552,34 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
                 </div>
               )}
               {!isSealed ? (
-                <p
-                  className={`text-[14px] leading-relaxed ${isReflection ? "reflection-text" : "text-[var(--text)]"}`}
-                  dangerouslySetInnerHTML={
-                    isCorrupted ? { __html: corruptedDisplay } : undefined
-                  }
-                >
-                  {isCorrupted ? undefined : record.description}
-                </p>
+                isUnknown ? (
+                  <div className="text-[14px] leading-relaxed space-y-2">
+                    {/* Для Неизвестности: парсим ★★★ как выделенный текст */}
+                    {record.description.split('\n').map((line, i) => {
+                      if (line.includes('★★★')) {
+                        return (
+                          <p key={i} className="glow-amber text-lg font-bold text-center tracking-wider pulse-slow">
+                            {line}
+                          </p>
+                        );
+                      }
+                      return (
+                        <p key={i} className="reflection-text text-[13px]">
+                          {line || '\u00A0'}
+                        </p>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p
+                    className={`text-[14px] leading-relaxed ${isReflection ? "reflection-text" : "text-[var(--text)]"}`}
+                    dangerouslySetInnerHTML={
+                      isCorrupted ? { __html: corruptedDisplay } : undefined
+                    }
+                  >
+                    {isCorrupted ? undefined : record.description}
+                  </p>
+                )
               ) : (
                 <div className="panel-inset p-4 text-center">
                   <div className="font-vt323 text-xl glow-amber mb-1">
@@ -610,10 +637,23 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
                   </button>
                 ) : (
                   <button
-                    onClick={onClose}
-                    className="btn-crt clip-hud-sm px-4 py-2 text-xs"
+                    onClick={() => {
+                      // Для Отражения: кнопка не работает, пока не пройдены 6 попыток
+                      if (isReflection && reflectionCloseAttempts < 6) {
+                        sfx.glitch();
+                        return;
+                      }
+                      onClose();
+                    }}
+                    className={`btn-crt clip-hud-sm px-4 py-2 text-xs ${
+                      isReflection && reflectionCloseAttempts < 6
+                        ? "opacity-30 cursor-not-allowed"
+                        : ""
+                    }`}
                   >
-                    ◂ ЗАКРЫТЬ ДОСЬЕ
+                    {isReflection && reflectionCloseAttempts < 6
+                      ? "✕ ОНА НЕ ОТПУСКАЕТ"
+                      : "◂ ЗАКРЫТЬ ДОСЬЕ"}
                   </button>
                 )}
 
