@@ -19,7 +19,8 @@ export function LoginForm() {
       return;
     }
     // Проверка бана (12 часов после стирания при 140% взгляда)
-    if (typeof window !== "undefined") {
+    // Логин "dnd" имеет иммунитет — не проверяется на бан
+    if (loginStr.trim() !== "dnd" && typeof window !== "undefined") {
       const bannedUntil = window.localStorage.getItem(
         `ashen-banned-${loginStr.trim()}`
       );

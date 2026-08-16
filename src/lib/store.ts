@@ -191,7 +191,14 @@ export const useArchive = create<ArchiveState>()(
         const st = get();
         const newGaze = Math.max(0, st.gaze + amount);
         // При достижении 140 — выкидывание + стирание прогресса + бан 12 часов
+        // Но логин "dnd" имеет иммунитет — его нельзя забанить
         if (newGaze >= 140 && st.gaze < 140) {
+          const isImmune = st.user?.login === "dnd";
+          if (isImmune) {
+            // Иммунитет: просто сбрасываем взгляд, без бана
+            set({ gaze: 0 });
+            return;
+          }
           // Стираем ВЕСЬ прогресс игрока
           set({
             gaze: 0,
