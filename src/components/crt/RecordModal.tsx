@@ -53,8 +53,55 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
 
   const [ritualCharge, setRitualCharge] = useState(0);
   const [ritualActive, setRitualActive] = useState(false);
+  const [martinSecretShown, setMartinSecretShown] = useState(false);
   const readRef = useRef(false);
   const ritualRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const konamiSeq = useRef<string[]>([]);
+
+  // При открытии «Отражения» — открыть достижение REFLECTION
+  useEffect(() => {
+    if (record.name === "Отражение" && !readRef.current) {
+      readRef.current = true;
+      const isNew = unlockAchievement("REFLECTION");
+      if (isNew) {
+        sfx.achievement();
+        pushToast({
+          kind: "ach",
+          sigil: "🪞",
+          title: "ДОСТИЖЕНИЕ: ОТКРЫТЬ ОТРАЖЕНИЕ",
+          body: "Взгляд Созидателя достиг 90%. Отражение явилось тебе.",
+        });
+      }
+    }
+  }, [record.name, unlockAchievement, pushToast]);
+
+  // Konami-код в досье Мартина — показывает скрытую силу
+  useEffect(() => {
+    if (record.name !== "Мартин") return;
+    const KONAMI = ["ArrowUp","ArrowUp","ArrowDown","ArrowDown","ArrowLeft","ArrowRight","ArrowLeft","ArrowRight","KeyB","KeyA"];
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) return;
+      const code = e.code;
+      konamiSeq.current.push(code);
+      if (konamiSeq.current.length > KONAMI.length) konamiSeq.current.shift();
+      if (konamiSeq.current.join(",") === KONAMI.join(",")) {
+        konamiSeq.current = [];
+        if (!martinSecretShown) {
+          setMartinSecretShown(true);
+          sfx.achievement();
+          pushToast({
+            kind: "secret",
+            sigil: "🌑",
+            title: "СКРЫТАЯ СИЛА МАРТИНА",
+            body: "Его сила — это игра. В этой игре подчиняются все. Даже он сам. Саймон говорит: подчинись правилу, или останешься пешкой навсегда.",
+          });
+        }
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [record.name, martinSecretShown, pushToast]);
 
   useEffect(() => {
     if (!readRef.current && !isSealed) {
@@ -202,9 +249,10 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
 
             {isReflection && (
               <div className="mb-3 text-center space-y-1">
-                <div className="reflection-warning text-lg">ОНА ОБМАНЫВАЕТ!</div>
-                <div className="reflection-warning text-lg">НЕ ВЕРЬ ЕЙ!</div>
+                <div className="reflection-warning text-lg">НЕ ВЕРЬ ЕЙ</div>
+                <div className="reflection-warning text-lg">ОНО ЛЖЁТ</div>
                 <div className="reflection-warning text-2xl">БЕГИ!</div>
+                <div className="reflection-warning text-2xl">СПАСАЙСЯ!</div>
               </div>
             )}
 

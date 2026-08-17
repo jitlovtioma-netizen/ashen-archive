@@ -682,7 +682,6 @@ async function main() {
         kind: 'HERO',
         status: 'DEAD',
         imageUrl: img('heroes/eiri.png'),
-        shardWord: 'тьма',
       },
       {
         name: 'Реми',
@@ -699,7 +698,6 @@ async function main() {
         kind: 'HERO',
         status: 'ALIVE',
         imageUrl: img('heroes/remi.png'),
-        shardWord: 'свет',
       },
       {
         name: 'Бруно',
@@ -716,7 +714,6 @@ async function main() {
         kind: 'HERO',
         status: 'ALIVE',
         imageUrl: img('heroes/bruno.png'),
-        shardWord: 'время',
       },
       {
         name: 'Раудон Пасекеяс',
@@ -733,7 +730,6 @@ async function main() {
         kind: 'HERO',
         status: 'ALIVE',
         imageUrl: img('heroes/raudon.png'),
-        shardWord: 'мощь',
       },
       {
         name: 'Мурасаки Каэдэ',
@@ -751,7 +747,6 @@ async function main() {
         kind: 'HERO',
         status: 'ALIVE',
         imageUrl: img('heroes/murasaki.png'),
-        shardWord: 'реальность',
       },
       // ─── PF2E герои — 3 стаба ───
       {
@@ -900,6 +895,7 @@ async function main() {
         imageUrl: img('gods/lunart.png'),
         folder: 'PANTHEON',
         sortOrder: 2,
+        shardWord: 'луна',
       },
       {
         title: 'Элианна',
@@ -939,6 +935,7 @@ async function main() {
         imageUrl: img('gods/abner.png'),
         folder: 'PANTHEON',
         sortOrder: 5,
+        shardWord: 'свет',
       },
       {
         title: 'Ксу',
@@ -966,6 +963,7 @@ async function main() {
         imageUrl: img('gods/meremot.png'),
         folder: 'PANTHEON',
         sortOrder: 7,
+        shardWord: 'мощь',
       },
       {
         title: 'Келемвор',
@@ -1045,7 +1043,7 @@ async function main() {
         sigil: '🕯',
         mapX: 180,
         mapY: 260,
-        imageUrl: img('secondary/ameliya.png'),
+        imageUrl: img('heroes/ameliya.png'),
         status: 'DEAD',
         folder: 'SECONDARY_HEROES',
         sortOrder: 1,
@@ -1060,7 +1058,7 @@ async function main() {
         mapX: 220,
         mapY: 280,
         isCorrupted: true,
-        imageUrl: img('secondary/merika.png'),
+        imageUrl: img('heroes/merika.png'),
         folder: 'SECONDARY_HEROES',
         sortOrder: 2,
       },
@@ -1073,9 +1071,10 @@ async function main() {
         sigil: '🌑',
         mapX: 260,
         mapY: 300,
-        imageUrl: img('secondary/martin.png'),
+        imageUrl: img('heroes/martin.png'),
         folder: 'SECONDARY_HEROES',
         sortOrder: 3,
+        shardWord: 'тьма',
       },
       {
         title: 'Кали',
@@ -1087,9 +1086,10 @@ async function main() {
         mapX: 300,
         mapY: 320,
         isCorrupted: true,
-        imageUrl: img('secondary/kali.png'),
+        imageUrl: img('heroes/kali.png'),
         folder: 'SECONDARY_HEROES',
         sortOrder: 4,
+        shardWord: 'реальность',
       },
       {
         title: 'Увитар',
@@ -1101,7 +1101,7 @@ async function main() {
         mapX: 340,
         mapY: 280,
         isCorrupted: true,
-        imageUrl: img('secondary/uvitar.png'),
+        imageUrl: img('heroes/uvitar.png'),
         status: 'DEAD',
         folder: 'SECONDARY_HEROES',
         sortOrder: 5,
@@ -1115,7 +1115,7 @@ async function main() {
         sigil: '🍷',
         mapX: 380,
         mapY: 320,
-        imageUrl: img('secondary/mika.png'),
+        imageUrl: img('heroes/mika.png'),
         folder: 'SECONDARY_HEROES',
         sortOrder: 6,
       },
@@ -1129,7 +1129,7 @@ async function main() {
         mapX: 400,
         mapY: 340,
         isCorrupted: true,
-        imageUrl: img('secondary/mifita.png'),
+        imageUrl: img('heroes/mifita.png'),
         folder: 'SECONDARY_HEROES',
         sortOrder: 7,
       },
@@ -1142,7 +1142,7 @@ async function main() {
         sigil: '⚔',
         mapX: 440,
         mapY: 360,
-        imageUrl: img('secondary/yugvikh.png'),
+        imageUrl: img('heroes/yugvikh.png'),
         status: 'DEAD',
         folder: 'SECONDARY_HEROES',
         sortOrder: 8,
@@ -1157,7 +1157,7 @@ async function main() {
         mapX: 480,
         mapY: 380,
         isCorrupted: true,
-        imageUrl: img('secondary/irem.png'),
+        imageUrl: img('heroes/irem.png'),
         folder: 'SECONDARY_HEROES',
         sortOrder: 9,
       },
@@ -1209,6 +1209,19 @@ async function main() {
         mapY: 460,
         folder: 'SECONDARY_HEROES',
         sortOrder: 13,
+      },
+      {
+        title: 'Отражение',
+        category: 'Сокрытое · Появляется при 90% взгляда',
+        system: 'DND',
+        description:
+          '▓▒░ Отражение ░▒▓ — сущность, что является стражу, когда Взгляд Созидателя достигает 90%. Она выглядит как зеркало, в котором нет отражения стража — только тьма и шёпот. Говорят, она — не враг и не друг; она — предупреждение. Те, кто долго смотрел в неё, потом слышат её голос даже с закрытыми глазами. Архив предупреждает: не верь ей, она лжёт, беги, спасайся.',
+        sigil: '🪞',
+        mapX: 660,
+        mapY: 480,
+        isCorrupted: true,
+        folder: 'SECONDARY_HEROES',
+        sortOrder: 99,
       },
 
       // ─── Секреты (folder = "SECRETS") — 4 секрета, открываются при сборе 5 осколков ───
@@ -1290,7 +1303,6 @@ async function main() {
         sigil: '🌟',
         mapX: 490,
         mapY: 270,
-        shardWord: 'время',
       },
       {
         title: 'Землепад (Earthfall)',
@@ -1302,7 +1314,6 @@ async function main() {
         mapX: 350,
         mapY: 500,
         isLocked: true,
-        shardWord: 'реальность',
       },
       {
         title: 'Звёздный Камень (Starstone)',
@@ -1313,7 +1324,6 @@ async function main() {
         sigil: '💎',
         mapX: 470,
         mapY: 250,
-        shardWord: 'мощь',
       },
       {
         title: 'Шепчущий Тиран (Тар-Бафон)',
@@ -1325,7 +1335,6 @@ async function main() {
         mapX: 380,
         mapY: 230,
         isLocked: true,
-        shardWord: 'тьма',
       },
       {
         title: 'Мировая Язва (Worldwound)',
@@ -1368,7 +1377,6 @@ async function main() {
         mapX: 530,
         mapY: 310,
         isCorrupted: true,
-        shardWord: 'свет',
       },
 
       // ─── Второстепенные герои (folder = "SECONDARY_HEROES") — 5 штук ───
@@ -1721,41 +1729,46 @@ async function main() {
   await db.achievement.createMany({
     data: [
       {
-        code: 'FIRST_BREACH',
-        name: 'Первый Прорыв',
-        description: 'Впервые открыть запечатанную запись в архиве — провести ритуал снятия печати.',
-        sigil: '🔓',
+        code: 'REFLECTION',
+        name: 'Открыть Отражение',
+        description:
+          'Довести Взгляд Созидателя до 90% — во «Второстепенных героях» появится Отражение. Открой его досье, чтобы увидеть предупреждение.',
+        sigil: '🪞',
       },
       {
-        code: 'SEALBREAKER',
-        name: 'Сломитель Печатей',
-        description: 'Снять печати с пяти запечатанных записей.',
-        sigil: '🔑',
-      },
-      {
-        code: 'SHARD_COLLECTOR',
-        name: 'Собиратель Осколков',
-        description: 'Собрать пять осколков памяти — по одному с каждого из пятерых героев.',
-        sigil: '🧩',
-      },
-      {
-        code: 'CREATOR_GAZE',
-        name: 'Взгляд Созидателя',
-        description: 'Довести Взгляд Созидателя до 90% — он обратил на тебя внимание.',
-        sigil: '👁',
+        code: 'DEMON_WIFE',
+        name: 'Жена Демона',
+        description:
+          'Разгадать загадку Четвёртого — назвать имя его жены Ехидны.',
+        sigil: '😈',
       },
       {
         code: 'MASTER_KEYS',
         name: 'Мастер Ключей',
-        description: 'Ввести Konami-код (↑↑↓↓←→←→ba) и открыть скрытую силу.',
+        description:
+          'Ввести Konami-код (↑↑↓↓←→←→ba) и открыть скрытую силу в досье Мартина.',
         sigil: '🎮',
         secretFragment: 'Мартин - Kanami',
+      },
+      {
+        code: 'DEAD_PLAN',
+        name: 'Мёртвый План',
+        description:
+          'Разгадать загадку Мёртвого Плана — назвать источник хмеля (волосы).',
+        sigil: '🏚',
       },
       {
         code: 'BRUNO_SAVIOR',
         name: 'Спаситель Бруно',
         description: 'Пройти мини-игру Бруно: 5 правильных ответов за 20 секунд.',
         sigil: '🧠',
+      },
+      {
+        code: 'MARTIN_RIDDLE',
+        name: 'Саймон Говорит',
+        description:
+          'Разгадать загадку Мартина — понять, что команда отдаётся только по правилу «Саймон говорит».',
+        sigil: '🌑',
       },
     ],
   })

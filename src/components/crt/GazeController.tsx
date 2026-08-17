@@ -13,7 +13,6 @@ const LEVELS = [
 
 export function GazeController() {
   const gaze = useArchive((s) => s.gaze);
-  const unlockAchievement = useArchive((s) => s.unlockAchievement);
   const pushToast = useArchive((s) => s.pushToast);
   const addGaze = useArchive((s) => s.addGaze);
   const prevGaze = useRef(gaze);
@@ -24,19 +23,16 @@ export function GazeController() {
     const level = [...LEVELS].reverse().find((l) => gaze >= l.min);
     if (level) body.classList.add(level.cls);
 
-    // crossing 90 → CREATOR_GAZE (Взгляд Созидателя)
+    // crossing 90 → предупреждение об Отражении (но достижение REFLECTION
+    // открывается в RecordModal при открытии досье «Отражение»)
     if (gaze >= 90 && prevGaze.current < 90) {
-      const isNew = unlockAchievement("CREATOR_GAZE");
       sfx.gaze();
-      if (isNew) {
-        pushToast({
-          kind: "ach",
-          sigil: "👁",
-          title: "ДОСТИЖЕНИЕ: ВЗГЛЯД СОЗИДАТЕЛЯ",
-          body: "Взгляд достиг 90%. Созидатель обратил на тебя внимание.",
-        });
-        sfx.achievement();
-      }
+      pushToast({
+        kind: "warn",
+        sigil: "🪞",
+        title: "ОТРАЖЕНИЕ ЯВИЛОСЬ",
+        body: "Взгляд Созидателя достиг 90%. Во «Второстепенных героях» появилась новая запись.",
+      });
     }
     // reaching 100 → alert
     if (gaze >= 100 && prevGaze.current < 100) {
@@ -51,7 +47,7 @@ export function GazeController() {
       setTimeout(() => addGaze(-15), 1200);
     }
     prevGaze.current = gaze;
-  }, [gaze, unlockAchievement, pushToast, addGaze]);
+  }, [gaze, pushToast, addGaze]);
 
   return null;
 }

@@ -36,7 +36,7 @@ export function ArchiveSection<T>({
       if (filter && !filter(raw)) return false;
       if (revealAtMaxGaze) {
         const title = (raw as Record<string, unknown>).title as string;
-        if (title === revealAtMaxGaze && gaze < 100) return false;
+        if (title === revealAtMaxGaze && gaze < 90) return false;
       }
       return true;
     })
