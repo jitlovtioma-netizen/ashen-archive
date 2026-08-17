@@ -81,6 +81,11 @@ async function main() {
     data: [
       { login: 'dnd', password: 'ashen', displayName: 'Страж Эларии', system: 'DND' },
       { login: 'pf2e', password: 'ashen', displayName: 'Страж Голариона', system: 'PF2E' },
+      // ─── Новые стражи Эларии (DND) ───
+      { login: 'sashakarev1809', password: '1411Masha!', displayName: 'sashakarev1809', system: 'DND' },
+      { login: 'IlyaKazakhStrong', password: 'Qotaq667', displayName: 'IlyaKazakhStrong', system: 'DND' },
+      { login: 'NiT', password: 'Tihe123', displayName: 'NiT', system: 'DND' },
+      { login: 'ps1x0k1d', password: '676767', displayName: 'ps1x0k1d', system: 'DND' },
     ],
   })
 
