@@ -14,16 +14,6 @@ export type Section =
   | "achievements"
   | "secrets";
 
-// Секции, которые нужно посетить для CARTOGRAPHER
-export const CARTOGRAPHER_SECTIONS: Section[] = [
-  "characters",
-  "factions",
-  "lore",
-  "lore_gods",
-  "lore_npcs",
-  "locations",
-];
-
 export interface Toast {
   id: string;
   kind: "ach" | "info" | "warn" | "secret";
@@ -88,14 +78,6 @@ interface ArchiveState {
   revealedSecrets: string[];
   revealRecordSecret: (id: string) => boolean;
 
-  // прочитанные записи (для ARCHIVIST — 10 уникальных) — сбрасывается при входе
-  readRecordIds: string[];
-  markReadRecord: (id: string) => boolean; // returns true if newly added
-
-  // посещённые секции (для CARTOGRAPHER) — сбрасывается при входе
-  visitedSections: Section[];
-  markSectionVisited: (s: Section) => boolean; // returns true if newly added
-
   // witching hour (runtime)
   witching: boolean;
   setWitching: (v: boolean) => void;
@@ -138,8 +120,6 @@ export const useArchive = create<ArchiveState>()(
               unlockedIds: [],
               revealedSecrets: [],
               solvedRiddles: [],
-              readRecordIds: [],
-              visitedSections: [],
               toasts: [],
               soundOn: true,
             });
@@ -220,22 +200,6 @@ export const useArchive = create<ArchiveState>()(
         const cur = get().revealedSecrets;
         if (cur.includes(id)) return false;
         set({ revealedSecrets: [...cur, id] });
-        return true;
-      },
-
-      readRecordIds: [],
-      markReadRecord: (id) => {
-        const cur = get().readRecordIds;
-        if (cur.includes(id)) return false;
-        set({ readRecordIds: [...cur, id] });
-        return true;
-      },
-
-      visitedSections: [],
-      markSectionVisited: (s) => {
-        const cur = get().visitedSections;
-        if (cur.includes(s)) return false;
-        set({ visitedSections: [...cur, s] });
         return true;
       },
 

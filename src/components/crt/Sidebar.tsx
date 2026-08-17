@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import { useArchive, type Section } from "@/lib/store";
 import { sfx } from "@/lib/audio";
 
@@ -24,7 +23,6 @@ const NAV: NavItem[] = [
 export function Sidebar() {
   const section = useArchive((s) => s.section);
   const setSection = useArchive((s) => s.setSection);
-  const markSectionVisited = useArchive((s) => s.markSectionVisited);
   const shards = useArchive((s) => s.shards);
   const gaze = useArchive((s) => s.gaze);
   const user = useArchive((s) => s.user);
@@ -33,14 +31,8 @@ export function Sidebar() {
   const onNav = (k: Section) => {
     if (k === section) return;
     setSection(k);
-    markSectionVisited(k);
     sfx.select();
   };
-
-  // При первом рендере тоже отмечаем текущую секцию
-  useEffect(() => {
-    markSectionVisited(section);
-  }, [section, markSectionVisited]);
 
   const gazePct = Math.round(gaze);
   const gazeColor =
@@ -115,7 +107,7 @@ export function Sidebar() {
 
         <div className="px-1">
           <div className="flex justify-between text-[10px] text-dim tracking-widest mb-1">
-            <span>ВЗГЛЯД БОГА</span>
+            <span>ВЗГЛЯД СОЗИДАТЕЛЯ</span>
             <span style={{ color: gazeColor }}>{gazePct}%</span>
           </div>
           <div className="panel-inset h-2 overflow-hidden">
@@ -135,7 +127,7 @@ export function Sidebar() {
                 ? "// взгляд становится острым"
                 : gaze >= 30
                   ? "// он замечает тебя"
-                  : "// бог дремлет"}
+                  : "// созидатель дремлет"}
           </div>
         </div>
 

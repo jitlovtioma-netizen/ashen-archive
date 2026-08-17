@@ -73,7 +73,7 @@ export function StatusBar({ system }: { system: GameSystem }) {
       <span className="flex-1" />
       <Sep />
       <span className="text-dim shrink-0">
-        ВЗГЛЯД: <span className={gazeColor}>{Math.round(gaze)}%</span>
+        СОЗИДАТЕЛЬ: <span className={gazeColor}>{Math.round(gaze)}%</span>
       </span>
       <Sep className="hidden sm:inline" />
       <span className="text-dim shrink-0 hidden sm:inline truncate max-w-[120px]">

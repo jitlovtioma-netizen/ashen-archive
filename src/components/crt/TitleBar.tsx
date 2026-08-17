@@ -69,7 +69,7 @@ export function TitleBar() {
           ЗВУК:{soundOn ? "ВКЛ" : "ВЫКЛ"}
         </button>
         <span className={`chip ${gaze >= 90 ? "chip-err" : gaze >= 60 ? "chip-warn" : "chip-ok"}`}>
-          ВЗГЛЯД <span className={gazeColor}>{gaze}%</span>
+          СОЗИДАТЕЛЬ <span className={gazeColor}>{gaze}%</span>
         </span>
         <button
           onClick={onLogout}
