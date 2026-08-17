@@ -73,7 +73,7 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
     : false;
   const secretRevealed = revealedSecrets.includes(record.id);
   const riddleLocked =
-    (record.name === "Мартин" || record.name === "Внешний План" || record.name === "Четвёртый" || record.name === "Разум Бруно") &&
+    (record.name === "Мартин" || record.name === "Мёртвый План" || record.name === "Четвёртый" || record.name === "Разум Бруно") &&
     !solvedRiddles.includes(record.name);
 
   const [modalOpen, setModalOpen] = useState(false);
