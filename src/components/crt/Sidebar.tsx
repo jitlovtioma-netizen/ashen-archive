@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useArchive, type Section } from "@/lib/store";
 import { sfx } from "@/lib/audio";
 
@@ -23,6 +24,7 @@ const NAV: NavItem[] = [
 export function Sidebar() {
   const section = useArchive((s) => s.section);
   const setSection = useArchive((s) => s.setSection);
+  const markSectionVisited = useArchive((s) => s.markSectionVisited);
   const shards = useArchive((s) => s.shards);
   const gaze = useArchive((s) => s.gaze);
   const user = useArchive((s) => s.user);
@@ -31,8 +33,14 @@ export function Sidebar() {
   const onNav = (k: Section) => {
     if (k === section) return;
     setSection(k);
+    markSectionVisited(k);
     sfx.select();
   };
+
+  // При первом рендере тоже отмечаем текущую секцию
+  useEffect(() => {
+    markSectionVisited(section);
+  }, [section, markSectionVisited]);
 
   const gazePct = Math.round(gaze);
   const gazeColor =

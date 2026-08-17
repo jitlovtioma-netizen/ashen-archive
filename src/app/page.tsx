@@ -10,6 +10,8 @@ import { Sidebar } from "@/components/crt/Sidebar";
 import { StatusBar } from "@/components/crt/StatusBar";
 import { GazeController } from "@/components/crt/GazeController";
 import { KonamiHandler } from "@/components/crt/KonamiHandler";
+import { KonamiModal } from "@/components/crt/KonamiModal";
+import { AchievementWatcher } from "@/components/crt/AchievementWatcher";
 import { AchievementToaster } from "@/components/crt/AchievementToaster";
 import { SecretBanner } from "@/components/crt/SecretBanner";
 import {
@@ -119,6 +121,8 @@ export default function Home() {
 
       <GazeController />
       <KonamiHandler />
+      <KonamiModal />
+      <AchievementWatcher />
 
       <AchievementToaster />
       <SecretBanner />

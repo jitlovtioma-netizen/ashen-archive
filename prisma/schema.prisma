@@ -6,8 +6,9 @@ generator client {
 }
 
 datasource db {
-  // Supabase PostgreSQL. Для serverless (Vercel) используем pooling (pgbouncer),
-  // а для миграций — прямое подключение через directUrl.
+  // PostgreSQL (Supabase) — для деплоя на Vercel.
+  // Для локального dev с SQLite: переключи provider на "sqlite"
+  // и убери directUrl. DATABASE_URL должен быть вида "file:./db/custom.db".
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")

@@ -5,21 +5,27 @@ import { Toaster } from "@/components/ui/toaster";
 
 const shareTechMono = Share_Tech_Mono({
   variable: "--font-mono",
-  subsets: ["latin", "cyrillic"],
+  // Share Tech Mono поддерживает только latin.
+  // Кириллица отрисуется системным моноширинным шрифтом (выглядит аутентично для CRT).
+  subsets: ["latin"],
   weight: "400",
   display: "swap",
 });
 
 const vt323 = VT323({
   variable: "--font-vt323",
-  subsets: ["latin", "cyrillic"],
+  // VT323 не поддерживает кириллицу — только latin/latin-ext/vietnamese.
+  // Кириллический текст отрисуется системным CRT-like шрифтом.
+  subsets: ["latin", "latin-ext"],
   weight: "400",
   display: "swap",
 });
 
 const medieval = MedievalSharp({
   variable: "--font-medieval",
-  subsets: ["latin", "cyrillic"],
+  // MedievalSharp не поддерживает кириллицу — используем latin-ext для расширенной латиницы.
+  // Кириллический текст будет отрисован системным fallback-шрифтом.
+  subsets: ["latin", "latin-ext"],
   weight: "400",
   display: "swap",
 });

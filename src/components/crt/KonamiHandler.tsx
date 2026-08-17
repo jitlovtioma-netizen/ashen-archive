@@ -4,6 +4,8 @@ import { useEffect, useRef } from "react";
 import { useArchive } from "@/lib/store";
 import { sfx } from "@/lib/audio";
 
+// Используем e.code (физическая клавиша) — не зависит от раскладки.
+// На русской раскладке "b" → "и", "a" → "ф", но e.code всегда "KeyB" / "KeyA".
 const KONAMI = [
   "ArrowUp",
   "ArrowUp",
@@ -13,8 +15,8 @@ const KONAMI = [
   "ArrowRight",
   "ArrowLeft",
   "ArrowRight",
-  "b",
-  "a",
+  "KeyB",
+  "KeyA",
 ];
 
 export function KonamiHandler() {
@@ -22,11 +24,21 @@ export function KonamiHandler() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+      // Игнорируем, если фокус в текстовом поле — чтобы не мешать вводу
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+
+      const code = e.code;
       const S = useArchive.getState();
 
-      // konami sequence — только для Мартина (открывает скрытую силу)
-      seq.current.push(k);
+      seq.current.push(code);
       if (seq.current.length > KONAMI.length) seq.current.shift();
       if (seq.current.join(",") === KONAMI.join(",")) {
         seq.current = [];
@@ -42,9 +54,8 @@ export function KonamiHandler() {
 }
 
 function triggerKonami(S: ReturnType<typeof useArchive.getState>) {
-  // Konami-код активируется только в досье Мартина (через RecordModal)
-  // Здесь — глобальный обработчик. Он не делает Час Ведьмы.
-  // Просто отмечаем, что код введён.
+  // Konami-код: открывает скрытую силу в досье Мартина.
+  // Глобальный обработчик — отмечает, что код введён, и показывает табличку.
   if (!S.konamiUnlocked) S.setKonamiUnlocked(true);
   S.addGaze(8);
   sfx.achievement();

@@ -44,6 +44,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
     pushToast,
     solvedRiddles,
     solveRiddle,
+    markReadRecord,
   } = useArchive();
 
   const isSealed = record.isLocked && !unlockedIds.includes(record.id);
@@ -60,8 +61,9 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
     if (!readRef.current && !isSealed) {
       readRef.current = true;
       addGaze(2);
+      markReadRecord(record.id);
     }
-  }, [isSealed, addGaze]);
+  }, [isSealed, addGaze, markReadRecord, record.id]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -83,10 +85,11 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
     const isNew = unlockRecord(record.id);
     sfx.unlock();
     addGaze(4);
+    markReadRecord(record.id);
     if (isNew) {
       pushToast({ kind: "ach", sigil: "🔓", title: "ПЕЧАТЬ СНЯТА", body: record.name });
     }
-  }, [record.id, record.name, unlockRecord, pushToast, addGaze]);
+  }, [record.id, record.name, unlockRecord, pushToast, addGaze, markReadRecord]);
 
   useEffect(() => {
     if (!ritualActive) return;

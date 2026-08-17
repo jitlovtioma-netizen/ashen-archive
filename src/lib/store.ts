@@ -14,6 +14,16 @@ export type Section =
   | "achievements"
   | "secrets";
 
+// Секции, которые нужно посетить для CARTOGRAPHER
+export const CARTOGRAPHER_SECTIONS: Section[] = [
+  "characters",
+  "factions",
+  "lore",
+  "lore_gods",
+  "lore_npcs",
+  "locations",
+];
+
 export interface Toast {
   id: string;
   kind: "ach" | "info" | "warn" | "secret";
@@ -62,6 +72,9 @@ interface ArchiveState {
   setKonamiUnlocked: (v: boolean) => void;
   secretRevealed: boolean;
   revealSecret: () => void;
+  // Большая центральная табличка KonamiModal — сбрасывается при входе.
+  konamiModalDismissed: boolean;
+  setKonamiModalDismissed: (v: boolean) => void;
 
   // solved riddles (persisted) — record names whose riddle was solved
   solvedRiddles: string[];
@@ -74,6 +87,14 @@ interface ArchiveState {
   // revealed secret fragments (persisted) — hidden text in records
   revealedSecrets: string[];
   revealRecordSecret: (id: string) => boolean;
+
+  // прочитанные записи (для ARCHIVIST — 10 уникальных) — сбрасывается при входе
+  readRecordIds: string[];
+  markReadRecord: (id: string) => boolean; // returns true if newly added
+
+  // посещённые секции (для CARTOGRAPHER) — сбрасывается при входе
+  visitedSections: Section[];
+  markSectionVisited: (s: Section) => boolean; // returns true if newly added
 
   // witching hour (runtime)
   witching: boolean;
@@ -113,9 +134,12 @@ export const useArchive = create<ArchiveState>()(
               shards: [],
               achievements: [],
               konamiUnlocked: false,
+              konamiModalDismissed: false,
               unlockedIds: [],
               revealedSecrets: [],
               solvedRiddles: [],
+              readRecordIds: [],
+              visitedSections: [],
               toasts: [],
               soundOn: true,
             });
@@ -172,6 +196,8 @@ export const useArchive = create<ArchiveState>()(
       setKonamiUnlocked: (v) => set({ konamiUnlocked: v }),
       secretRevealed: false,
       revealSecret: () => set({ secretRevealed: true }),
+      konamiModalDismissed: false,
+      setKonamiModalDismissed: (v) => set({ konamiModalDismissed: v }),
 
       solvedRiddles: [],
       solveRiddle: (id) => {
@@ -194,6 +220,22 @@ export const useArchive = create<ArchiveState>()(
         const cur = get().revealedSecrets;
         if (cur.includes(id)) return false;
         set({ revealedSecrets: [...cur, id] });
+        return true;
+      },
+
+      readRecordIds: [],
+      markReadRecord: (id) => {
+        const cur = get().readRecordIds;
+        if (cur.includes(id)) return false;
+        set({ readRecordIds: [...cur, id] });
+        return true;
+      },
+
+      visitedSections: [],
+      markSectionVisited: (s) => {
+        const cur = get().visitedSections;
+        if (cur.includes(s)) return false;
+        set({ visitedSections: [...cur, s] });
         return true;
       },
 
