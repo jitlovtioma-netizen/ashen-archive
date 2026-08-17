@@ -73,7 +73,7 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
     : false;
   const secretRevealed = revealedSecrets.includes(record.id);
   const riddleLocked =
-    (record.name === "Мартин" || record.name === "Мёртвый План" || record.name === "Четвёртый" || record.name === "Разум Бруно") &&
+    (record.name === "Мартин" || record.name === "Мёртвый План" || record.name === "Четвёртый" || record.name === "Разум Бруно" || record.name === "Джейтал") &&
     !solvedRiddles.includes(record.name);
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -179,6 +179,7 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
   return (
     <>
       <article
+        data-record-id={record.id}
         className={`panel clip-hud brackets relative p-4 transition-all duration-200 cursor-pointer hover:border-[var(--green-dim)] hover:shadow-[0_0_16px_rgba(74,246,38,0.15)] ${
           isSealed ? "opacity-90" : ""
         }`}

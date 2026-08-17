@@ -86,6 +86,8 @@ async function main() {
       { login: 'IlyaKazakhStrong', password: 'Qotaq667', displayName: 'IlyaKazakhStrong', system: 'DND' },
       { login: 'NiT', password: 'Tihe123', displayName: 'NiT', system: 'DND' },
       { login: 'ps1x0k1d', password: '676767', displayName: 'ps1x0k1d', system: 'DND' },
+      // ─── Стражи Голариона (PF2E) ───
+      { login: 'Mira', password: 'Flower', displayName: 'Mira', system: 'PF2E' },
     ],
   })
 
@@ -1716,8 +1718,8 @@ async function main() {
         sortOrder: 20,
       },
 
-      // ─── Второстепенные герои (folder = "SECONDARY_HEROES") — 1 запись ───
-      // Арт: public/heroes/valeri.png (placeholder, пользователь заменит своим).
+      // ─── Второстепенные герои (folder = "SECONDARY_HEROES") — 2 записи ───
+      // Арты: public/heroes/valeri.png, jaethal.png (placeholder, пользователь заменит своим).
       {
         title: 'Валери',
         category: 'Паладин · Человек',
@@ -1730,6 +1732,20 @@ async function main() {
         imageUrl: img('heroes/valeri.png'),
         folder: 'SECONDARY_HEROES',
         sortOrder: 1,
+      },
+      {
+        title: 'Джейтал',
+        category: 'Инквизитор · Эльф',
+        system: 'PF2E',
+        description:
+          '▓▒░ Джейтал ░▒▓ — эльфийка-инквизитор из далёкой земли, чьё прошлое сокрыто во мраке. Строгая, холодная, с пронзительным взглядом, что видит насквозь — её тёмные глаза замечают то, что другие проходят мимо. Её вера — в цикл жизни и смерти, но её понимание этого цикла... отличается от общепринятого. Ходят слухи, что она служит силе, что не принадлежит ни свету, ни тьме в привычном смысле, и что её ритуалы происходят в часы, когда луна скрыта за облаками. Никто не знает наверняка, что скрывается за её невозмутимой маской. Те, кто пытался разгадать её тайну, либо замолкали навсегда, либо уходили, не желая говорить о увиденном. Архив не располагает достаточными данными. Все записи о ней помечены печатью, и печать эту не снять простым ритуалом — лишь разгадав загадку.',
+        sigil: '🌑',
+        mapX: 540,
+        mapY: 350,
+        isCorrupted: true,
+        imageUrl: img('heroes/jaethal.png'),
+        folder: 'SECONDARY_HEROES',
+        sortOrder: 2,
       },
 
       // ─── Секреты (folder = "SECRETS") — 5 штук без осколков ───
