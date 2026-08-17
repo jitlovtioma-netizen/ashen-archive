@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { HoloPortrait } from "./HoloPortrait";
 import { Sigil } from "./Sigil";
+import { MartinSecretModal } from "./MartinSecretModal";
 import { useArchive } from "@/lib/store";
 import { sfx } from "@/lib/audio";
 import { SYSTEM_LABEL, SYSTEM_COLOR } from "@/lib/types";
@@ -90,18 +91,12 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
         if (!martinSecretShown) {
           setMartinSecretShown(true);
           sfx.achievement();
-          pushToast({
-            kind: "secret",
-            sigil: "🌑",
-            title: "СКРЫТАЯ СИЛА МАРТИНА",
-            body: "Его сила — это игра. В этой игре подчиняются все. Даже он сам. Саймон говорит: подчинись правилу, или останешься пешкой навсегда.",
-          });
         }
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [record.name, martinSecretShown, pushToast]);
+  }, [record.name, martinSecretShown]);
 
   useEffect(() => {
     if (!readRef.current && !isSealed) {
@@ -354,6 +349,9 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
           </div>
         </div>
       </div>
+      {martinSecretShown && (
+        <MartinSecretModal onClose={() => setMartinSecretShown(false)} />
+      )}
     </div>,
     document.body
   );

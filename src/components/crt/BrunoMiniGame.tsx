@@ -21,7 +21,7 @@ function generateQuestion(): Question {
 }
 
 export function BrunoMiniGame({ onClose }: BrunoMiniGameProps) {
-  const { unlockAchievement, pushToast, addGaze } = useArchive();
+  const { pushToast, addGaze } = useArchive();
   const [question, setQuestion] = useState<Question>(generateQuestion);
   const [input, setInput] = useState("");
   const [correct, setCorrect] = useState(0);
@@ -35,7 +35,6 @@ export function BrunoMiniGame({ onClose }: BrunoMiniGameProps) {
     if (timerRef.current) clearInterval(timerRef.current);
     if (won) {
       sfx.achievement();
-      const isNew = unlockAchievement("BRUNO_SAVIOR");
       addGaze(-10);
       pushToast({
         kind: "ach",
@@ -43,11 +42,10 @@ export function BrunoMiniGame({ onClose }: BrunoMiniGameProps) {
         title: "СПАСИТЕЛЬ БРУНО",
         body: "Вы прошли мини-игру! Бруно благодарит вас.",
       });
-      if (isNew) sfx.achievement();
     } else {
       sfx.error();
     }
-  }, [unlockAchievement, pushToast, addGaze]);
+  }, [pushToast, addGaze]);
 
   // Timer
   useEffect(() => {
