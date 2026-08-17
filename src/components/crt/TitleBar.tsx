@@ -11,6 +11,7 @@ export function TitleBar() {
   const witching = useArchive((s) => s.witching);
   const user = useArchive((s) => s.user);
   const logout = useArchive((s) => s.logout);
+  const switchWorld = useArchive((s) => s.switchWorld);
 
   const onToggleSound = () => {
     toggleSound();
@@ -23,8 +24,16 @@ export function TitleBar() {
     logout();
   };
 
+  const onSwitchWorld = () => {
+    sfx.gaze();
+    switchWorld();
+  };
+
   const system = user?.system ?? "DND";
   const sysColor = SYSTEM_COLOR[system];
+  const otherSystem = system === "DND" ? "PF2E" : "DND";
+  const otherLabel = system === "DND" ? "ГОЛАРИОН" : "ЭЛАРИЯ";
+  const otherColor = SYSTEM_COLOR[otherSystem];
   const gazeColor =
     gaze >= 90 ? "glow-red" : gaze >= 60 ? "glow-amber" : "glow-green";
 
@@ -49,6 +58,18 @@ export function TitleBar() {
       </div>
 
       <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-[11px]">
+        <span
+          className="chip shrink-0 font-medieval tracking-[0.2em]"
+          style={{
+            color: sysColor,
+            borderColor: `color-mix(in srgb, ${sysColor} 50%, transparent)`,
+            background: `color-mix(in srgb, ${sysColor} 12%, var(--panel-2))`,
+            textShadow: `0 0 8px ${sysColor}`,
+          }}
+          title={`Текущий мир: ${SYSTEM_WORLD[system]}`}
+        >
+          {SYSTEM_WORLD[system]}
+        </span>
         {witching && (
           <span className="chip chip-violet hidden sm:inline-flex">
             🌙 ЧАС ВЕДЬМЫ
@@ -61,6 +82,25 @@ export function TitleBar() {
         >
           {user?.displayName ?? "СТРАЖ"}
         </span>
+        <div className="tip-wrap shrink-0">
+          <button
+            onClick={onSwitchWorld}
+            className="btn-crt clip-hud-sm px-2 py-1 world-switch-btn"
+            aria-label={`Переключиться на ${otherLabel}`}
+            title={`Переключиться на мир: ${otherLabel}`}
+            style={{
+              borderColor: `color-mix(in srgb, ${otherColor} 40%, transparent)`,
+              color: otherColor,
+            }}
+          >
+            <span className="hidden sm:inline">⇄</span>
+            <span className="sm:hidden">⇄</span>
+            <span className="hidden lg:inline ml-1">{otherLabel}</span>
+          </button>
+          <span className="tip-bubble">
+            Переключить мир на {otherLabel}
+          </span>
+        </div>
         <button
           onClick={onToggleSound}
           className="btn-crt clip-hud-sm px-2 py-1"

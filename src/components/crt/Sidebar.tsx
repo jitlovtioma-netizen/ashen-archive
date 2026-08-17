@@ -17,6 +17,7 @@ const NAV: NavItem[] = [
   { key: "lore_gods", label: "Божества", code: "ЛОР_ПАНТЕОН", sigil: "✦" },
   { key: "lore_npcs", label: "Второстеп. герои", code: "ЛОР_НПС", sigil: "🎭" },
   { key: "locations", label: "Локации", code: "РЕЕСТР_МЕСТ", sigil: "🗺" },
+  { key: "chronicles", label: "Хроники", code: "ЛЕТОПИСЬ", sigil: "📜" },
   { key: "achievements", label: "Достижения", code: "ДОСТИЖЕНИЯ", sigil: "🏆" },
 ];
 
@@ -42,9 +43,15 @@ export function Sidebar() {
   const allShardsCollected =
     totalShardWords > 0 && shards.length >= totalShardWords;
 
+  // В PF2E (Голарион) секция «Достижения» скрыта — достижения только для DND.
+  const baseNav =
+    user?.system === "PF2E"
+      ? NAV.filter((item) => item.key !== "achievements")
+      : NAV;
+
   const fullNav = allShardsCollected
     ? [
-        ...NAV,
+        ...baseNav,
         {
           key: "secrets" as Section,
           label: "Секреты",
@@ -52,7 +59,7 @@ export function Sidebar() {
           sigil: "🔓",
         },
       ]
-    : NAV;
+    : baseNav;
 
   return (
     <nav
