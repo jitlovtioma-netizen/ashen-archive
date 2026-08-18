@@ -39,11 +39,6 @@ export function KeyboardShortcutsHandler() {
       if (NUM_TO_SECTION[e.code]) {
         e.preventDefault();
         const sec = NUM_TO_SECTION[e.code];
-        // В PF2E секция «Достижения» скрыта — игнорируем шорткат 8.
-        if (sec === "achievements" && S.user?.system === "PF2E") {
-          sfx.error();
-          return;
-        }
         S.setSection(sec);
         sfx.select();
         return;

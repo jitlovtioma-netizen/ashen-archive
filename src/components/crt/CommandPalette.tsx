@@ -144,14 +144,14 @@ export function CommandPalette() {
 
   // Фильтрация
   const q = query.trim().toLowerCase();
-  // В PF2E секция «Достижения» скрыта — убираем из быстрого доступа и поиска.
-  const hideAchievements = system === "PF2E";
-  const quickNav = hideAchievements
-    ? QUICK_NAV.filter((r) => r.section !== "achievements")
+  // В PF2E секция «Секреты» скрыта (пока что). Достижения возвращены.
+  const hideSecrets = system === "PF2E";
+  const quickNav = hideSecrets
+    ? QUICK_NAV.filter((r) => r.section !== "secrets")
     : QUICK_NAV;
   const filtered = q
     ? results.filter((r) => {
-        if (hideAchievements && r.section === "achievements") return false;
+        if (hideSecrets && r.section === "secrets") return false;
         const inTitle = r.title.toLowerCase().includes(q);
         const inSubtitle = r.subtitle.toLowerCase().includes(q);
         return inTitle || inSubtitle;

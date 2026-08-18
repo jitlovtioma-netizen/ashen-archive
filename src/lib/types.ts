@@ -58,6 +58,21 @@ export interface Location extends BaseRecord {
   type: string;
 }
 
+// Chronicle — запись о сессии партии (хроника)
+export interface Chronicle {
+  id: string;
+  sessionNumber: number;
+  title: string;
+  summary: string;
+  date: string; // ISO-дата строкой, напр. "2024-03-15"
+  system: GameSystem;
+  isLocked: boolean;
+  isCorrupted: boolean;
+  secretFragment: string | null;
+  shardWord: string | null;
+  createdAt: string;
+}
+
 export interface Achievement {
   id: string;
   code: string;
@@ -65,12 +80,14 @@ export interface Achievement {
   description: string;
   sigil: string;
   secretFragment?: string | null;
+  system?: string | null;
 }
 
 export type ArchiveType =
   | "characters"
   | "lore"
-  | "locations";
+  | "locations"
+  | "chronicles";
 
 export interface Stats {
   totalRecords: number;

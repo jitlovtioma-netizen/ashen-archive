@@ -6,14 +6,10 @@ generator client {
 }
 
 datasource db {
-  // PostgreSQL (Supabase) — для деплоя на Vercel.
-  // Для локального dev с SQLite: переключи provider на "sqlite"
-  // и убери directUrl. DATABASE_URL должен быть вида "file:./db/custom.db".
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
-
 // ============================================================================
 // АРХИВ ЛОРА — два параллельных мира: Элария (D&D 5e) и Голарион (Pathfinder 2e).
 // PostgreSQL: все "enum-like" поля хранятся как String (для простоты миграций).
@@ -139,5 +135,6 @@ model Achievement {
   description    String
   sigil          String
   secretFragment String?
+  system         String?
   createdAt      DateTime @default(now())
 }

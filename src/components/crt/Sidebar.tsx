@@ -39,19 +39,15 @@ export function Sidebar() {
   const gazeColor =
     gaze >= 90 ? "var(--red)" : gaze >= 60 ? "var(--amber)" : "var(--green)";
 
-  // Вкладка «Секреты» появляется только когда собраны ВСЕ осколки памяти
+  // Вкладка «Секреты» появляется только когда собраны ВСЕ осколки памяти.
+  // В PF2E (Голарион) секреты скрыты (пока что — пользователь запросил).
   const allShardsCollected =
     totalShardWords > 0 && shards.length >= totalShardWords;
+  const showSecrets = allShardsCollected && user?.system !== "PF2E";
 
-  // В PF2E (Голарион) секция «Достижения» скрыта — достижения только для DND.
-  const baseNav =
-    user?.system === "PF2E"
-      ? NAV.filter((item) => item.key !== "achievements")
-      : NAV;
-
-  const fullNav = allShardsCollected
+  const fullNav = showSecrets
     ? [
-        ...baseNav,
+        ...NAV,
         {
           key: "secrets" as Section,
           label: "Секреты",
@@ -59,7 +55,7 @@ export function Sidebar() {
           sigil: "🔓",
         },
       ]
-    : baseNav;
+    : NAV;
 
   return (
     <nav

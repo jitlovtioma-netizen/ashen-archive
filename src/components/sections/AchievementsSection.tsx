@@ -21,7 +21,11 @@ export function AchievementsSection({ system }: { system: GameSystem }) {
       .finally(() => setLoading(false));
   }, []);
 
-  const list = data ?? [];
+  // Фильтруем достижения по системе текущего мира (DND/PF2E).
+  // Достижения без system (null) показываются в обоих мирах.
+  const list = (data ?? []).filter(
+    (a) => !a.system || a.system === system,
+  );
 
   return (
     <section className="flex flex-col gap-3 h-full">

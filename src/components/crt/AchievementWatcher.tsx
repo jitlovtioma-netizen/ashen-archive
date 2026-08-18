@@ -96,5 +96,24 @@ export function AchievementWatcher() {
     }
   }, [konamiUnlocked, achievements, unlockAchievement, pushToast]);
 
+  // TARTUCCIO_RIDDLE — разгадать загадку Тартуччио (PF2E)
+  useEffect(() => {
+    if (
+      solvedRiddles.includes("Тартуччио") &&
+      !achievements.includes("TARTUCCIO_RIDDLE")
+    ) {
+      const isNew = unlockAchievement("TARTUCCIO_RIDDLE");
+      if (isNew) {
+        sfx.achievement();
+        pushToast({
+          kind: "ach",
+          sigil: "🎪",
+          title: "ДОСТИЖЕНИЕ: СТОИТ НАД ВСЕМИ НАРОДАМИ",
+          body: "Ты разгадал загадку Тартуччио — гордыня падает больно и глубоко.",
+        });
+      }
+    }
+  }, [solvedRiddles, achievements, unlockAchievement, pushToast]);
+
   return null;
 }
