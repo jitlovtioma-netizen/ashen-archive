@@ -207,7 +207,7 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
 
         <div className={`flex gap-4 ${horizontal ? "flex-row items-center" : ""}`}>
           <div className="shrink-0">
-            {record.imageUrl ? (
+            {record.imageUrl && record.name !== "Неизвестный персонаж" ? (
               <HoloPortrait
                 src={record.imageUrl}
                 corrupted={isCorrupted}
