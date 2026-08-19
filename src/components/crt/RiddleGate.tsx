@@ -130,6 +130,19 @@ const RIDDLES: Record<string, {
     valid: ["созидатель", "созидатель.", "созидатель,"],
     hint: "// назови имя того, кто создал и разрушил //",
   },
+  "Микси": {
+    sigil: "🧚",
+    title: "МИКСИ",
+    subtitle: "// пикси · наследница фиолетового леса · искажена //",
+    riddle: [
+      "Я добро, и зло,",
+      "Мне любят и ненавидят,",
+      "Но расставшись, я пытаюсь восстановиться...",
+      "Кто я?",
+    ],
+    valid: ["любовь", "любовь.", "любовь,"],
+    hint: "// разгадай загадку, чтобы открыть досье Микси //",
+  },
 };
 
 export function RiddleGate({ recordName, onSolved, onCancel }: RiddleGateProps) {
@@ -291,7 +304,7 @@ export function RiddleGate({ recordName, onSolved, onCancel }: RiddleGateProps) 
         >
           <div className="relative fade-in" onClick={(e) => e.stopPropagation()}>
             <img
-              src="/echidna2.png"
+              src="/heroes/echidna2.png"
               alt="Ехидна"
               className="max-h-[85vh] max-w-[85vw] object-contain rounded-lg"
               style={{

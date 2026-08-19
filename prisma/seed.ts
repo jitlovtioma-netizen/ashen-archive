@@ -1305,6 +1305,25 @@ async function main() {
         folder: 'SECONDARY_HEROES',
         sortOrder: 99,
       },
+      {
+        title: 'Микси',
+        category: 'Пикси · Наследница Фиолетового Леса',
+        system: 'DND',
+        description:
+          melt('▓▒░ Микси ░▒▓ — ') +
+          melt('пикси... семь лет... наследница фиолетового леса... ') +
+          melt('владеет заклинаниями второго круга... ') +
+          melt('довольно хрупкая... ') +
+          melt('но за этой хрупкостью скрывается... ') +
+          melt('нечто, чего не видел ни один смертный...'),
+        sigil: '🧚',
+        mapX: 680,
+        mapY: 420,
+        isCorrupted: true,
+        imageUrl: img('heroes/miksi.png'),
+        folder: 'SECONDARY_HEROES',
+        sortOrder: 14,
+      },
 
       // ─── Секреты (folder = "SECRETS") — 4 секрета, открываются при сборе 5 осколков ───
       // У двух из них загадки в RiddleGate: «Мёртвый План» (волосы) и «Четвёртый» (Ехидна).

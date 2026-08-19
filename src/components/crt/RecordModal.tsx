@@ -172,7 +172,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
 
   const corruptedDisplay = censorText(record.description);
   const isReflection = record.name === "Отражение";
-  const isEntity = record.name === "???" || record.name === "Неизвестная личность";
+  const isEntity = record.name === "???" || record.name === "Неизвестная личность" || record.name === "Неизвестный персонаж" || record.name === "Микси";
   const isUnknown = record.name === "Неизвестная" || record.name === "Четвёртый" || record.name === "Мёртвый План";
 
   if (typeof document === "undefined") return null;

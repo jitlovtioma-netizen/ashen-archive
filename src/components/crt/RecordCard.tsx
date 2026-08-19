@@ -69,13 +69,13 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
 
   const isSealed = record.isLocked && !unlockedIds.includes(record.id);
   const isCorrupted = record.isCorrupted;
-  const isEntity = record.name === "???" || record.name === "Неизвестная личность" || record.name === "Неизвестный персонаж";
+  const isEntity = record.name === "???" || record.name === "Неизвестная личность" || record.name === "Неизвестный персонаж" || record.name === "Микси";
   const shardCollected = record.shardWord
     ? shards.includes(record.shardWord)
     : false;
   const secretRevealed = revealedSecrets.includes(record.id);
   const riddleLocked =
-    (record.name === "Мартин" || record.name === "Мёртвый План" || record.name === "Четвёртый" || record.name === "Разум Бруно" || record.name === "Джейтал" || record.name === "Тартуччио" || record.name === "Неизвестная личность" || record.name === "Неизвестный персонаж") &&
+    (record.name === "Мартин" || record.name === "Мёртвый План" || record.name === "Четвёртый" || record.name === "Разум Бруно" || record.name === "Джейтал" || record.name === "Тартуччио" || record.name === "Неизвестная личность" || record.name === "Неизвестный персонаж" || record.name === "Микси") &&
     !solvedRiddles.includes(record.name);
 
   const [modalOpen, setModalOpen] = useState(false);
