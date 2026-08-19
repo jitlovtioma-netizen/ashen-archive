@@ -100,9 +100,22 @@ export function AchievementsSection({ system }: { system: GameSystem }) {
                     </p>
                   )}
                   {!isUnlocked && (
-                    <p className="text-[12px] text-dim mt-1 italic leading-relaxed">
-                      {"// описание сокрыто до выполнения //"}
-                    </p>
+                    <>
+                      <p className="text-[12px] text-dim mt-1 italic leading-relaxed">
+                        {"// описание сокрыто до выполнения //"}
+                      </p>
+                      {/* Подсказка для DESTROYER даже когда закрыт */}
+                      {a.code === "DESTROYER" && (
+                        <div className="mt-2 panel-inset p-2 border-l-2 border-[var(--cyan)]">
+                          <div className="text-[9px] glow-cyan tracking-widest mb-0.5">
+                            ⟁ НАМЕК
+                          </div>
+                          <div className="text-[11px] italic text-[var(--text)]">
+                            Вспомни прошлое
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
                   {/* Подсказка видна только после выполнения (или если есть secretFragment) */}
                   {isUnlocked && a.secretFragment && (
