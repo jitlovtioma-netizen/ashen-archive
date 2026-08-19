@@ -6,6 +6,9 @@ generator client {
 }
 
 datasource db {
+  // Локальная разработка в песочнице — SQLite.
+  // Для деплоя на Vercel/Supabase: переключи provider на "postgresql"
+  // и раскомментируй directUrl = env("DIRECT_URL").
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")

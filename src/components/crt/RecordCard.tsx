@@ -6,6 +6,7 @@ import { Sigil } from "./Sigil";
 import { HoloPortrait } from "./HoloPortrait";
 import { BrunoMiniGame } from "./BrunoMiniGame";
 import { RiddleGate } from "./RiddleGate";
+import { SozidatelReveal } from "./SozidatelReveal";
 import { RecordModal } from "./RecordModal";
 import { useArchive } from "@/lib/store";
 import { sfx } from "@/lib/audio";
@@ -68,13 +69,13 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
 
   const isSealed = record.isLocked && !unlockedIds.includes(record.id);
   const isCorrupted = record.isCorrupted;
-  const isEntity = record.name === "???" || record.name === "Неизвестная личность";
+  const isEntity = record.name === "???" || record.name === "Неизвестная личность" || record.name === "Неизвестный персонаж";
   const shardCollected = record.shardWord
     ? shards.includes(record.shardWord)
     : false;
   const secretRevealed = revealedSecrets.includes(record.id);
   const riddleLocked =
-    (record.name === "Мартин" || record.name === "Мёртвый План" || record.name === "Четвёртый" || record.name === "Разум Бруно" || record.name === "Джейтал" || record.name === "Тартуччио" || record.name === "Неизвестная личность") &&
+    (record.name === "Мартин" || record.name === "Мёртвый План" || record.name === "Четвёртый" || record.name === "Разум Бруно" || record.name === "Джейтал" || record.name === "Тартуччио" || record.name === "Неизвестная личность" || record.name === "Неизвестный персонаж") &&
     !solvedRiddles.includes(record.name);
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -82,6 +83,7 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
   const [ritualActive, setRitualActive] = useState(false);
   const [miniGameOpen, setMiniGameOpen] = useState(false);
   const [riddleOpen, setRiddleOpen] = useState(false);
+  const [sozidatelReveal, setSozidatelReveal] = useState(false);
   const readRef = useRef(false);
   const ritualRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -282,9 +284,25 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
           recordName={record.name}
           onSolved={() => {
             setRiddleOpen(false);
-            setModalOpen(true);
+            // Для «Неизвестный персонаж» — спецэффект (тьма → глюки → арт → досье)
+            if (record.name === "Неизвестный персонаж") {
+              setSozidatelReveal(true);
+            } else {
+              setModalOpen(true);
+            }
           }}
           onCancel={() => setRiddleOpen(false)}
+        />,
+        document.body
+      )}
+
+      {sozidatelReveal && typeof document !== "undefined" && createPortal(
+        <SozidatelReveal
+          imageUrl={record.imageUrl || ""}
+          onComplete={() => {
+            setSozidatelReveal(false);
+            setModalOpen(true);
+          }}
         />,
         document.body
       )}
