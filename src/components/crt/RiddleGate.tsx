@@ -136,6 +136,7 @@ export function RiddleGate({ recordName, onSolved, onCancel }: RiddleGateProps) 
   const { solveRiddle, solvedRiddles, unlockAchievement, pushToast } = useArchive();
   const [answer, setAnswer] = useState("");
   const [error, setError] = useState(false);
+  const [echidnaEaster, setEchidnaEaster] = useState(false);
 
   const riddle = RIDDLES[recordName];
   if (!riddle) return null;
@@ -149,6 +150,19 @@ export function RiddleGate({ recordName, onSolved, onCancel }: RiddleGateProps) 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const normalized = answer.trim().toLowerCase();
+
+    // Пасхалка: «Ехидна» или «молоко» в любую загадку, КРОМЕ «Четвёртый»
+    // (где «Ехидна» — настоящий правильный ответ).
+    if (
+      (normalized === "ехидна" || normalized === "ехидна." ||
+       normalized === "молоко" || normalized === "молоко.") &&
+      recordName !== "Четвёртый"
+    ) {
+      sfx.whisper();
+      setEchidnaEaster(true);
+      return;
+    }
+
     if (riddle.valid.includes(normalized)) {
       solveRiddle(recordName);
       sfx.unlock();
@@ -267,6 +281,43 @@ export function RiddleGate({ recordName, onSolved, onCancel }: RiddleGateProps) 
           {riddle.hint}
         </div>
       </div>
+
+      {/* Пасхалка: арт Ехидны при вводе «Ехидна» или «молоко» */}
+      {echidnaEaster && (
+        <div
+          className="fixed inset-0 z-[9800] flex items-center justify-center p-4"
+          style={{ background: "rgba(0, 0, 0, 0.95)", backdropFilter: "blur(4px)" }}
+          onClick={() => setEchidnaEaster(false)}
+        >
+          <div className="relative fade-in" onClick={(e) => e.stopPropagation()}>
+            <img
+              src="/echidna2.png"
+              alt="Ехидна"
+              className="max-h-[85vh] max-w-[85vw] object-contain rounded-lg"
+              style={{
+                filter: "drop-shadow(0 0 30px rgba(167, 139, 250, 0.4))",
+                animation: "echidnaIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+              }}
+            />
+            <button
+              onClick={() => setEchidnaEaster(false)}
+              className="absolute -top-3 -right-3 btn-crt btn-red clip-hud-sm px-2 py-0.5 text-xs"
+            >
+              ✕
+            </button>
+            <div className="text-center mt-3 text-[10px] text-dim tracking-widest">
+              {"// ...что ты наделал... //"}
+            </div>
+          </div>
+          <style>{`
+            @keyframes echidnaIn {
+              0% { opacity: 0; transform: scale(0.5) rotate(-10deg); filter: blur(20px) drop-shadow(0 0 60px rgba(167, 139, 250, 0.8)); }
+              60% { filter: blur(0) drop-shadow(0 0 30px rgba(167, 139, 250, 0.4)); }
+              100% { opacity: 1; transform: scale(1) rotate(0deg); filter: blur(0) drop-shadow(0 0 30px rgba(167, 139, 250, 0.4)); }
+            }
+          `}</style>
+        </div>
+      )}
     </div>,
     document.body
   );
