@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useArchive, type Section } from "@/lib/store";
 import { sfx } from "@/lib/audio";
 
-// Цифровые клавиши 1-8 → быстрый переход по секциям архива
+// Цифровые клавиши 1-7 → быстрый переход по секциям архива (хроники убраны)
 const NUM_TO_SECTION: Record<string, Section> = {
   Digit1: "characters",
   Digit2: "factions",
@@ -12,8 +12,7 @@ const NUM_TO_SECTION: Record<string, Section> = {
   Digit4: "lore_gods",
   Digit5: "lore_npcs",
   Digit6: "locations",
-  Digit7: "chronicles",
-  Digit8: "achievements",
+  Digit7: "achievements",
 };
 
 export function KeyboardShortcutsHandler() {

@@ -172,6 +172,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
 
   const corruptedDisplay = censorText(record.description);
   const isReflection = record.name === "Отражение";
+  const isEntity = record.name === "???" || record.name === "Неизвестная личность";
   const isUnknown = record.name === "Неизвестная" || record.name === "Четвёртый" || record.name === "Мёртвый План";
 
   if (typeof document === "undefined") return null;
@@ -189,7 +190,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
       aria-label={record.name}
     >
       <div
-        className={`panel clip-hud brackets w-full max-w-7xl max-h-[95vh] flex flex-col overflow-hidden fade-in ${isReflection ? "reflection-panel" : ""}`}
+        className={`panel clip-hud brackets w-full max-w-7xl max-h-[95vh] flex flex-col overflow-hidden fade-in ${isReflection ? "reflection-panel" : ""} ${isEntity ? "entity-modal" : ""}`}
         style={{
           boxShadow: isReflection
             ? "0 0 60px rgba(167, 139, 250, 0.4), 0 0 120px rgba(40, 0, 60, 0.9)"
@@ -222,10 +223,10 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
           {/* LEFT: text */}
           <div className="md:w-[55%] p-4 sm:p-6 overflow-y-auto crt-scroll border-b md:border-b-0 md:border-r border-[var(--line)]">
             <div className="mb-4">
-              <h2 className={`font-medieval text-2xl sm:text-3xl leading-tight mb-1 ${isCorrupted ? "glow-red glitch" : "glow-green"}`} data-text={record.name}>
+              <h2 className={`font-medieval text-2xl sm:text-3xl leading-tight mb-1 ${isCorrupted ? "glow-red glitch" : "glow-green"} ${isEntity ? "entity-title" : ""}`} data-text={record.name}>
                 {record.name}
               </h2>
-              <div className="text-dim text-sm tracking-wider">{record.subtitle}</div>
+              <div className={`text-sm tracking-wider ${isEntity ? "text-[var(--cyan)] opacity-80" : "text-dim"}`}>{record.subtitle}</div>
             </div>
 
             <div className="flex items-center gap-1.5 mb-4 flex-wrap">
@@ -263,7 +264,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
                 </div>
               ) : (
                 <p
-                  className="text-[14px] leading-relaxed text-[var(--text)]"
+                  className={`text-[14px] leading-relaxed ${isEntity ? "text-[var(--cyan)]" : "text-[var(--text)]"}`}
                   dangerouslySetInnerHTML={isCorrupted ? { __html: corruptedDisplay } : undefined}
                 >
                   {isCorrupted ? undefined : record.description}

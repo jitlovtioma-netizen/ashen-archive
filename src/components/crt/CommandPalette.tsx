@@ -20,7 +20,6 @@ const SECTION_META: Record<string, { label: string; code: string }> = {
   lore_gods: { label: "Божества", code: "ЛОР_ПАНТЕОН" },
   lore_npcs: { label: "Второстеп. герои", code: "ЛОР_НПС" },
   locations: { label: "Локации", code: "РЕЕСТР_МЕСТ" },
-  chronicles: { label: "Хроники", code: "ЛЕТОПИСЬ" },
 };
 
 const QUICK_NAV: SearchResult[] = [
@@ -30,7 +29,6 @@ const QUICK_NAV: SearchResult[] = [
   { id: "nav-lore_gods", title: "Перейти: Божества", subtitle: "быстрый переход", sigil: "✦", section: "lore_gods", system: "DND" },
   { id: "nav-lore_npcs", title: "Перейти: Второстеп. герои", subtitle: "быстрый переход", sigil: "🎭", section: "lore_npcs", system: "DND" },
   { id: "nav-locations", title: "Перейти: Локации", subtitle: "быстрый переход", sigil: "🗺", section: "locations", system: "DND" },
-  { id: "nav-chronicles", title: "Перейти: Хроники", subtitle: "быстрый переход", sigil: "📜", section: "chronicles", system: "DND" },
   { id: "nav-achievements", title: "Перейти: Достижения", subtitle: "быстрый переход", sigil: "🏆", section: "achievements", system: "DND" },
 ];
 
@@ -52,11 +50,10 @@ export function CommandPalette() {
     if (!user) return;
     setLoading(true);
     try {
-      const [chars, lore, locs, chron] = await Promise.all([
+      const [chars, lore, locs] = await Promise.all([
         fetch(`/api/archive?type=characters&system=${system}`).then((r) => r.json() as Promise<Character[]>),
         fetch(`/api/archive?type=lore&system=${system}`).then((r) => r.json() as Promise<Lore[]>),
         fetch(`/api/archive?type=locations&system=${system}`).then((r) => r.json() as Promise<Location[]>),
-        fetch(`/api/archive?type=chronicles&system=${system}`).then((r) => r.json() as Promise<Chronicle[]>),
       ]);
 
       const out: SearchResult[] = [];
@@ -98,16 +95,7 @@ export function CommandPalette() {
           system: l.system,
         });
       }
-      for (const c of chron) {
-        out.push({
-          id: c.id,
-          title: `Сессия #${c.sessionNumber} — ${c.title}`,
-          subtitle: c.date,
-          sigil: "📜",
-          section: "chronicles",
-          system: c.system,
-        });
-      }
+      // Хроники убраны — не добавляем в результаты поиска.
       setResults(out);
     } catch {
       setResults([]);

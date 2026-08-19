@@ -748,6 +748,7 @@ body.witching::after {
 .chip-ok { color: var(--green); border-color: var(--green-dim); }
 .chip-warn { color: var(--amber); border-color: var(--amber-dim); }
 .chip-err { color: var(--red); border-color: var(--red-dim); animation: ledPulse 1.5s infinite; }
+.chip-cyan { color: var(--cyan); border-color: rgba(63,214,200,0.4); }
 .chip-violet { color: var(--violet); border-color: rgba(167,139,250,0.4); }
 
 /* responsive helpers */
@@ -799,4 +800,669 @@ body.witching::after {
   0% { opacity: 0.8; transform: scale(1); }
   50% { opacity: 1; transform: scale(1.02); }
   100% { opacity: 0.7; transform: scale(0.98); }
+}
+
+/* ============================================================
+   SECTION TRANSITIONS — плавные переходы между секциями архива
+   ============================================================ */
+.section-enter {
+  animation: sectionEnter 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes sectionEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) skewX(-0.3deg);
+    filter: blur(2px);
+  }
+  60% {
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) skewX(0);
+    filter: blur(0);
+  }
+}
+
+/* хроматическая аберрация при ховере карточек */
+.chroma-hover {
+  transition: all 0.18s ease;
+  position: relative;
+}
+.chroma-hover:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 0 0 1px rgba(74, 246, 38, 0.4),
+    0 0 20px rgba(74, 246, 38, 0.15),
+    -1px 0 0 rgba(255, 36, 36, 0.25),
+    1px 0 0 rgba(63, 214, 200, 0.25);
+}
+.chroma-hover:hover::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(74, 246, 38, 0.04) 50%,
+    transparent 100%
+  );
+  animation: holoScan 1.5s linear infinite;
+}
+
+/* ============================================================
+   DATA STREAM — амбиентный «поток данных» сбоку панели
+   ============================================================ */
+.data-stream {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: 0.5;
+}
+.data-stream::before {
+  content: "";
+  position: absolute;
+  top: -20%;
+  left: 0;
+  width: 100%;
+  height: 30%;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    var(--green),
+    transparent
+  );
+  box-shadow: 0 0 6px var(--green);
+  animation: streamFall 3s linear infinite;
+}
+@keyframes streamFall {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(500%); }
+}
+
+/* ============================================================
+   CHRONICLE TIMELINE — стили для вертикальной летописи
+   ============================================================ */
+.timeline-node {
+  position: relative;
+}
+.timeline-node::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border: 1px solid transparent;
+  clip-path: polygon(
+    0 4px, 4px 0,
+    calc(100% - 4px) 0, 100% 4px,
+    100% calc(100% - 4px), calc(100% - 4px) 100%,
+    4px 100%, 0 calc(100% - 4px)
+  );
+  transition: border-color 0.2s;
+}
+.timeline-node:hover::before {
+  border-color: var(--green);
+}
+.timeline-node[data-corrupted="true"]:hover::before {
+  border-color: var(--red);
+}
+
+/* пульсация для sealed хроник — приглашение к действию */
+.timeline-sealed {
+  animation: sealedPulse 2.5s ease-in-out infinite;
+}
+@keyframes sealedPulse {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(232, 161, 58, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(232, 161, 58, 0.5);
+  }
+}
+
+/* ============================================================
+   COMMAND PALETTE (Cmd+K) — быстрый поиск по архиву
+   ============================================================ */
+.cmdk-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9500;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 12vh;
+  animation: fadeIn 0.15s ease-out forwards;
+}
+.cmdk-panel {
+  width: min(640px, 92vw);
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  animation: cmdkIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes cmdkIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.97);
+    filter: blur(3px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+.cmdk-input {
+  background: var(--bg-deep);
+  border: 1px solid var(--green-dim);
+  color: var(--green);
+  font-family: var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  outline: none;
+  box-shadow: 0 0 16px rgba(74, 246, 38, 0.15);
+}
+.cmdk-input:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 24px rgba(74, 246, 38, 0.3);
+}
+.cmdk-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  transition: all 0.1s;
+}
+.cmdk-item:hover,
+.cmdk-item[data-active="true"] {
+  background: var(--green-deep);
+  border-left-color: var(--green);
+  color: var(--green);
+}
+.cmdk-item-sigil {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-deep);
+  border: 1px solid var(--line-bright);
+  clip-path: polygon(
+    0 4px, 4px 0,
+    calc(100% - 4px) 0, 100% 4px,
+    100% calc(100% - 4px), calc(100% - 4px) 100%,
+    4px 100%, 0 calc(100% - 4px)
+  );
+  flex-shrink: 0;
+}
+.cmdk-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 1px solid var(--line-bright);
+  background: var(--panel-2);
+  color: var(--dim);
+}
+
+/* ============================================================
+   STATUS BAR ENHANCEMENT — живые часы + индикаторы
+   ============================================================ */
+.status-clock {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.15em;
+}
+.status-tick {
+  animation: tick 1s steps(2) infinite;
+}
+@keyframes tick {
+  0%, 50% { opacity: 1; }
+  50.01%, 100% { opacity: 0.3; }
+}
+
+/* ============================================================
+   CARD SEAL BREAK — анимация при снятии печати
+   ============================================================ */
+.seal-break {
+  animation: sealBreak 0.6s ease-out forwards;
+}
+@keyframes sealBreak {
+  0% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  30% {
+    transform: scale(1.03) skewX(2deg);
+    filter: brightness(1.4) hue-rotate(20deg);
+  }
+  60% {
+    transform: scale(0.98) skewX(-1deg);
+    filter: brightness(0.8);
+  }
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+/* текст с эффектом печатной машинки для подсказок */
+.type-cursor::after {
+  content: "▋";
+  animation: cursorBlink 0.8s steps(2) infinite;
+  color: var(--green);
+  margin-left: 2px;
+}
+
+/* ============================================================
+   MINI MAP — компактная мини-карта в углу viewport
+   ============================================================ */
+.minimap-container {
+  backdrop-filter: blur(4px);
+  background: rgba(10, 13, 10, 0.92);
+}
+.minimap-container:hover {
+  background: rgba(14, 18, 14, 0.98);
+}
+.minimap-node-pulse {
+  animation: minimapPulse 2s ease-in-out infinite;
+}
+@keyframes minimapPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0.7;
+  }
+}
+
+/* ============================================================
+   KBDS / SHORTCUT HINTS — стилизованные клавиши
+   ============================================================ */
+kbd.cmdk-hint {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 2px 5px;
+  background: var(--bg-deep);
+  border: 1px solid var(--line-bright);
+  color: var(--green-dim);
+  letter-spacing: 0.05em;
+  box-shadow:
+    inset 0 -1px 0 var(--line),
+    0 1px 0 var(--bg-deep);
+}
+kbd.cmdk-hint:hover {
+  color: var(--green);
+  border-color: var(--green-dim);
+}
+
+/* ============================================================
+   SEAL BREAK — подсветка карточки при клике из мини-карты
+   ============================================================ */
+.seal-break {
+  animation: sealBreakFlash 0.6s ease-out;
+}
+@keyframes sealBreakFlash {
+  0% {
+    box-shadow: 0 0 0 0 rgba(74, 246, 38, 0.8);
+    border-color: var(--green);
+  }
+  30% {
+    box-shadow: 0 0 20px 4px rgba(74, 246, 38, 0.4);
+    border-color: var(--green);
+    transform: translateY(-2px);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(74, 246, 38, 0);
+    border-color: var(--line-bright);
+    transform: translateY(0);
+  }
+}
+
+/* ============================================================
+   STATUS BAR BUTTONS — анимация при ховере кнопок ⌘K и ?
+   ============================================================ */
+.status-btn {
+  position: relative;
+  transition: all 0.15s ease;
+}
+.status-btn::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  width: 0;
+  height: 1px;
+  background: var(--green);
+  transition: all 0.2s;
+  transform: translateX(-50%);
+}
+.status-btn:hover::after {
+  width: 80%;
+}
+
+/* ============================================================
+   SCANLINE SWEEP — тонкая сканирующая линия по карточкам
+   ============================================================ */
+.scan-sweep {
+  position: relative;
+  overflow: hidden;
+}
+.scan-sweep::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--green),
+    transparent
+  );
+  opacity: 0;
+  animation: scanSweep 4s linear infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+@keyframes scanSweep {
+  0% { top: 0; opacity: 0; }
+  10% { opacity: 0.4; }
+  90% { opacity: 0.4; }
+  100% { top: 100%; opacity: 0; }
+}
+
+/* ============================================================
+   GAZE METER ENHANCEMENT — пульсирующий индикатор взгляда
+   ============================================================ */
+.gaze-pulse {
+  animation: gazePulse 2s ease-in-out infinite;
+}
+@keyframes gazePulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 2px currentColor);
+  }
+  50% {
+    filter: drop-shadow(0 0 8px currentColor);
+  }
+}
+
+/* ============================================================
+   REFLECTION GLOW — свечение для «Отражения» при 90% gaze
+   ============================================================ */
+.reflection-aura {
+  position: relative;
+}
+.reflection-aura::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(167, 139, 250, 0.15),
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: -1;
+  animation: reflectionAura 3s ease-in-out infinite;
+}
+@keyframes reflectionAura {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+/* ============================================================
+   TOOLTIP — стилизованный тултип с шорткатом
+   ============================================================ */
+.tip-wrap {
+  position: relative;
+}
+.tip-wrap .tip-bubble {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: var(--panel);
+  border: 1px solid var(--green-dim);
+  color: var(--text);
+  padding: 4px 8px;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.15s ease;
+  z-index: 100;
+  box-shadow: 0 0 10px rgba(74, 246, 38, 0.15);
+  clip-path: polygon(
+    0 3px, 3px 0,
+    calc(100% - 3px) 0, 100% 3px,
+    100% calc(100% - 3px), calc(100% - 3px) 100%,
+    3px 100%, 0 calc(100% - 3px)
+  );
+}
+.tip-wrap .tip-bubble::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: var(--green-dim);
+}
+.tip-wrap:hover .tip-bubble,
+.tip-wrap:focus-within .tip-bubble {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.tip-bubble kbd {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 1px 4px;
+  background: var(--bg-deep);
+  border: 1px solid var(--line-bright);
+  color: var(--green);
+  font-size: 9px;
+}
+
+/* ============================================================
+   WORLD TRANSITION — анимация перехода между мирами
+   ============================================================ */
+.world-flash {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9700;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 0%,
+    rgba(74, 246, 38, 0.15) 40%,
+    rgba(0, 0, 0, 0.6) 100%
+  );
+  animation: worldFlash 0.8s ease-out forwards;
+}
+@keyframes worldFlash {
+  0% { opacity: 0; transform: scale(1.1); }
+  30% { opacity: 1; transform: scale(1); filter: blur(0); }
+  100% { opacity: 0; transform: scale(0.95); filter: blur(4px); }
+}
+
+/* ============================================================
+   ACHIEVEMENT PROGRESS BAR — пульсация при приближении к цели
+   ============================================================ */
+.ach-progress-bar {
+  position: relative;
+  overflow: hidden;
+}
+.ach-progress-bar::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(74, 246, 38, 0.3),
+    transparent
+  );
+  animation: progressShimmer 2s linear infinite;
+}
+@keyframes progressShimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* ============================================================
+   BOOT SEQUENCE ENHANCEMENT — мерцающий glitch в строке
+   ============================================================ */
+.boot-line {
+  animation: bootLineGlitch 0.3s steps(3) infinite;
+}
+@keyframes bootLineGlitch {
+  0% { text-shadow: 0 0 4px rgba(74, 246, 38, 0.4); }
+  33% { text-shadow: 2px 0 var(--red), -2px 0 var(--cyan), 0 0 4px rgba(74, 246, 38, 0.4); }
+  66% { text-shadow: -1px 0 var(--red), 1px 0 var(--cyan), 0 0 4px rgba(74, 246, 38, 0.4); }
+  100% { text-shadow: 0 0 4px rgba(74, 246, 38, 0.4); }
+}
+
+/* ============================================================
+   AMBIENT PARTICLE — плавающие частицы в фоне
+   ============================================================ */
+.ambient-particle {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: var(--green);
+  border-radius: 50%;
+  box-shadow: 0 0 4px var(--green);
+  opacity: 0.4;
+  animation: ambientFloat 8s ease-in-out infinite;
+}
+@keyframes ambientFloat {
+  0%, 100% {
+    transform: translate(0, 0);
+    opacity: 0.2;
+  }
+  50% {
+    transform: translate(20px, -30px);
+    opacity: 0.6;
+  }
+}
+
+/* ============================================================
+   ENTITY FRAME — уникальная зловещая рамка для «???» существа
+   Голубой (cyan) цвет — отличается от остальных записей.
+   ============================================================ */
+.entity-card {
+  position: relative;
+  border-color: rgba(63, 214, 200, 0.4) !important;
+  background: rgba(0, 20, 20, 0.4) !important;
+  animation: entityPulse 3s ease-in-out infinite;
+}
+.entity-card::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border: 1px solid transparent;
+  clip-path: polygon(
+    0 8px, 8px 0,
+    calc(100% - 8px) 0, 100% 8px,
+    100% calc(100% - 8px), calc(100% - 8px) 100%,
+    8px 100%, 0 calc(100% - 8px)
+  );
+  background: linear-gradient(135deg, var(--cyan), transparent 40%, transparent 60%, var(--cyan));
+  opacity: 0.6;
+  animation: entityBorderShift 4s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+.entity-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 60%, rgba(63, 214, 200, 0.08) 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+.entity-card > * {
+  position: relative;
+  z-index: 1;
+}
+@keyframes entityPulse {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(63, 214, 200, 0.2), inset 0 0 20px rgba(0, 20, 20, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(63, 214, 200, 0.4), inset 0 0 30px rgba(0, 30, 30, 0.8);
+  }
+}
+@keyframes entityBorderShift {
+  0% { transform: rotate(0deg); opacity: 0.3; }
+  50% { opacity: 0.8; }
+  100% { transform: rotate(360deg); opacity: 0.3; }
+}
+
+/* Уникальная модалка для существа «???» — голубая */
+.entity-modal {
+  background: rgba(0, 15, 15, 0.97) !important;
+  border: 2px solid rgba(63, 214, 200, 0.4) !important;
+  box-shadow:
+    0 0 60px rgba(63, 214, 200, 0.3),
+    0 0 120px rgba(0, 60, 60, 0.6),
+    inset 0 0 40px rgba(0, 30, 30, 0.5) !important;
+  animation: entityModalIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.entity-modal::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(0deg, rgba(63, 214, 200, 0.03) 0, rgba(63, 214, 200, 0.03) 1px, transparent 1px, transparent 4px);
+  pointer-events: none;
+  animation: entityScan 3s linear infinite;
+}
+@keyframes entityModalIn {
+  0% { opacity: 0; transform: scale(0.92); filter: blur(8px); }
+  60% { filter: blur(0); }
+  100% { opacity: 1; transform: scale(1); filter: blur(0); }
+}
+@keyframes entityScan {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 100%; }
+}
+
+/* Заголовок существа в модалке — мерцающий голубой */
+.entity-title {
+  color: var(--cyan) !important;
+  text-shadow:
+    0 0 8px rgba(63, 214, 200, 0.8),
+    0 0 20px rgba(63, 214, 200, 0.4),
+    2px 0 rgba(255, 36, 36, 0.3),
+    -2px 0 rgba(167, 139, 250, 0.3) !important;
+  animation: entityTitleFlicker 0.15s steps(2) infinite;
+}
+@keyframes entityTitleFlicker {
+  0% { opacity: 1; }
+  100% { opacity: 0.92; }
+}
+
+/* Голубой цвет для censor-glitch внутри entity-card/modal
+   (вместо красного red-dim по умолчанию) */
+.entity-card .censor-glitch,
+.entity-modal .censor-glitch {
+  color: var(--cyan) !important;
 }

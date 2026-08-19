@@ -89,6 +89,8 @@ async function main() {
       // ─── Стражи Голариона (PF2E) ───
       { login: 'Mira', password: 'Flower', displayName: 'Mira', system: 'PF2E' },
       { login: 'vladik_pidr', password: '123456', displayName: 'vladik_pidr', system: 'PF2E' },
+      { login: 'xlov21', password: 'NegrVolody', displayName: 'xlov21', system: 'PF2E' },
+      { login: 'EvaMoon', password: 'EverMoon', displayName: 'EvaMoon', system: 'PF2E' },
     ],
   })
 
@@ -1373,6 +1375,28 @@ async function main() {
         folder: 'SECRETS',
         sortOrder: 4,
       },
+      {
+        title: '???',
+        category: 'Секрет · Сущность · Неизвестное',
+        system: 'DND',
+        // Описание: полностью расплавлено через melt(), кроме слова
+        // «спаситель» — единственное, что можно разобрать.
+        description:
+          melt('▓▒░ ??? ░▒▓ — ') +
+          melt('нечто, явившееся из-за пределов... тьма... шёпот... оно идёт... ') +
+          melt('поглотит... неизбежность... ') +
+          'спаситель' +
+          melt(' ...придёт... или уже пришёл... ') +
+          melt('не доверяй... не верь... беги... ') +
+          melt('но оно уже здесь... в этих строках... между букв...'),
+        sigil: '👁',
+        mapX: 860,
+        mapY: 560,
+        isLocked: true,
+        isCorrupted: true,
+        folder: 'SECRETS',
+        sortOrder: 5,
+      },
     ],
   })
 
@@ -1781,10 +1805,33 @@ async function main() {
         folder: 'SECONDARY_HEROES',
         sortOrder: 3,
       },
+      {
+        title: 'Неизвестная личность',
+        category: 'Сущность · Загадка',
+        system: 'PF2E',
+        // Описание: расплавлено через melt(), кроме 4 читаемых слов:
+        // «Не стоило», «Проклятие», «Затуманивание», «Победа?».
+        description:
+          melt('▓▒░ Неизвестная личность ░▒▓ — ') +
+          melt('нечто, что пришло из-за грани... тьма... шёпот... ') +
+          'Не стоило' +
+          melt(' ...было пробуждать... то, что спало... ') +
+          'Проклятие' +
+          melt(' ...пало на землю... всё поглотило... ') +
+          'Затуманивание' +
+          melt(' ...разум мутнеет... кто это?... ') +
+          'Победа?' +
+          melt(' ...или поражение?... не разобрать... ') +
+          melt('оно здесь... среди нас... между строк...'),
+        sigil: '🌀',
+        mapX: 580,
+        mapY: 390,
+        isCorrupted: true,
+        folder: 'SECONDARY_HEROES',
+        sortOrder: 4,
+      },
 
       // ─── Секреты (folder = "SECRETS") — очищено для PF2E (пока что) ───
-      // Пользователь запросил очистить все PF2E секреты. Кнопка «Секреты»
-      // также скрыта в Sidebar для PF2E (пока что).
     ],
   })
 
@@ -2057,6 +2104,14 @@ async function main() {
         description:
           'Разгадать загадку Тартуччио — понять, что падает больно и глубоко того, кто задирает нос высоко. Ответ: гордыня.',
         sigil: '🎪',
+        system: 'PF2E',
+      },
+      {
+        code: 'DESTROYER',
+        name: 'Губитель',
+        description:
+          'Разгадать загадку Неизвестной личности — понять, кто погубит мир. Ответ: Сатра.',
+        sigil: '🌀',
         system: 'PF2E',
       },
     ],

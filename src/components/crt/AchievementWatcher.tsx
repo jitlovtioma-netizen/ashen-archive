@@ -115,5 +115,24 @@ export function AchievementWatcher() {
     }
   }, [solvedRiddles, achievements, unlockAchievement, pushToast]);
 
+  // DESTROYER — разгадать загадку Неизвестной личности (PF2E)
+  useEffect(() => {
+    if (
+      solvedRiddles.includes("Неизвестная личность") &&
+      !achievements.includes("DESTROYER")
+    ) {
+      const isNew = unlockAchievement("DESTROYER");
+      if (isNew) {
+        sfx.achievement();
+        pushToast({
+          kind: "ach",
+          sigil: "🌀",
+          title: "ДОСТИЖЕНИЕ: ГУБИТЕЛЬ",
+          body: "Ты разгадал загадку Неизвестной личности — Сатра погубит мир.",
+        });
+      }
+    }
+  }, [solvedRiddles, achievements, unlockAchievement, pushToast]);
+
   return null;
 }

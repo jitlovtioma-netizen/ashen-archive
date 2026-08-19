@@ -68,12 +68,13 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
 
   const isSealed = record.isLocked && !unlockedIds.includes(record.id);
   const isCorrupted = record.isCorrupted;
+  const isEntity = record.name === "???" || record.name === "Неизвестная личность";
   const shardCollected = record.shardWord
     ? shards.includes(record.shardWord)
     : false;
   const secretRevealed = revealedSecrets.includes(record.id);
   const riddleLocked =
-    (record.name === "Мартин" || record.name === "Мёртвый План" || record.name === "Четвёртый" || record.name === "Разум Бруно" || record.name === "Джейтал" || record.name === "Тартуччио") &&
+    (record.name === "Мартин" || record.name === "Мёртвый План" || record.name === "Четвёртый" || record.name === "Разум Бруно" || record.name === "Джейтал" || record.name === "Тартуччио" || record.name === "Неизвестная личность") &&
     !solvedRiddles.includes(record.name);
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -182,7 +183,7 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
         data-record-id={record.id}
         className={`panel clip-hud brackets relative p-4 transition-all duration-200 cursor-pointer hover:border-[var(--green-dim)] hover:shadow-[0_0_16px_rgba(74,246,38,0.15)] ${
           isSealed ? "opacity-90" : ""
-        }`}
+        } ${record.name === "???" ? "entity-card" : ""}`}
         onClick={onOpen}
       >
         <div className="flex items-center gap-1.5 mb-3 flex-wrap">
@@ -196,7 +197,7 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
             {SYSTEM_LABEL[record.system]}
           </span>
           {isSealed && <span className="chip chip-warn">🔒 ОПЕЧАТАНО</span>}
-          {isCorrupted && <span className="chip chip-err">⚠ ИСКАЖЕНО</span>}
+          {isCorrupted && <span className={`chip ${isEntity ? "chip-cyan" : "chip-err"}`}>⚠ ИСКАЖЕНО</span>}
           {!isSealed && !isCorrupted && <span className="chip chip-ok">✓ ДОСТУПНО</span>}
           {record.status === "DEAD" && <span className="chip chip-err">💀 ПАЛ</span>}
           {record.status === "MISSING" && <span className="chip chip-warn">? ПРОПАЛ</span>}
@@ -221,13 +222,13 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
           <div className="flex-1 min-w-0">
             <h3
               className={`font-medieval ${horizontal ? "text-xl" : "text-lg"} leading-tight ${
-                isCorrupted ? "glow-red glitch" : "glow-green"
+                isEntity ? "glow-cyan glitch" : isCorrupted ? "glow-red glitch" : "glow-green"
               }`}
               data-text={record.name}
             >
               {record.name}
             </h3>
-            <div className="text-dim text-xs tracking-wider mt-0.5 mb-2">
+            <div className={`text-xs tracking-wider mt-0.5 mb-2 ${isEntity ? "text-[var(--cyan)] opacity-80" : "text-dim"}`}>
               {record.subtitle}
             </div>
 
@@ -243,7 +244,7 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
             ) : !isSealed ? (
               <p
                 className={`text-[13px] leading-relaxed ${
-                  isCorrupted ? "text-[var(--red-dim)]" : "text-[var(--text)]"
+                  isEntity ? "text-[var(--cyan)]" : isCorrupted ? "text-[var(--red-dim)]" : "text-[var(--text)]"
                 } line-clamp-2`}
                 dangerouslySetInnerHTML={
                   isCorrupted ? { __html: corruptedDisplay } : undefined

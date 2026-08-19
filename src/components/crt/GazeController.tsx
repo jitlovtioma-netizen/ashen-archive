@@ -23,9 +23,9 @@ export function GazeController() {
     const level = [...LEVELS].reverse().find((l) => gaze >= l.min);
     if (level) body.classList.add(level.cls);
 
-    // crossing 90 → предупреждение об Отражении (но достижение REFLECTION
-    // открывается в RecordModal при открытии досье «Отражение»)
-    if (gaze >= 90 && prevGaze.current < 90) {
+    // crossing 90 → предупреждение об Отражении (только для DND/Эларии).
+    // В PF2E/Голарионе Отражения нет — уведомление скрыто.
+    if (gaze >= 90 && prevGaze.current < 90 && useArchive.getState().user?.system !== "PF2E") {
       sfx.gaze();
       pushToast({
         kind: "warn",

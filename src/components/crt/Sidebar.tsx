@@ -17,7 +17,6 @@ const NAV: NavItem[] = [
   { key: "lore_gods", label: "Божества", code: "ЛОР_ПАНТЕОН", sigil: "✦" },
   { key: "lore_npcs", label: "Второстеп. герои", code: "ЛОР_НПС", sigil: "🎭" },
   { key: "locations", label: "Локации", code: "РЕЕСТР_МЕСТ", sigil: "🗺" },
-  { key: "chronicles", label: "Хроники", code: "ЛЕТОПИСЬ", sigil: "📜" },
   { key: "achievements", label: "Достижения", code: "ДОСТИЖЕНИЯ", sigil: "🏆" },
 ];
 
