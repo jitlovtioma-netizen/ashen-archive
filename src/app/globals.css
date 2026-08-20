@@ -1466,3 +1466,59 @@ kbd.cmdk-hint:hover {
 .entity-modal .censor-glitch {
   color: var(--cyan) !important;
 }
+
+/* ============================================================
+   CURSED (Кали) — фиолетовое досье + искажение всего экрана
+   ============================================================ */
+
+/* Искажение всего экрана при открытии досье Кали */
+body.cursed-screen {
+  animation: cursedScreenGlitch 0.2s steps(3) infinite;
+}
+body.cursed-screen .crt-scanlines {
+  opacity: 0.8;
+  animation: cursedFlicker 0.3s steps(2) infinite;
+}
+body.cursed-screen .crt-noise {
+  opacity: 0.12;
+}
+body.cursed-screen .crt-vignette {
+  box-shadow: inset 0 0 200px rgba(80, 0, 120, 0.6);
+}
+body.cursed-screen .glow-green {
+  text-shadow: 0 0 6px rgba(167, 139, 250, 0.6), 0 0 14px rgba(80, 0, 120, 0.3);
+}
+@keyframes cursedScreenGlitch {
+  0%, 90%, 100% { transform: translate(0, 0); }
+  92% { transform: translate(-1px, 1px); }
+  94% { transform: translate(1px, -1px); }
+  96% { transform: translate(-1px, -1px); }
+  98% { transform: translate(1px, 1px); }
+}
+@keyframes cursedFlicker {
+  0%, 50% { opacity: 0.8; }
+  50.01%, 100% { opacity: 0.5; }
+}
+
+/* Фиолетовое досье (как reflection-panel, но с доп. эффектами) */
+.cursed-modal {
+  position: relative;
+}
+.cursed-modal::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(167, 139, 250, 0.03) 0,
+    rgba(167, 139, 250, 0.03) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+  pointer-events: none;
+  animation: cursedScan 3s linear infinite;
+}
+@keyframes cursedScan {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 100%; }
+}

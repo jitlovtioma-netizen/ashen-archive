@@ -143,6 +143,17 @@ const RIDDLES: Record<string, {
     valid: ["любовь", "любовь.", "любовь,"],
     hint: "// разгадай загадку, чтобы открыть досье Микси //",
   },
+  "Безымянная": {
+    sigil: "🌑",
+    title: "БЕЗЫМЯННАЯ",
+    subtitle: "// ??? · без имени · искажена //",
+    riddle: [
+      "Какая часть человека",
+      "Видна только на свету?",
+    ],
+    valid: ["тень", "тень.", "тень,"],
+    hint: "// назови часть, что видна лишь при свете //",
+  },
 };
 
 export function RiddleGate({ recordName, onSolved, onCancel }: RiddleGateProps) {

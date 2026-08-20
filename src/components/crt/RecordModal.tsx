@@ -114,11 +114,19 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
     };
     window.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
+
+    // Проклятие Кали: при открытии досье — весь экран искажается
+    const isCursedRecord = record.name === "Кали";
+    if (isCursedRecord) {
+      document.body.classList.add("cursed-screen");
+    }
+
     return () => {
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
+      document.body.classList.remove("cursed-screen");
     };
-  }, [onClose]);
+  }, [onClose, record.name]);
 
   const completeRitual = useCallback(() => {
     setRitualActive(false);
@@ -172,7 +180,8 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
 
   const corruptedDisplay = censorText(record.description);
   const isReflection = record.name === "Отражение";
-  const isEntity = record.name === "???" || record.name === "Неизвестная личность" || record.name === "Неизвестный персонаж" || record.name === "Микси";
+  const isEntity = record.name === "???" || record.name === "Неизвестная личность";
+  const isCursed = record.name === "Кали";
   const isUnknown = record.name === "Неизвестная" || record.name === "Четвёртый" || record.name === "Мёртвый План";
 
   if (typeof document === "undefined") return null;
@@ -181,8 +190,8 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
     <div
       className="fixed inset-0 z-[9700] flex items-center justify-center p-2 sm:p-4"
       style={{
-        background: isReflection ? "rgba(20, 0, 30, 0.9)" : "rgba(2, 0, 2, 0.85)",
-        backdropFilter: isReflection ? "blur(4px)" : "blur(2px)",
+        background: isReflection || isCursed ? "rgba(20, 0, 30, 0.9)" : "rgba(2, 0, 2, 0.85)",
+        backdropFilter: isReflection || isCursed ? "blur(4px)" : "blur(2px)",
       }}
       onClick={onClose}
       role="dialog"
@@ -190,16 +199,16 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
       aria-label={record.name}
     >
       <div
-        className={`panel clip-hud brackets w-full max-w-7xl max-h-[95vh] flex flex-col overflow-hidden fade-in ${isReflection ? "reflection-panel" : ""} ${isEntity ? "entity-modal" : ""}`}
+        className={`panel clip-hud brackets w-full max-w-7xl max-h-[95vh] flex flex-col overflow-hidden fade-in ${isReflection ? "reflection-panel" : ""} ${isEntity ? "entity-modal" : ""} ${isCursed ? "cursed-modal" : ""}`}
         style={{
-          boxShadow: isReflection
+          boxShadow: isReflection || isCursed
             ? "0 0 60px rgba(167, 139, 250, 0.4), 0 0 120px rgba(40, 0, 60, 0.9)"
             : "0 0 60px rgba(74, 246, 38, 0.2), 0 0 120px rgba(0, 0, 0, 0.8)",
-          animation: isReflection
+          animation: isReflection || isCursed
             ? "reflectionGlitch 0.15s steps(2) infinite, modalIn 0.3s ease-out forwards"
             : "modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards",
-          background: isReflection ? "rgba(15, 0, 25, 0.95)" : undefined,
-          border: isReflection ? "1px solid rgba(167, 139, 250, 0.5)" : undefined,
+          background: isReflection || isCursed ? "rgba(15, 0, 25, 0.95)" : undefined,
+          border: isReflection || isCursed ? "1px solid rgba(167, 139, 250, 0.5)" : undefined,
         }}
         onClick={(e) => e.stopPropagation()}
       >

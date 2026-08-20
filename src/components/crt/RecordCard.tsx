@@ -7,6 +7,7 @@ import { HoloPortrait } from "./HoloPortrait";
 import { BrunoMiniGame } from "./BrunoMiniGame";
 import { RiddleGate } from "./RiddleGate";
 import { SozidatelReveal } from "./SozidatelReveal";
+import { KaliDialog } from "./KaliDialog";
 import { RecordModal } from "./RecordModal";
 import { useArchive } from "@/lib/store";
 import { sfx } from "@/lib/audio";
@@ -69,13 +70,14 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
 
   const isSealed = record.isLocked && !unlockedIds.includes(record.id);
   const isCorrupted = record.isCorrupted;
-  const isEntity = record.name === "???" || record.name === "Неизвестная личность" || record.name === "Неизвестный персонаж" || record.name === "Микси";
+  const isEntity = record.name === "???" || record.name === "Неизвестная личность";
+  const isCursed = record.name === "Кали";
   const shardCollected = record.shardWord
     ? shards.includes(record.shardWord)
     : false;
   const secretRevealed = revealedSecrets.includes(record.id);
   const riddleLocked =
-    (record.name === "Мартин" || record.name === "Мёртвый План" || record.name === "Четвёртый" || record.name === "Разум Бруно" || record.name === "Джейтал" || record.name === "Тартуччио" || record.name === "Неизвестная личность" || record.name === "Неизвестный персонаж" || record.name === "Микси") &&
+    (record.name === "Мартин" || record.name === "Мёртвый План" || record.name === "Четвёртый" || record.name === "Разум Бруно" || record.name === "Джейтал" || record.name === "Тартуччио" || record.name === "Неизвестная личность" || record.name === "Безымянная") &&
     !solvedRiddles.includes(record.name);
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -84,6 +86,7 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
   const [miniGameOpen, setMiniGameOpen] = useState(false);
   const [riddleOpen, setRiddleOpen] = useState(false);
   const [sozidatelReveal, setSozidatelReveal] = useState(false);
+  const [kaliDialogOpen, setKaliDialogOpen] = useState(false);
   const readRef = useRef(false);
   const ritualRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -166,6 +169,12 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
   };
 
   const onOpen = () => {
+    // Для Кали — сначала интерактивный диалог (6 вопросов Нет/Да)
+    if (record.name === "Кали") {
+      sfx.whisper();
+      setKaliDialogOpen(true);
+      return;
+    }
     // Загадка для записей с загадкой
     if (riddleLocked) {
       sfx.select();
@@ -199,15 +208,16 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
             {SYSTEM_LABEL[record.system]}
           </span>
           {isSealed && <span className="chip chip-warn">🔒 ОПЕЧАТАНО</span>}
+          {isCursed && <span className="chip chip-violet">🔒 ЗАПЕЧАТАНА</span>}
           {isCorrupted && <span className={`chip ${isEntity ? "chip-cyan" : "chip-err"}`}>⚠ ИСКАЖЕНО</span>}
-          {!isSealed && !isCorrupted && <span className="chip chip-ok">✓ ДОСТУПНО</span>}
+          {!isSealed && !isCorrupted && !isCursed && <span className="chip chip-ok">✓ ДОСТУПНО</span>}
           {record.status === "DEAD" && <span className="chip chip-err">💀 ПАЛ</span>}
           {record.status === "MISSING" && <span className="chip chip-warn">? ПРОПАЛ</span>}
         </div>
 
         <div className={`flex gap-4 ${horizontal ? "flex-row items-center" : ""}`}>
           <div className="shrink-0">
-            {record.imageUrl && record.name !== "Неизвестный персонаж" ? (
+            {record.imageUrl ? (
               <HoloPortrait
                 src={record.imageUrl}
                 corrupted={isCorrupted}
@@ -301,6 +311,16 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
           imageUrl={record.imageUrl || ""}
           onComplete={() => {
             setSozidatelReveal(false);
+            setModalOpen(true);
+          }}
+        />,
+        document.body
+      )}
+
+      {kaliDialogOpen && typeof document !== "undefined" && createPortal(
+        <KaliDialog
+          onComplete={() => {
+            setKaliDialogOpen(false);
             setModalOpen(true);
           }}
         />,
