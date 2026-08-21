@@ -28,6 +28,7 @@ const loreNormalize = (r: Lore) => ({
   mapY: r.mapY,
   imageUrl: (r as Record<string, unknown>).imageUrl as string | null ?? null,
   status: ((r as Record<string, unknown>).status as "ALIVE" | "DEAD" | "MISSING") ?? "ALIVE",
+  friendship: (r as Record<string, unknown>).friendship as number | null ?? null,
 });
 
 export function CharactersSection({ system }: SectionProps) {

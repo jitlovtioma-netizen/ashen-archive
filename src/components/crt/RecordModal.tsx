@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { HoloPortrait } from "./HoloPortrait";
 import { Sigil } from "./Sigil";
 import { MartinSecretModal } from "./MartinSecretModal";
+import { SinsWheel } from "./SinsWheel";
 import { useArchive } from "@/lib/store";
 import { sfx } from "@/lib/audio";
 import { SYSTEM_LABEL, SYSTEM_COLOR } from "@/lib/types";
@@ -55,6 +56,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
   const [ritualCharge, setRitualCharge] = useState(0);
   const [ritualActive, setRitualActive] = useState(false);
   const [martinSecretShown, setMartinSecretShown] = useState(false);
+  const [sinsWheelOpen, setSinsWheelOpen] = useState(false);
   const readRef = useRef(false);
   const ritualRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const konamiSeq = useRef<string[]>([]);
@@ -250,6 +252,58 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
             </div>
 
             <div className="divider-glow mb-3" />
+
+            {/* Большая шкала дружбы в досье */}
+            {typeof record.friendship === "number" && record.friendship > 0 && (
+              <div className="mb-4">
+                <div className="flex items-center gap-3">
+                  {record.friendship >= 10 && <span className="text-2xl">❤️</span>}
+                  <div
+                    className="flex-1 h-3 overflow-hidden rounded-full"
+                    style={{ background: "rgba(0,0,0,0.4)", border: "1px solid var(--line)" }}
+                  >
+                    <div
+                      className="h-full transition-all duration-500 rounded-full"
+                      style={{
+                        width: `${(record.friendship / 10) * 100}%`,
+                        background: record.friendship >= 10
+                          ? "#ff69b4"
+                          : record.friendship >= 7
+                            ? `rgb(${Math.round(232 * (1 - (record.friendship - 7) / 3))}, 246, 38)`
+                            : record.friendship >= 4
+                              ? `rgb(255, ${Math.round(140 + 92 * ((record.friendship - 4) / 3))}, 40)`
+                              : `rgb(${Math.round(160 + 95 * ((record.friendship - 1) / 2))}, ${Math.round(20 + 16 * ((record.friendship - 1) / 2))}, 20)`,
+                        boxShadow: `0 0 8px ${record.friendship >= 10
+                          ? "#ff69b4"
+                          : record.friendship >= 7
+                            ? `rgb(${Math.round(232 * (1 - (record.friendship - 7) / 3))}, 246, 38)`
+                            : record.friendship >= 4
+                              ? `rgb(255, ${Math.round(140 + 92 * ((record.friendship - 4) / 3))}, 40)`
+                              : `rgb(${Math.round(160 + 95 * ((record.friendship - 1) / 2))}, ${Math.round(20 + 16 * ((record.friendship - 1) / 2))}, 20)`}`,
+                      }}
+                    />
+                  </div>
+                  <span
+                    className="text-sm font-mono tracking-wider shrink-0"
+                    style={{
+                      color: record.friendship >= 10
+                        ? "#ff69b4"
+                        : record.friendship >= 7
+                          ? `rgb(${Math.round(232 * (1 - (record.friendship - 7) / 3))}, 246, 38)`
+                          : record.friendship >= 4
+                            ? `rgb(255, ${Math.round(140 + 92 * ((record.friendship - 4) / 3))}, 40)`
+                            : `rgb(${Math.round(160 + 95 * ((record.friendship - 1) / 2))}, ${Math.round(20 + 16 * ((record.friendship - 1) / 2))}, 20)`,
+                    }}
+                  >
+                    {record.friendship}/10
+                  </span>
+                </div>
+                <div className="text-[9px] text-dim tracking-widest mt-1 text-center">
+                  {"// ОТНОШЕНИЯ //"}
+                </div>
+              </div>
+            )}
+
             <div className="text-[10px] text-dim tracking-widest mb-2">{"// ОПИСАНИЕ //"}</div>
 
             {isReflection && (
@@ -291,6 +345,24 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
                 <div className="text-[10px] glow-violet tracking-widest mb-1">⟁ СОКРЫТОЕ</div>
                 <div className="text-[13px] italic text-[var(--text)] leading-relaxed">{record.secretFragment}</div>
               </div>
+            )}
+
+            {/* Кнопка «А что могло бы быть?» — только для Бруно */}
+            {record.name === "Бруно" && (
+              <button
+                onClick={() => {
+                  sfx.whisper();
+                  setSinsWheelOpen(true);
+                }}
+                className="btn-crt clip-hud-sm px-4 py-2 text-xs mt-5 w-full"
+                style={{
+                  borderColor: "var(--amber-dim)",
+                  color: "var(--amber)",
+                  background: "rgba(232, 161, 58, 0.08)",
+                }}
+              >
+                💀 А ЧТО МОГЛО БЫ БЫТЬ?
+              </button>
             )}
 
             <div className="flex items-center gap-2 mt-5 flex-wrap">
@@ -361,6 +433,9 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
       </div>
       {martinSecretShown && (
         <MartinSecretModal onClose={() => setMartinSecretShown(false)} />
+      )}
+      {sinsWheelOpen && (
+        <SinsWheel onClose={() => setSinsWheelOpen(false)} />
       )}
     </div>,
     document.body

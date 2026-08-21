@@ -7,7 +7,6 @@ import { HoloPortrait } from "./HoloPortrait";
 import { BrunoMiniGame } from "./BrunoMiniGame";
 import { RiddleGate } from "./RiddleGate";
 import { SozidatelReveal } from "./SozidatelReveal";
-import { KaliDialog } from "./KaliDialog";
 import { RecordModal } from "./RecordModal";
 import { useArchive } from "@/lib/store";
 import { sfx } from "@/lib/audio";
@@ -28,6 +27,7 @@ export interface CardRecord {
   mapY: number;
   imageUrl?: string | null;
   status?: "ALIVE" | "DEAD" | "MISSING";
+  friendship?: number | null;
 }
 
 interface RecordCardProps {
@@ -86,7 +86,6 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
   const [miniGameOpen, setMiniGameOpen] = useState(false);
   const [riddleOpen, setRiddleOpen] = useState(false);
   const [sozidatelReveal, setSozidatelReveal] = useState(false);
-  const [kaliDialogOpen, setKaliDialogOpen] = useState(false);
   const readRef = useRef(false);
   const ritualRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -169,12 +168,6 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
   };
 
   const onOpen = () => {
-    // Для Кали — сначала интерактивный диалог (6 вопросов Нет/Да)
-    if (record.name === "Кали") {
-      sfx.whisper();
-      setKaliDialogOpen(true);
-      return;
-    }
     // Загадка для записей с загадкой
     if (riddleLocked) {
       sfx.select();
@@ -232,14 +225,19 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
           </div>
 
           <div className="flex-1 min-w-0">
-            <h3
-              className={`font-medieval ${horizontal ? "text-xl" : "text-lg"} leading-tight ${
-                isEntity ? "glow-cyan glitch" : isCorrupted ? "glow-red glitch" : "glow-green"
-              }`}
-              data-text={record.name}
-            >
-              {record.name}
-            </h3>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3
+                className={`font-medieval ${horizontal ? "text-xl" : "text-lg"} leading-tight ${
+                  isEntity ? "glow-cyan glitch" : isCorrupted ? "glow-red glitch" : "glow-green"
+                }`}
+                data-text={record.name}
+              >
+                {record.name}
+              </h3>
+              {typeof record.friendship === "number" && record.friendship > 0 && (
+                <FriendshipBar value={record.friendship} />
+              )}
+            </div>
             <div className={`text-xs tracking-wider mt-0.5 mb-2 ${isEntity ? "text-[var(--cyan)] opacity-80" : "text-dim"}`}>
               {record.subtitle}
             </div>
@@ -316,16 +314,54 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
         />,
         document.body
       )}
-
-      {kaliDialogOpen && typeof document !== "undefined" && createPortal(
-        <KaliDialog
-          onComplete={() => {
-            setKaliDialogOpen(false);
-            setModalOpen(true);
-          }}
-        />,
-        document.body
-      )}
     </>
+  );
+}
+
+/**
+ * FriendshipBar — шкала дружбы (1-10) в карточке второстепенного NPC.
+ * Цвет: от красного (1) к зелёному (10), при 10 — розовый + сердечко.
+ */
+function FriendshipBar({ value }: { value: number }) {
+  const max = 10;
+  const pct = Math.min(100, (value / max) * 100);
+
+  let color: string;
+  let heart = false;
+  if (value >= 10) {
+    color = "#ff69b4";
+    heart = true;
+  } else if (value >= 7) {
+    const t = (value - 7) / 3;
+    const r = Math.round(232 * (1 - t));
+    color = `rgb(${r}, 246, 38)`;
+  } else if (value >= 4) {
+    const t = (value - 4) / 3;
+    color = `rgb(255, ${Math.round(140 + 92 * t)}, 40)`;
+  } else {
+    const t = (value - 1) / 2;
+    color = `rgb(${Math.round(160 + 95 * t)}, ${Math.round(20 + 16 * t)}, 20)`;
+  }
+
+  return (
+    <div className="flex items-center gap-1.5 shrink-0">
+      {heart && <span className="text-[10px] leading-none">❤️</span>}
+      <div
+        className="h-1 w-12 overflow-hidden rounded-full"
+        style={{ background: "rgba(0,0,0,0.4)" }}
+      >
+        <div
+          className="h-full transition-all duration-500 rounded-full"
+          style={{
+            width: `${pct}%`,
+            background: color,
+            boxShadow: `0 0 4px ${color}`,
+          }}
+        />
+      </div>
+      <span className="text-[8px] font-mono" style={{ color }}>
+        {value}
+      </span>
+    </div>
   );
 }

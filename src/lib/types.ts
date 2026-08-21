@@ -51,6 +51,7 @@ export interface Lore extends BaseRecord {
   imageUrl?: string | null;
   sortOrder?: number;
   status?: string;
+  friendship?: number | null; // шкала дружбы (1-10) для второстепенных NPC
 }
 
 export interface Location extends BaseRecord {

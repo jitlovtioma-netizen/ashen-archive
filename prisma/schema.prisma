@@ -93,6 +93,7 @@ model Lore {
   imageUrl       String?
   sortOrder      Int      @default(0)
   status         String   @default("ALIVE")
+  friendship     Int?
   createdAt      DateTime @default(now())
 }
 
