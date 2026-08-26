@@ -1522,3 +1522,158 @@ body.cursed-screen .glow-green {
   0% { background-position: 0 0; }
   100% { background-position: 0 100%; }
 }
+
+/* ============================================================
+   DEMONIC INVASION — демоническая красная тема (только DND)
+   ============================================================ */
+
+/* Основная демоническая тема — весь интерфейс краснеет */
+body.demonic-theme {
+  animation: demonicJitter 6s ease-in-out infinite;
+}
+
+/* Красные scanlines */
+body.demonic-theme .crt-scanlines {
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0px,
+    rgba(0, 0, 0, 0) 2px,
+    rgba(80, 0, 0, 0.3) 3px,
+    rgba(80, 0, 0, 0.3) 4px
+  );
+  opacity: 0.7;
+}
+
+/* Красный vignette */
+body.demonic-theme .crt-vignette {
+  background: radial-gradient(
+    ellipse at center,
+    transparent 30%,
+    rgba(60, 0, 0, 0.5) 70%,
+    rgba(20, 0, 0, 0.9) 100%
+  );
+  box-shadow: inset 0 0 140px rgba(100, 0, 0, 0.6);
+}
+
+/* Усиленный noise */
+body.demonic-theme .crt-noise {
+  opacity: 0.08;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3Cfilter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");
+}
+
+/* Красный flicker */
+body.demonic-theme .crt-flicker {
+  background: rgba(255, 36, 36, 0.03);
+  animation: demonicFlicker 4s infinite;
+}
+
+/* Зелёный glow → красный */
+body.demonic-theme .glow-green {
+  color: var(--red);
+  text-shadow: 0 0 6px rgba(255, 36, 36, 0.6), 0 0 14px rgba(255, 36, 36, 0.3);
+}
+body.demonic-theme .glow-green-strong {
+  color: var(--red);
+  text-shadow: 0 0 8px rgba(255, 36, 36, 0.8), 0 0 20px rgba(255, 36, 36, 0.4);
+}
+
+/* Кнопки — красный hover */
+body.demonic-theme .btn-crt:hover {
+  background: rgba(80, 0, 0, 0.4);
+  border-color: var(--red-dim);
+  color: var(--red);
+  text-shadow: 0 0 6px rgba(255, 36, 36, 0.7);
+  box-shadow: 0 0 12px rgba(255, 36, 36, 0.2), inset 0 0 12px rgba(255, 36, 36, 0.08);
+}
+body.demonic-theme .btn-crt[data-active="true"] {
+  background: rgba(80, 0, 0, 0.5);
+  border-color: var(--red);
+  color: var(--red);
+  text-shadow: 0 0 6px rgba(255, 36, 36, 0.8);
+  box-shadow: inset 0 0 14px rgba(255, 36, 36, 0.18), 0 0 14px rgba(255, 36, 36, 0.15);
+}
+body.demonic-theme .btn-crt[data-active="true"]::before {
+  color: var(--red);
+}
+
+/* Boot bar — красный */
+body.demonic-theme .boot-bar-fill {
+  background: linear-gradient(90deg, rgba(80, 0, 0, 0.8), var(--red));
+  box-shadow: 0 0 10px rgba(255, 36, 36, 0.6);
+}
+
+/* Divider — красный */
+body.demonic-theme .divider-glow {
+  background: linear-gradient(90deg, transparent, var(--red-dim), transparent);
+  box-shadow: 0 0 4px rgba(255, 36, 36, 0.3);
+}
+
+/* Scrollbar — красный */
+body.demonic-theme .crt-scroll {
+  scrollbar-color: var(--red-dim) var(--panel);
+}
+body.demonic-theme .crt-scroll::-webkit-scrollbar-thumb {
+  background: var(--red-dim);
+  box-shadow: 0 0 6px rgba(255, 36, 36, 0.4);
+}
+body.demonic-theme .crt-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--red);
+  box-shadow: 0 0 10px rgba(255, 36, 36, 0.7);
+}
+
+/* LED зелёный → красный */
+body.demonic-theme .led-green {
+  background: var(--red);
+  color: var(--red);
+}
+
+/* Chip-ok → красный */
+body.demonic-theme .chip-ok {
+  color: var(--red);
+  border-color: var(--red-dim);
+}
+
+/* Hint caret — красный */
+body.demonic-theme .hint-caret::after {
+  color: var(--red);
+}
+
+/* Boot cursor — красный */
+body.demonic-theme .boot-cursor {
+  background: var(--red);
+  box-shadow: 0 0 6px rgba(255, 36, 36, 0.7);
+}
+
+/* Лёгкий jitter всего экрана */
+@keyframes demonicJitter {
+  0%, 88%, 100% { transform: translate(0, 0); }
+  90% { transform: translate(-0.5px, 0.5px); }
+  92% { transform: translate(0.5px, -0.5px); }
+  94% { transform: translate(-0.5px, -0.5px); }
+  96% { transform: translate(0.5px, 0.5px); }
+}
+
+@keyframes demonicFlicker {
+  0%, 93%, 100% { opacity: 0.03; }
+  94% { opacity: 0.08; }
+  95% { opacity: 0.01; }
+  96% { opacity: 0.06; }
+  97% { opacity: 0.02; }
+}
+
+/* Зловещая загрузка — дополнительный эффект во время boot */
+body.demonic-boot .crt-scanlines {
+  opacity: 0.9;
+  animation: demonicBootFlicker 0.5s steps(3) infinite;
+}
+body.demonic-boot .crt-vignette {
+  box-shadow: inset 0 0 180px rgba(120, 0, 0, 0.7);
+}
+body.demonic-boot .crt-noise {
+  opacity: 0.12;
+}
+
+@keyframes demonicBootFlicker {
+  0%, 50% { opacity: 0.9; }
+  50.01%, 100% { opacity: 0.5; }
+}

@@ -14,6 +14,13 @@ import { KonamiModal } from "@/components/crt/KonamiModal";
 import { AchievementWatcher } from "@/components/crt/AchievementWatcher";
 import { AchievementToaster } from "@/components/crt/AchievementToaster";
 import { SecretBanner } from "@/components/crt/SecretBanner";
+import { CommandPalette } from "@/components/crt/CommandPalette";
+import { KeyboardShortcuts } from "@/components/crt/KeyboardShortcuts";
+import { KeyboardShortcutsHandler } from "@/components/crt/KeyboardShortcutsHandler";
+import { MiniMap } from "@/components/crt/MiniMap";
+import { AmbientParticles } from "@/components/crt/AmbientParticles";
+import { WorldFlash } from "@/components/crt/WorldFlash";
+import { DemonicInvasion } from "@/components/crt/DemonicInvasion";
 import {
   CharactersSection,
   LoreSection,
@@ -24,6 +31,7 @@ import {
 } from "@/components/sections/Sections";
 import { FactionsSection } from "@/components/sections/FactionsSection";
 import { AchievementsSection } from "@/components/sections/AchievementsSection";
+import { ChroniclesSection } from "@/components/sections/ChroniclesSection";
 
 function SecretsSection({ system }: { system: "DND" | "PF2E" }) {
   return <LoreSecretsSection system={system} />;
@@ -44,6 +52,8 @@ function Viewport({ system }: { system: "DND" | "PF2E" }) {
       return <LoreNpcsSection system={system} />;
     case "locations":
       return <LocationsSection system={system} />;
+    case "chronicles":
+      return <ChroniclesSection system={system} />;
     case "secrets":
       return <SecretsSection system={system} />;
     case "achievements":
@@ -58,6 +68,7 @@ export default function Home() {
   const user = useArchive((s) => s.user);
   const hydrated = useArchive((s) => s._hasHydrated);
   const setTotalShardWords = useArchive((s) => s.setTotalShardWords);
+  const section = useArchive((s) => s.section);
 
   // Загружаем totalShardWords из API
   useEffect(() => {
@@ -122,6 +133,11 @@ export default function Home() {
       <GazeController />
       <KonamiHandler />
       <KonamiModal />
+      <CommandPalette />
+      <KeyboardShortcuts />
+      <KeyboardShortcutsHandler />
+      <WorldFlash />
+      <DemonicInvasion />
       <AchievementWatcher />
 
       <AchievementToaster />
@@ -137,12 +153,17 @@ export default function Home() {
 
           <div className="flex-1 flex flex-col md:flex-row gap-2 min-h-0">
             <Sidebar />
-            <main className="flex-1 min-w-0 panel clip-hud p-3 sm:p-4 overflow-y-auto crt-scroll fade-in">
-              <Viewport system={system} />
+            <main className="flex-1 min-w-0 panel clip-hud p-3 sm:p-4 overflow-y-auto crt-scroll fade-in relative">
+              <AmbientParticles count={10} />
+              <div key={section} className="section-enter relative" style={{ zIndex: 1 }}>
+                <Viewport system={system} />
+              </div>
             </main>
           </div>
 
           <StatusBar system={system} />
+
+          <MiniMap system={system} section={section} />
 
           <div className="text-center text-[10px] text-dim tracking-[0.3em] py-0.5 shrink-0">
             {`// АРХИВ ПЕПЕЛЬНОЙ ДЛАНИ — ${system === "DND" ? "ЭЛАРИЯ" : "ГОЛАРИОН"} — НЕ ДОВЕРЯЙ СВЕТУ //`}
