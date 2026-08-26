@@ -31,7 +31,6 @@ import {
 } from "@/components/sections/Sections";
 import { FactionsSection } from "@/components/sections/FactionsSection";
 import { AchievementsSection } from "@/components/sections/AchievementsSection";
-import { ChroniclesSection } from "@/components/sections/ChroniclesSection";
 
 function SecretsSection({ system }: { system: "DND" | "PF2E" }) {
   return <LoreSecretsSection system={system} />;
@@ -52,8 +51,6 @@ function Viewport({ system }: { system: "DND" | "PF2E" }) {
       return <LoreNpcsSection system={system} />;
     case "locations":
       return <LocationsSection system={system} />;
-    case "chronicles":
-      return <ChroniclesSection system={system} />;
     case "secrets":
       return <SecretsSection system={system} />;
     case "achievements":
