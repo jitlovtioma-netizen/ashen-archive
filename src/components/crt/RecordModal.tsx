@@ -365,6 +365,22 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
               </button>
             )}
 
+            {/* Кнопка «Prime Form» — заблокирована, для Бруно/Коринна/Реми */}
+            {(record.name === "Бруно" || record.name === "Коринна" || record.name === "Реми") && (
+              <button
+                disabled
+                className="btn-crt clip-hud-sm px-4 py-2 text-xs mt-3 w-full opacity-40 cursor-not-allowed"
+                style={{
+                  borderColor: "var(--line-bright)",
+                  color: "var(--dim)",
+                  background: "var(--panel-2)",
+                }}
+                title="Заблокировано — форма недоступна"
+              >
+                🔒 PRIME FORM
+              </button>
+            )}
+
             <div className="flex items-center gap-2 mt-5 flex-wrap">
               {isSealed ? (
                 <button

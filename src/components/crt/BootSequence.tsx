@@ -7,33 +7,13 @@ import { SYSTEM_WORLD, SYSTEM_SHORT, type GameSystem } from "@/lib/types";
 
 function bootLines(system: GameSystem) {
   const world = SYSTEM_WORLD[system];
-  if (system === "DND") {
-    // Зловещая демоническая загрузка для DND
-    return [
-      { tag: "FAIL" as const, text: "ДЕМОН ИЗ АДА ПРОРВАЛСЯ", tail: "КРИТИЧНО" },
-      { tag: "WARN" as const, text: "ИМПЕРИЯ ЭЙРИОС АТАКОВАНА", tail: "ПАДАЕТ" },
-      { tag: "FAIL" as const, text: "ДРЕВО ИГДРАСИЛЬ ГОРИТ", tail: "ОГНЬ" },
-      { tag: "WARN" as const, text: "АВТОРИЗАЦИЯ СТРАЖА", tail: "ПОВРЕЖДЕНА" },
-      { tag: "OK" as const, text: `ПОДКЛЮЧЕНИЕ К АРХИВУ ${world.toUpperCase()}`, tail: "ГОТОВО" },
-      { tag: "WARN" as const, text: "ПЕЧАТЬ СТРАЖА", tail: "ТРЕЩИТ" },
-      { tag: "OK" as const, text: "ЗАГРУЗКА ФРАКЦИЙ", tail: "5/7" },
-      { tag: "FAIL" as const, text: "ФРАКЦИЯ ЭЙРИОС НЕ ОТВЕЧАЕТ", tail: "ПОТЕРЯНА" },
-      { tag: "OK" as const, text: "ЗАГРУЗКА ГЕРОЕВ", tail: "5/6" },
-      { tag: "FAIL" as const, text: "ГЕРОЙ РАУДОН ПАЛ", tail: "МЁРТВ" },
-      { tag: "WARN" as const, text: "ОБНАРУЖЕНО ИСКАЖЕНИЙ", tail: "∞" },
-      { tag: "FAIL" as const, text: "ДЕМОНЫ В АРХИВЕ", tail: "ВНУТРИ" },
-      { tag: "WARN" as const, text: "ВЗГЛЯД СОЗИДАТЕЛЯ", tail: "ПАДАЕТ" },
-      { tag: "OK" as const, text: "ВХОД В АРХИВ", tail: "...ВОЗМОЖЕН" },
-    ];
-  }
-  // Обычная загрузка для PF2E
   return [
     { tag: "OK" as const, text: "ИНИЦИАЛИЗАЦИЯ ЯДРА", tail: "ГОТОВО" },
     { tag: "OK" as const, text: "АВТОРИЗАЦИЯ СТРАЖА", tail: "ОК" },
     { tag: "OK" as const, text: `ПОДКЛЮЧЕНИЕ К АРХИВУ ${world.toUpperCase()}`, tail: "ГОТОВО" },
     { tag: "WARN" as const, text: "ПЕЧАТЬ СТРАЖА", tail: "ЧАСТИЧНО" },
     { tag: "OK" as const, text: "ЗАГРУЗКА ФРАКЦИЙ", tail: "7/7" },
-    { tag: "OK" as const, text: "ЗАГРУЗКА ГЕРОЕВ", tail: "5/5" },
+    { tag: "OK" as const, text: "ЗАГРУЗКА ГЕРОЕВ", tail: "3/3" },
     { tag: "OK" as const, text: "ЗАГРУЗКА ЛОРА", tail: "8/8" },
     { tag: "WARN" as const, text: "ОБНАРУЖЕНО ИСКАЖЕНИЙ", tail: "4" },
     { tag: "OK" as const, text: "ВЗГЛЯД СОЗИДАТЕЛЯ", tail: "7%" },
@@ -110,43 +90,23 @@ export function BootSequence() {
 
       {phase === "gate" && (
         <div className="text-center px-6 fade-in cursor-pointer">
-          {system === "DND" ? (
-            <>
-              <div className="font-medieval text-3xl sm:text-5xl glow-red mb-3 tracking-widest glitch" data-text={SYSTEM_WORLD[system].toUpperCase()}>
-                {SYSTEM_WORLD[system].toUpperCase()}
-              </div>
-              <div className="text-[11px] sm:text-sm tracking-[0.3em] mb-2" style={{ color: "var(--red)" }}>
-                {"// ДЕМОНИЧЕСКОЕ ВТОРЖЕНИЕ //"}
-              </div>
-              <div className="text-[11px] tracking-[0.25em] mb-10" style={{ color: "var(--red)" }}>
-                {"СЕКТОР: "}{SYSTEM_SHORT[system]}{" // СТРАЖ: "}{user?.displayName ?? "---"}
-              </div>
-              <div className="font-vt323 text-2xl glow-red hint-caret pulse-slow">
-                ВОЙДИ... ЕСЛИ СМЕЕШЬ
-              </div>
-              <div className="text-[10px] mt-6 max-w-md mx-auto leading-relaxed" style={{ color: "var(--red-dim)" }}>
-                {"// демоны из ада прорвались. эйриос пылает. игдрасиль горит. //"}
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="font-medieval text-3xl sm:text-5xl glow-green-strong mb-3 tracking-widest">
-                {SYSTEM_WORLD[system].toUpperCase()}
-              </div>
-              <div className="text-dim text-xs sm:text-sm tracking-[0.3em] mb-2">
-                {"// АРХИВ ОРДЕНА ПЕПЕЛЬНОЙ ДЛАНИ //"}
-              </div>
-              <div className="text-[11px] tracking-[0.25em] mb-10" style={{ color: "var(--cyan)" }}>
-                {"СЕКТОР: "}{SYSTEM_SHORT[system]}{" // СТРАЖ: "}{user?.displayName ?? "---"}
-              </div>
-              <div className="font-vt323 text-2xl glow-green hint-caret pulse-slow">
-                НАЖМИТЕ ДЛЯ ВХОДА
-              </div>
-              <div className="text-dim text-[10px] mt-6 max-w-md mx-auto leading-relaxed">
-                {"// бог человечества Ароден мёртв. пророчества утрачены. мир трещит. //"}
-              </div>
-            </>
-          )}
+          <div className="font-medieval text-3xl sm:text-5xl glow-green-strong mb-3 tracking-widest">
+            {SYSTEM_WORLD[system].toUpperCase()}
+          </div>
+          <div className="text-dim text-xs sm:text-sm tracking-[0.3em] mb-2">
+            {"// АРХИВ ОРДЕНА ПЕПЕЛЬНОЙ ДЛАНИ //"}
+          </div>
+          <div className="text-[11px] tracking-[0.25em] mb-10" style={{ color: system === "DND" ? "var(--red)" : "var(--cyan)" }}>
+            {"СЕКТОР: "}{SYSTEM_SHORT[system]}{" // СТРАЖ: "}{user?.displayName ?? "---"}
+          </div>
+          <div className="font-vt323 text-2xl glow-green hint-caret pulse-slow">
+            НАЖМИТЕ ДЛЯ ВХОДА
+          </div>
+          <div className="text-dim text-[10px] mt-6 max-w-md mx-auto leading-relaxed">
+            {system === "DND"
+              ? "// мир создан серебряным драконом Аларусом. он мёртв. разлом открыт. //"
+              : "// бог человечества Ароден мёртв. пророчества утрачены. мир трещит. //"}
+          </div>
         </div>
       )}
 
