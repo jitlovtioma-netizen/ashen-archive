@@ -123,10 +123,17 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
       document.body.classList.add("cursed-screen");
     }
 
+    // Бруно: при открытии досье — тряска экрана + ошибки
+    const isBrunoRecord = record.name === "Бруно";
+    if (isBrunoRecord) {
+      document.body.classList.add("bruno-glitch-screen");
+    }
+
     return () => {
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
       document.body.classList.remove("cursed-screen");
+      document.body.classList.remove("bruno-glitch-screen");
     };
   }, [onClose, record.name]);
 
@@ -362,22 +369,6 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
                 }}
               >
                 💀 А ЧТО МОГЛО БЫ БЫТЬ?
-              </button>
-            )}
-
-            {/* Кнопка «Prime Form» — заблокирована, для Бруно/Коринна/Реми */}
-            {(record.name === "Бруно" || record.name === "Коринна" || record.name === "Реми") && (
-              <button
-                disabled
-                className="btn-crt clip-hud-sm px-4 py-2 text-xs mt-3 w-full opacity-40 cursor-not-allowed"
-                style={{
-                  borderColor: "var(--line-bright)",
-                  color: "var(--dim)",
-                  background: "var(--panel-2)",
-                }}
-                title="Заблокировано — форма недоступна"
-              >
-                🔒 PRIME FORM
               </button>
             )}
 

@@ -1,6 +1,6 @@
 // ============================================================================
-// UPLOAD IMAGES: загружает все картинки из public/heroes и public/gods
-// в Supabase Storage bucket "images".
+// UPLOAD IMAGES: загружает все картинки из public/heroes, public/gods
+// и видео из public/videos в Supabase Storage bucket "images".
 //
 // Запуск (один раз после создания проекта Supabase):
 //   1. Создай bucket "images" (public) в Supabase Storage
@@ -30,35 +30,44 @@ const supabase = createClient(url, serviceKey)
 const BUCKET = 'images'
 const PUBLIC_DIR = join(process.cwd(), 'public')
 
-async function uploadDir(localDir: string, prefix: string) {
+// MIME-типы для всех поддерживаемых расширений
+function getContentType(ext: string): string {
+  switch (ext) {
+    case 'png': return 'image/png'
+    case 'jpg':
+    case 'jpeg': return 'image/jpeg'
+    case 'webp': return 'image/webp'
+    case 'gif': return 'image/gif'
+    case 'mp4': return 'video/mp4'
+    case 'webm': return 'video/webm'
+    case 'ogg': return 'video/ogg'
+    default: return 'application/octet-stream'
+  }
+}
+
+async function uploadDir(localDir: string, prefix: string, isVideo = false) {
   const dirPath = join(PUBLIC_DIR, localDir)
   if (!existsSync(dirPath)) {
     console.log(`⊘ Папка ${localDir} не найдена — пропуск`)
     return
   }
 
-  const files = readdirSync(dirPath).filter((f) =>
-    /\.(png|jpg|jpeg|webp|gif)$/i.test(f)
-  )
+  // Для картинок: png/jpg/jpeg/webp/gif, для видео: mp4/webm/ogg
+  const extRegex = isVideo
+    ? /\.(mp4|webm|ogg)$/i
+    : /\.(png|jpg|jpeg|webp|gif)$/i
 
-  console.log(`▸ Загрузка ${files.length} файлов из ${localDir}/ → ${prefix}/`)
+  const files = readdirSync(dirPath).filter((f) => extRegex.test(f))
+
+  console.log(`▸ Загрузка ${files.length} ${isVideo ? 'видео' : 'файлов'} из ${localDir}/ → ${prefix}/`)
 
   for (const file of files) {
     const localPath = join(dirPath, file)
     const objectPath = `${prefix}/${file}`
     const buf = readFileSync(localPath)
 
-    const ext = file.split('.').pop()?.toLowerCase()
-    const contentType =
-      ext === 'png'
-        ? 'image/png'
-        : ext === 'jpg' || ext === 'jpeg'
-          ? 'image/jpeg'
-          : ext === 'webp'
-            ? 'image/webp'
-            : ext === 'gif'
-              ? 'image/gif'
-              : 'application/octet-stream'
+    const ext = file.split('.').pop()?.toLowerCase() || ''
+    const contentType = getContentType(ext)
 
     const { error } = await supabase.storage
       .from(BUCKET)
@@ -83,7 +92,7 @@ async function ensureBucket() {
     console.log(`▸ Bucket "${BUCKET}" не найден — создаём (public)...`)
     const { error: createErr } = await supabase.storage.createBucket(BUCKET, {
       public: true,
-      fileSizeLimit: '10MB',
+      fileSizeLimit: '50MB', // увеличено для видео
     })
     if (createErr) {
       console.error('✘ Не удалось создать bucket:', createErr.message)
@@ -95,12 +104,22 @@ async function ensureBucket() {
     process.exit(1)
   } else {
     console.log(`✓ Bucket "${BUCKET}" существует`)
+    // Обновляем лимит размера если нужно (для видео)
+    const { error: updateErr } = await supabase.storage.updateBucket(BUCKET, {
+      public: true,
+      fileSizeLimit: '50MB',
+    })
+    if (updateErr) {
+      console.log(`  ⚠ Не удалось обновить лимит размера: ${updateErr.message}`)
+    } else {
+      console.log(`  ✓ Лимит размера: 50MB`)
+    }
   }
 }
 
 async function main() {
   console.log('══════════════════════════════════════════════')
-  console.log('  ЗАГРУЗКА КАРТИНОК В SUPABASE STORAGE')
+  console.log('  ЗАГРУЗКА МЕДИА В SUPABASE STORAGE')
   console.log('══════════════════════════════════════════════')
   console.log(`  URL:   ${url}`)
   console.log(`  Bucket: ${BUCKET}`)
@@ -111,9 +130,12 @@ async function main() {
 
   await uploadDir('heroes', 'heroes')
   await uploadDir('gods', 'gods')
+  await uploadDir('videos', 'videos', true)
 
   console.log('────────────────────────────────────────────────')
-  console.log('✓ Готово. Публичные URL картинок теперь доступны.')
+  console.log('✓ Готово. Публичные URL теперь доступны.')
+  console.log('  Картинки: /heroes/*.png, /gods/*.png')
+  console.log('  Видео:    /videos/*.mp4')
   console.log('  Теперь можно запустить: bun run db:seed')
   console.log('────────────────────────────────────────────────')
 }

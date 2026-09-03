@@ -7,6 +7,7 @@ import { HoloPortrait } from "./HoloPortrait";
 import { BrunoMiniGame } from "./BrunoMiniGame";
 import { RiddleGate } from "./RiddleGate";
 import { SozidatelReveal } from "./SozidatelReveal";
+import { HopeVideo } from "./HopeVideo";
 import { RecordModal } from "./RecordModal";
 import { useArchive } from "@/lib/store";
 import { sfx } from "@/lib/audio";
@@ -77,7 +78,7 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
     : false;
   const secretRevealed = revealedSecrets.includes(record.id);
   const riddleLocked =
-    (record.name === "Мартин" || record.name === "Мёртвый План" || record.name === "Четвёртый" || record.name === "Разум Бруно" || record.name === "Джейтал" || record.name === "Тартуччио" || record.name === "Неизвестная личность" || record.name === "Морфея") &&
+    (record.name === "Мартин" || record.name === "Мёртвый План" || record.name === "Четвёртый" || record.name === "Разум Бруно" || record.name === "Джейтал" || record.name === "Тартуччио" || record.name === "Неизвестная личность" || record.name === "Безымянная" || record.name === "Надежда") &&
     !solvedRiddles.includes(record.name);
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -86,6 +87,7 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
   const [miniGameOpen, setMiniGameOpen] = useState(false);
   const [riddleOpen, setRiddleOpen] = useState(false);
   const [sozidatelReveal, setSozidatelReveal] = useState(false);
+  const [hopeVideoOpen, setHopeVideoOpen] = useState(false);
   const readRef = useRef(false);
   const ritualRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -295,6 +297,9 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
             // Для «Неизвестный персонаж» — спецэффект (тьма → глюки → арт → досье)
             if (record.name === "Неизвестный персонаж") {
               setSozidatelReveal(true);
+            } else if (record.name === "Надежда") {
+              // Для «Надежда» — видео на весь экран → досье
+              setHopeVideoOpen(true);
             } else {
               setModalOpen(true);
             }
@@ -309,6 +314,16 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
           imageUrl={record.imageUrl || ""}
           onComplete={() => {
             setSozidatelReveal(false);
+            setModalOpen(true);
+          }}
+        />,
+        document.body
+      )}
+
+      {hopeVideoOpen && typeof document !== "undefined" && createPortal(
+        <HopeVideo
+          onComplete={() => {
+            setHopeVideoOpen(false);
             setModalOpen(true);
           }}
         />,
