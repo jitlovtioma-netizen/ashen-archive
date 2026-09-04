@@ -6,9 +6,8 @@ generator client {
 }
 
 datasource db {
-  // Локальная разработка в песочнице — SQLite.
-  // Для деплоя на Vercel/Supabase: переключи provider на "postgresql"
-  // и раскомментируй directUrl = env("DIRECT_URL").
+  // PRODUCTION: PostgreSQL (Supabase / Vercel / Neon / Railway).
+  // В песочнице используется SQLite, но для деплоя переключи на postgresql.
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
@@ -26,7 +25,7 @@ datasource db {
 model User {
   id          String   @id @default(cuid())
   login       String   @unique
-  password    String   // TODO: захешировать через bcrypt в production
+  password    String // TODO: захешировать через bcrypt в production
   displayName String
   // system: "DND" | "PF2E" — определяет, какой мир видит пользователь
   system      String
@@ -50,13 +49,13 @@ model Faction {
 model Character {
   id             String   @id @default(cuid())
   name           String
-  title          String   // краткое прозвище / эпитет
+  title          String // краткое прозвище / эпитет
   // system: "DND" | "PF2E"
   system         String
-  category       String   // класс/роль, напр. "Паладин", "Правитель", "Жрец"
-  race           String   // напр. "Полуэльф", "Дварф", "Человек"
-  description    String   // длинный атмосферный текст
-  sigil          String   // один глиф/эмодзи
+  category       String // класс/роль, напр. "Паладин", "Правитель", "Жрец"
+  race           String // напр. "Полуэльф", "Дварф", "Человек"
+  description    String // длинный атмосферный текст
+  sigil          String // один глиф/эмодзи
   mapX           Int      @default(0)
   mapY           Int      @default(0)
   isLocked       Boolean  @default(false)
@@ -121,8 +120,8 @@ model Chronicle {
   id             String   @id @default(cuid())
   sessionNumber  Int
   title          String
-  summary        String   // длинный текст — что произошло в сессию
-  date           String   // ISO-дата строкой, напр. "2024-03-15"
+  summary        String // длинный текст — что произошло в сессию
+  date           String // ISO-дата строкой, напр. "2024-03-15"
   // system: "DND" | "PF2E"
   system         String
   isLocked       Boolean  @default(false)

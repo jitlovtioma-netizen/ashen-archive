@@ -1,31 +1,18 @@
-import { createClient } from '@supabase/supabase-js'
-
 // ============================================================================
-// Supabase server-side client.
-// Используется ТОЛЬКО в server-side коде (API routes, seed, scripts).
-// В клиентских компонентах этот файл не импортировать — там нужен public anon
-// key с отдельным клиентом (если потребуется).
-//
-// SERVICE_ROLE_KEY обходит RLS — никогда не коммить и не свети в браузере.
+// Storage helper — локальный режим (sandbox без Supabase).
+// В деплое на Vercel здесь был createClient из @supabase/supabase-js.
+// В песочнице картинки лежат в /public, поэтому отдаём локальные пути.
 // ============================================================================
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+const SUPA_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
 
-if (!url || !serviceKey) {
-  // Не падаем при импорте (чтобы seed работал локально без Supabase как fallback),
-  // но экспортируем null и проверяем в точках использования.
-  console.warn(
-    '⚠️  Supabase env vars not set (NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY). ' +
-      'Storage functions will be unavailable.'
-  )
-}
+// Supabase-клиент недоступен в sandbox-режиме — экспортируем null.
+// Если когда-то понадобится реальный клиент — установи @supabase/supabase-js
+// и раскомментируй код ниже.
+export const supabase = null
 
-export const supabase =
-  url && serviceKey ? createClient(url, serviceKey) : null
-
-// Хелпер: публичный URL объекта в bucket "images"
+// Хелпер: публичный URL объекта. Если Supabase не настроен — отдаём /public-путь.
 export function publicImageUrl(path: string): string {
-  if (!url) return `/${path}` // fallback на /public
-  return `${url}/storage/v1/object/public/images/${path}`
+  if (!SUPA_URL) return `/${path}`
+  return `${SUPA_URL}/storage/v1/object/public/images/${path}`
 }

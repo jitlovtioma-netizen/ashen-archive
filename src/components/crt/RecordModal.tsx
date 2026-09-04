@@ -123,17 +123,10 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
       document.body.classList.add("cursed-screen");
     }
 
-    // Бруно: при открытии досье — тряска экрана + ошибки
-    const isBrunoRecord = record.name === "Бруно";
-    if (isBrunoRecord) {
-      document.body.classList.add("bruno-glitch-screen");
-    }
-
     return () => {
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
       document.body.classList.remove("cursed-screen");
-      document.body.classList.remove("bruno-glitch-screen");
     };
   }, [onClose, record.name]);
 
@@ -361,7 +354,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
                   sfx.whisper();
                   setSinsWheelOpen(true);
                 }}
-                className="btn-crt clip-hud-sm px-4 py-2 text-xs mt-5 w-full"
+                className="btn-crt clip-hud-sm px-4 py-2 text-xs mt-3 w-full"
                 style={{
                   borderColor: "var(--amber-dim)",
                   color: "var(--amber)",
@@ -371,6 +364,66 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
                 💀 А ЧТО МОГЛО БЫ БЫТЬ?
               </button>
             )}
+
+            {/* Кнопка «PRIME FORM» — для Реми и Бруно.
+                ПЕРМАНЕНТНО ЗАБЛОКИРОВАНА: нельзя нажать ни при каких условиях.
+                Кнопка рендерится как disabled div (не кнопка), без onClick,
+                с замком и диагональными полосами запрета. */}
+            {(record.name === "Реми" || record.name === "Бруно") && (
+              <div
+                className="mt-3 w-full relative"
+                aria-label="Prime Form — перманентно заблокирована"
+                role="img"
+              >
+                <div
+                  className="btn-crt clip-hud-sm px-4 py-2 text-xs w-full relative overflow-hidden cursor-not-allowed select-none"
+                  style={{
+                    borderColor: "var(--line)",
+                    color: "var(--dim)",
+                    background: "rgba(20, 20, 20, 0.5)",
+                    boxShadow: "inset 0 0 24px rgba(0,0,0,0.7)",
+                    opacity: 0.55,
+                    filter: "grayscale(1)",
+                  }}
+                >
+                  <span className="relative z-10 flex items-center justify-center gap-2">
+                    <span className="text-sm pulse-slow">🔒</span>
+                    <span className="tracking-wider">PRIME FORM · НА ПЕЧАТИ</span>
+                  </span>
+                  {/* Диагональные полосы запрета */}
+                  <span
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                      background:
+                        "repeating-linear-gradient(45deg, transparent 0, transparent 8px, rgba(255,255,255,0.025) 8px, rgba(255,255,255,0.025) 16px)",
+                    }}
+                  />
+                  {/* Лёгкое мерцание «печати» */}
+                  <span
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                      background:
+                        "radial-gradient(circle at center, rgba(255,36,36,0.04) 0%, transparent 70%)",
+                      animation: "primeSealPulse 4s ease-in-out infinite",
+                    }}
+                  />
+                </div>
+
+                <style>{`
+                  @keyframes primeSealPulse {
+                    0%, 100% { opacity: 0.4; }
+                    50% { opacity: 0.8; }
+                  }
+                `}</style>
+              </div>
+            )}
+
+            <style>{`
+              @keyframes primeBtnSweep {
+                0% { transform: translateX(-100%); }
+                100% { transform: translateX(100%); }
+              }
+            `}</style>
 
             <div className="flex items-center gap-2 mt-5 flex-wrap">
               {isSealed ? (

@@ -92,6 +92,11 @@ interface ArchiveState {
   // hydration flag
   _hasHydrated: boolean;
   setHydrated: () => void;
+
+  // world switching (DND ↔ PF2E) without logout
+  switchWorld: () => void;
+  worldFlash: boolean;
+  triggerWorldFlash: () => void;
 }
 
 export const useArchive = create<ArchiveState>()(
@@ -138,6 +143,37 @@ export const useArchive = create<ArchiveState>()(
           gaze: 7,
           toasts: [],
         }),
+
+      // Переключение между мирами без logout: меняет system + displayName,
+      // сбрасывает мир-специфичную прогрессию (shards, achievements, печати,
+      // загадки). Показывает world-flash.
+      worldFlash: false,
+      triggerWorldFlash: () => {
+        set({ worldFlash: true });
+        setTimeout(() => set({ worldFlash: false }), 900);
+      },
+      switchWorld: () => {
+        const cur = get().user;
+        if (!cur) return;
+        const newSystem = cur.system === "DND" ? "PF2E" : "DND";
+        const newDisplay =
+          newSystem === "DND" ? "Страж Эларии" : "Страж Голариона";
+        set({
+          user: { ...cur, system: newSystem, displayName: newDisplay },
+          section: "characters",
+          gaze: 7,
+          shards: [],
+          achievements: [],
+          konamiUnlocked: false,
+          konamiModalDismissed: false,
+          unlockedIds: [],
+          revealedSecrets: [],
+          solvedRiddles: [],
+          toasts: [],
+          totalShardWords: 0,
+        });
+        get().triggerWorldFlash();
+      },
 
       booted: false,
       setBooted: (v) => set({ booted: v }),

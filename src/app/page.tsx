@@ -63,7 +63,6 @@ export default function Home() {
   const setTotalShardWords = useArchive((s) => s.setTotalShardWords);
   const section = useArchive((s) => s.section);
 
-  // Загружаем totalShardWords из API
   useEffect(() => {
     if (!user) return;
     fetch(`/api/stats?system=${user.system}`)
@@ -74,7 +73,6 @@ export default function Home() {
       .catch(() => {});
   }, [user, setTotalShardWords]);
 
-  // ambient gaze drift
   useEffect(() => {
     if (!booted || !user) return;
     const id = setInterval(() => {

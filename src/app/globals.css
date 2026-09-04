@@ -1522,34 +1522,3 @@ body.cursed-screen .glow-green {
   0% { background-position: 0 0; }
   100% { background-position: 0 100%; }
 }
-
-/* ============================================================
-   BRUNO GLITCH — тряска экрана + ошибки при открытии досье Бруно
-   ============================================================ */
-body.bruno-glitch-screen {
-  animation: brunoShake 0.15s steps(2) infinite;
-}
-body.bruno-glitch-screen .crt-scanlines {
-  opacity: 0.85;
-  animation: brunoFlicker 0.2s steps(2) infinite;
-}
-body.bruno-glitch-screen .crt-noise {
-  opacity: 0.1;
-}
-body.bruno-glitch-screen .crt-vignette {
-  box-shadow: inset 0 0 180px rgba(0, 40, 0, 0.5);
-}
-body.bruno-glitch-screen .glow-green {
-  text-shadow: 0 0 6px rgba(74, 246, 38, 0.4), 2px 0 rgba(255,36,36,0.3), -2px 0 rgba(63,214,200,0.3);
-}
-
-@keyframes brunoShake {
-  0%, 100% { transform: translate(0, 0); }
-  25% { transform: translate(-1px, 1px); }
-  50% { transform: translate(1px, -1px); }
-  75% { transform: translate(-1px, -1px); }
-}
-@keyframes brunoFlicker {
-  0%, 50% { opacity: 0.85; }
-  50.01%, 100% { opacity: 0.5; }
-}

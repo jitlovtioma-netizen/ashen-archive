@@ -71,6 +71,41 @@ export function StatusBar({ system }: { system: GameSystem }) {
         </>
       )}
       <span className="flex-1" />
+      <div className="tip-wrap shrink-0">
+        <button
+          onClick={() => {
+            window.dispatchEvent(
+              new KeyboardEvent("keydown", { key: "?", bubbles: true })
+            );
+          }}
+          className="status-btn flex items-center gap-1 text-[10px] text-dim hover:text-[var(--green)] transition-colors cursor-pointer"
+          aria-label="Открыть справку по клавишам"
+        >
+          <span className="cmdk-hint">?</span>
+          <span className="hidden lg:inline">СПРАВКА</span>
+        </button>
+        <span className="tip-bubble">
+          Справка по клавишам <kbd>?</kbd>
+        </span>
+      </div>
+      <Sep />
+      <div className="tip-wrap shrink-0">
+        <button
+          onClick={() => {
+            window.dispatchEvent(
+              new KeyboardEvent("keydown", { key: "k", metaKey: true, ctrlKey: true })
+            );
+          }}
+          className="status-btn flex items-center gap-1 text-[10px] text-dim hover:text-[var(--green)] transition-colors cursor-pointer"
+          aria-label="Открыть быстрый поиск"
+        >
+          <span className="cmdk-hint">⌘K</span>
+          <span className="hidden sm:inline">ПОИСК</span>
+        </button>
+        <span className="tip-bubble">
+          Быстрый поиск <kbd>⌘K</kbd>
+        </span>
+      </div>
       <Sep />
       <span className="text-dim shrink-0">
         СОЗИДАТЕЛЬ: <span className={gazeColor}>{Math.round(gaze)}%</span>
@@ -80,7 +115,9 @@ export function StatusBar({ system }: { system: GameSystem }) {
         {user?.login ?? "страж_07"}
       </span>
       <Sep />
-      <span className="glow-green shrink-0 font-vt323 text-sm">{clock}</span>
+      <span className="glow-green shrink-0 font-vt323 text-sm status-clock">
+        <span className="status-tick">▸</span>{clock}
+      </span>
     </footer>
   );
 }

@@ -71,7 +71,7 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
 
   const isSealed = record.isLocked && !unlockedIds.includes(record.id);
   const isCorrupted = record.isCorrupted;
-  const isEntity = record.name === "???" || record.name === "Неизвестная личность";
+  const isEntity = record.name === "???" || record.name === "Неизвестная личность" || record.name === "Неизвестный персонаж";
   const isCursed = record.name === "Кали";
   const shardCollected = record.shardWord
     ? shards.includes(record.shardWord)
@@ -80,6 +80,8 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
   const riddleLocked =
     (record.name === "Мартин" || record.name === "Мёртвый План" || record.name === "Четвёртый" || record.name === "Разум Бруно" || record.name === "Джейтал" || record.name === "Тартуччио" || record.name === "Неизвестная личность" || record.name === "Безымянная" || record.name === "Надежда") &&
     !solvedRiddles.includes(record.name);
+  // Для «Надежда» — после решения загадки и видео, досье открывается без ритуала
+  const hopeAutoUnlock = record.name === "Надежда";
 
   const [modalOpen, setModalOpen] = useState(false);
   const [ritualCharge, setRitualCharge] = useState(0);
@@ -87,7 +89,7 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
   const [miniGameOpen, setMiniGameOpen] = useState(false);
   const [riddleOpen, setRiddleOpen] = useState(false);
   const [sozidatelReveal, setSozidatelReveal] = useState(false);
-  const [hopeVideoOpen, setHopeVideoOpen] = useState(false);
+  const [hopeVideo, setHopeVideo] = useState(false);
   const readRef = useRef(false);
   const ritualRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -298,8 +300,9 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
             if (record.name === "Неизвестный персонаж") {
               setSozidatelReveal(true);
             } else if (record.name === "Надежда") {
-              // Для «Надежда» — видео на весь экран → досье
-              setHopeVideoOpen(true);
+              // Для «Надежда» — сначала видео, потом досье (с авто-unlock)
+              if (hopeAutoUnlock) unlockRecord(record.id);
+              setHopeVideo(true);
             } else {
               setModalOpen(true);
             }
@@ -320,10 +323,10 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
         document.body
       )}
 
-      {hopeVideoOpen && typeof document !== "undefined" && createPortal(
+      {hopeVideo && typeof document !== "undefined" && createPortal(
         <HopeVideo
           onComplete={() => {
-            setHopeVideoOpen(false);
+            setHopeVideo(false);
             setModalOpen(true);
           }}
         />,

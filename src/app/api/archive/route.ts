@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   const rawType = (searchParams.get('type') ?? 'characters').toLowerCase()
   const rawSystem = (searchParams.get('system') ?? 'DND').toUpperCase()
 
-  const VALID_TYPES = ['characters', 'lore', 'locations'] as const
+  const VALID_TYPES = ['characters', 'lore', 'locations', 'chronicles'] as const
   type ArchiveType = (typeof VALID_TYPES)[number]
 
   const VALID_SYSTEMS = ['DND', 'PF2E'] as const
@@ -50,6 +50,13 @@ export async function GET(request: NextRequest) {
       const rows = await db.location.findMany({
         where: { system },
         orderBy: { name: 'asc' },
+      })
+      return NextResponse.json(rows)
+    }
+    case 'chronicles': {
+      const rows = await db.chronicle.findMany({
+        where: { system },
+        orderBy: { sessionNumber: 'asc' },
       })
       return NextResponse.json(rows)
     }
