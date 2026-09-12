@@ -73,12 +73,14 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
   const isCorrupted = record.isCorrupted;
   const isEntity = record.name === "???" || record.name === "Неизвестная личность" || record.name === "Неизвестный персонаж";
   const isCursed = record.name === "Кали";
+  // Алдуин — душа повреждена, досье не открывается
+  const isSoulDamaged = record.name === "Алдуин";
   const shardCollected = record.shardWord
     ? shards.includes(record.shardWord)
     : false;
   const secretRevealed = revealedSecrets.includes(record.id);
   const riddleLocked =
-    (record.name === "Мартин" || record.name === "Мёртвый План" || record.name === "Четвёртый" || record.name === "Разум Бруно" || record.name === "Джейтал" || record.name === "Тартуччио" || record.name === "Неизвестная личность" || record.name === "Безымянная" || record.name === "Надежда") &&
+    (record.name === "Мартин" || record.name === "Мёртвый План" || record.name === "Четвёртый" || record.name === "Разум Бруно" || record.name === "Джейтал" || record.name === "Тартуччио" || record.name === "Неизвестная личность" || record.name === "Безымянная" || record.name === "Надежда" || record.name === "Баал") &&
     !solvedRiddles.includes(record.name);
   // Для «Надежда» — после решения загадки и видео, досье открывается без ритуала
   const hopeAutoUnlock = record.name === "Надежда";
@@ -89,6 +91,7 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
   const [miniGameOpen, setMiniGameOpen] = useState(false);
   const [riddleOpen, setRiddleOpen] = useState(false);
   const [sozidatelReveal, setSozidatelReveal] = useState(false);
+  const [soulDamagedOpen, setSoulDamagedOpen] = useState(false);
   const [hopeVideo, setHopeVideo] = useState(false);
   const readRef = useRef(false);
   const ritualRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -172,6 +175,12 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
   };
 
   const onOpen = () => {
+    // Алдуин — душа повреждена, досье не открывается
+    if (isSoulDamaged) {
+      sfx.error();
+      setSoulDamagedOpen(true);
+      return;
+    }
     // Загадка для записей с загадкой
     if (riddleLocked) {
       sfx.select();
@@ -303,6 +312,10 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
               // Для «Надежда» — сначала видео, потом досье (с авто-unlock)
               if (hopeAutoUnlock) unlockRecord(record.id);
               setHopeVideo(true);
+            } else if (record.name === "Баал") {
+              // Для «Баал» — авто-unlock без ритуала, досье с искажённым описанием
+              unlockRecord(record.id);
+              setModalOpen(true);
             } else {
               setModalOpen(true);
             }
@@ -330,6 +343,45 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
             setModalOpen(true);
           }}
         />,
+        document.body
+      )}
+
+      {soulDamagedOpen && typeof document !== "undefined" && createPortal(
+        <div
+          className="fixed inset-0 z-[9700] flex items-center justify-center p-4"
+          style={{ background: "rgba(2, 0, 2, 0.9)", backdropFilter: "blur(4px)" }}
+          onClick={() => setSoulDamagedOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Душа существа повреждена"
+        >
+          <div
+            className="panel clip-hud brackets w-full max-w-md p-8 text-center fade-in"
+            style={{
+              borderColor: "var(--red-dim)",
+              boxShadow: "0 0 40px rgba(255, 36, 36, 0.3)",
+              animation: "modalIn 0.3s ease-out forwards",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-5xl mb-4 pulse-slow">💀</div>
+            <div className="font-medieval text-xl glow-red tracking-wider mb-3 glitch" data-text="ДУША ПОВРЕЖДЕНА">
+              ДУША ПОВРЕЖДЕНА
+            </div>
+            <div className="text-[13px] text-[var(--text)] leading-relaxed mb-2">
+              Душа существа повреждена.
+            </div>
+            <div className="text-[13px] text-dim leading-relaxed mb-6">
+              Информация временно заблокирована.
+            </div>
+            <button
+              onClick={() => setSoulDamagedOpen(false)}
+              className="btn-crt clip-hud-sm px-6 py-2 text-xs"
+            >
+              ◂ ЗАКРЫТЬ
+            </button>
+          </div>
+        </div>,
         document.body
       )}
     </>

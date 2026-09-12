@@ -15,6 +15,8 @@ interface ArchiveSectionProps<T> {
   columns?: 1 | 3;
   filter?: (raw: T) => boolean;
   revealAtMaxGaze?: string;
+  /** Если true — сортировать по дружбе (по убыванию), мёртвые внизу. */
+  sortByFriendship?: boolean;
 }
 
 export function ArchiveSection<T>({
@@ -27,6 +29,7 @@ export function ArchiveSection<T>({
   columns = 3,
   filter,
   revealAtMaxGaze,
+  sortByFriendship = false,
 }: ArchiveSectionProps<T>) {
   const { data, loading, error } = useArchiveData<T>(type, system);
   const gaze = useArchive((s) => s.gaze);
@@ -42,8 +45,22 @@ export function ArchiveSection<T>({
     })
     .slice()
     .sort((a, b) => {
-      const sa = (a as Record<string, unknown>).sortOrder as number ?? 0;
-      const sb = (b as Record<string, unknown>).sortOrder as number ?? 0;
+      const ra = a as Record<string, unknown>;
+      const rb = b as Record<string, unknown>;
+
+      if (sortByFriendship) {
+        // Мёртвые — внизу
+        const aDead = ra.status === "DEAD";
+        const bDead = rb.status === "DEAD";
+        if (aDead !== bDead) return aDead ? 1 : -1;
+        // По дружбе по убыванию (null → 0)
+        const fa = (ra.friendship as number) ?? 0;
+        const fb = (rb.friendship as number) ?? 0;
+        if (fa !== fb) return fb - fa;
+      }
+
+      const sa = (ra.sortOrder as number) ?? 0;
+      const sb = (rb.sortOrder as number) ?? 0;
       return sa - sb;
     })
     .map(normalize);

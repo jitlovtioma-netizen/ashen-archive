@@ -101,6 +101,7 @@ export function LoreNpcsSection({ system }: SectionProps) {
       blurb={`// значимые NPC, встреченные партией в странствиях //`}
       filter={(r) => (r as Record<string, unknown>).folder === "SECONDARY_HEROES"}
       revealAtMaxGaze="Отражение"
+      sortByFriendship
       normalize={loreNormalize}
     />
   );
