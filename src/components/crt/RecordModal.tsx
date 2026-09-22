@@ -57,6 +57,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
   const [ritualActive, setRitualActive] = useState(false);
   const [martinSecretShown, setMartinSecretShown] = useState(false);
   const [sinsWheelOpen, setSinsWheelOpen] = useState(false);
+  const [memoryProbeOpen, setMemoryProbeOpen] = useState(false);
   const readRef = useRef(false);
   const ritualRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const konamiSeq = useRef<string[]>([]);
@@ -325,6 +326,14 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
                     return <p key={i} className="reflection-text text-[13px]">{line || "\u00A0"}</p>;
                   })}
                 </div>
+              ) : isCursed ? (
+                // Для Кали — рендерим сырое описание без censorText,
+                // чтобы 6 читаемых слов (Лицимерие, Двуличность, Враг,
+                // Никчёмность, Смерть, Боль) всегда отображались.
+                <p
+                  className="text-[14px] leading-relaxed text-[var(--text)]"
+                  dangerouslySetInnerHTML={{ __html: record.description.replace(/\n/g, "<br/>") }}
+                />
               ) : (
                 <p
                   className={`text-[14px] leading-relaxed ${isEntity ? "text-[var(--cyan)]" : "text-[var(--text)]"}`}
@@ -418,12 +427,68 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
               </div>
             )}
 
+            {/* Кнопка «Проникнуть в память» — только для Кали */}
+            {record.name === "Кали" && (
+              <button
+                onClick={() => {
+                  sfx.whisper();
+                  setMemoryProbeOpen(true);
+                }}
+                className="btn-crt clip-hud-sm px-4 py-2 text-xs mt-3 w-full"
+                style={{
+                  borderColor: "var(--violet-dim)",
+                  color: "var(--violet)",
+                  background: "rgba(167, 139, 250, 0.08)",
+                }}
+              >
+                🧠 ПРОНИКНУТЬ В ПАМЯТЬ
+              </button>
+            )}
+
             <style>{`
               @keyframes primeBtnSweep {
                 0% { transform: translateX(-100%); }
                 100% { transform: translateX(100%); }
               }
             `}</style>
+
+            {/* Модалка «Проникнуть в память» — Бруно отказался */}
+            {memoryProbeOpen && (
+              <div
+                className="fixed inset-0 z-[9700] flex items-center justify-center p-4"
+                style={{ background: "rgba(2, 0, 2, 0.9)", backdropFilter: "blur(4px)" }}
+                onClick={() => setMemoryProbeOpen(false)}
+                role="dialog"
+                aria-modal="true"
+                aria-label="Проникновение в память"
+              >
+                <div
+                  className="panel clip-hud brackets w-full max-w-md p-8 text-center fade-in"
+                  style={{
+                    borderColor: "var(--violet-dim)",
+                    boxShadow: "0 0 40px rgba(167, 139, 250, 0.3)",
+                    animation: "modalIn 0.3s ease-out forwards",
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="text-5xl mb-4 pulse-slow">🧠</div>
+                  <div className="font-medieval text-lg glow-violet tracking-wider mb-3 glitch" data-text="ОТКАЗАНО">
+                    ОТКАЗАНО
+                  </div>
+                  <div className="text-[14px] text-[var(--text)] leading-relaxed mb-6">
+                    Бруно отказался от этого действия...
+                    <br />
+                    <span className="text-dim italic">Пока что.</span>
+                  </div>
+                  <button
+                    onClick={() => setMemoryProbeOpen(false)}
+                    className="btn-crt clip-hud-sm px-6 py-2 text-xs"
+                  >
+                    ◂ ЗАКРЫТЬ
+                  </button>
+                </div>
+              </div>
+            )}
 
             <div className="flex items-center gap-2 mt-5 flex-wrap">
               {isSealed ? (

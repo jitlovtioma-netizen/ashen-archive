@@ -80,7 +80,7 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
     : false;
   const secretRevealed = revealedSecrets.includes(record.id);
   const riddleLocked =
-    (record.name === "Мартин" || record.name === "Мёртвый План" || record.name === "Четвёртый" || record.name === "Разум Бруно" || record.name === "Джейтал" || record.name === "Тартуччио" || record.name === "Неизвестная личность" || record.name === "Безымянная" || record.name === "Надежда" || record.name === "Баал") &&
+    (record.name === "Мартин" || record.name === "Мёртвый План" || record.name === "Четвёртый" || record.name === "Разум Бруно" || record.name === "Джейтал" || record.name === "Тартуччио" || record.name === "Неизвестная личность" || record.name === "Безымянная" || record.name === "Надежда" || record.name === "Баал" || record.name === "Гений Холода") &&
     !solvedRiddles.includes(record.name);
   // Для «Надежда» — после решения загадки и видео, досье открывается без ритуала
   const hopeAutoUnlock = record.name === "Надежда";
@@ -314,6 +314,10 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
               setHopeVideo(true);
             } else if (record.name === "Баал") {
               // Для «Баал» — авто-unlock без ритуала, досье с искажённым описанием
+              unlockRecord(record.id);
+              setModalOpen(true);
+            } else if (record.name === "Гений Холода") {
+              // Для «Гений Холода» — авто-unlock без ритуала
               unlockRecord(record.id);
               setModalOpen(true);
             } else {
