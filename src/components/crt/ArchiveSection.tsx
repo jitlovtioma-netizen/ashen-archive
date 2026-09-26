@@ -17,6 +17,8 @@ interface ArchiveSectionProps<T> {
   revealAtMaxGaze?: string;
   /** Если true — сортировать по дружбе (по убыванию), мёртвые внизу. */
   sortByFriendship?: boolean;
+  /** Если true — мёртвые внизу, живые сверху (затем по sortOrder). */
+  sortDeadLast?: boolean;
 }
 
 export function ArchiveSection<T>({
@@ -30,6 +32,7 @@ export function ArchiveSection<T>({
   filter,
   revealAtMaxGaze,
   sortByFriendship = false,
+  sortDeadLast = false,
 }: ArchiveSectionProps<T>) {
   const { data, loading, error } = useArchiveData<T>(type, system);
   const gaze = useArchive((s) => s.gaze);
@@ -57,6 +60,13 @@ export function ArchiveSection<T>({
         const fa = (ra.friendship as number) ?? 0;
         const fb = (rb.friendship as number) ?? 0;
         if (fa !== fb) return fb - fa;
+      }
+
+      if (sortDeadLast) {
+        // Мёртвые — внизу, живые — сверху, затем по sortOrder
+        const aDead = ra.status === "DEAD";
+        const bDead = rb.status === "DEAD";
+        if (aDead !== bDead) return aDead ? 1 : -1;
       }
 
       const sa = (ra.sortOrder as number) ?? 0;

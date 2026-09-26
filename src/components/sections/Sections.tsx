@@ -40,6 +40,7 @@ export function CharactersSection({ system }: SectionProps) {
       code="ЗАПРОС_АРХИВ_ГЕРОЕВ"
       columns={1}
       blurb={`// действующие лица партии в ${system === "DND" ? "Эларии" : "Голарионе"} //`}
+      sortDeadLast
       normalize={(r) => ({
         id: r.id,
         name: r.name,

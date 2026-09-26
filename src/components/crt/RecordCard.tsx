@@ -8,6 +8,7 @@ import { BrunoMiniGame } from "./BrunoMiniGame";
 import { RiddleGate } from "./RiddleGate";
 import { SozidatelReveal } from "./SozidatelReveal";
 import { HopeVideo } from "./HopeVideo";
+import { RemiTransformSelector } from "./RemiTransformSelector";
 import { RecordModal } from "./RecordModal";
 import { useArchive } from "@/lib/store";
 import { sfx } from "@/lib/audio";
@@ -80,7 +81,7 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
     : false;
   const secretRevealed = revealedSecrets.includes(record.id);
   const riddleLocked =
-    (record.name === "Мартин" || record.name === "Мёртвый План" || record.name === "Четвёртый" || record.name === "Разум Бруно" || record.name === "Джейтал" || record.name === "Тартуччио" || record.name === "Неизвестная личность" || record.name === "Безымянная" || record.name === "Надежда" || record.name === "Баал" || record.name === "Гений Холода") &&
+    (record.name === "Мартин" || record.name === "Мёртвый План" || record.name === "Четвёртый" || record.name === "Разум Бруно" || record.name === "Джейтал" || record.name === "Тартуччио" || record.name === "Неизвестная личность" || record.name === "Безымянная" || record.name === "Надежда" || record.name === "Баал" || record.name === "Божественный осколок") &&
     !solvedRiddles.includes(record.name);
   // Для «Надежда» — после решения загадки и видео, досье открывается без ритуала
   const hopeAutoUnlock = record.name === "Надежда";
@@ -93,6 +94,7 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
   const [sozidatelReveal, setSozidatelReveal] = useState(false);
   const [soulDamagedOpen, setSoulDamagedOpen] = useState(false);
   const [hopeVideo, setHopeVideo] = useState(false);
+  const [remiSelectorOpen, setRemiSelectorOpen] = useState(false);
   const readRef = useRef(false);
   const ritualRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -179,6 +181,12 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
     if (isSoulDamaged) {
       sfx.error();
       setSoulDamagedOpen(true);
+      return;
+    }
+    // Реми — особое меню выбора формы (4 элемента)
+    if (record.name === "Реми") {
+      sfx.whisper();
+      setRemiSelectorOpen(true);
       return;
     }
     // Загадка для записей с загадкой
@@ -316,8 +324,8 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
               // Для «Баал» — авто-unlock без ритуала, досье с искажённым описанием
               unlockRecord(record.id);
               setModalOpen(true);
-            } else if (record.name === "Гений Холода") {
-              // Для «Гений Холода» — авто-unlock без ритуала
+            } else if (record.name === "Божественный осколок") {
+              // Для «Божественный осколок» — авто-unlock без ритуала
               unlockRecord(record.id);
               setModalOpen(true);
             } else {
@@ -386,6 +394,11 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
             </button>
           </div>
         </div>,
+        document.body
+      )}
+
+      {remiSelectorOpen && typeof document !== "undefined" && createPortal(
+        <RemiTransformSelector onClose={() => setRemiSelectorOpen(false)} />,
         document.body
       )}
     </>
