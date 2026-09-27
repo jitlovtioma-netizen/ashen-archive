@@ -48,8 +48,20 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
     solveRiddle,
   } = useArchive();
 
+  // SWAP: Диана → Анаид (toggle) — нужно объявить до isSealed/isCorrupted
+  const [swappedToAnaid, setSwappedToAnaid] = useState(false);
+  const anaidRecord: CardRecord = {
+    ...record,
+    name: "Анаид",
+    subtitle: "Зверолюд · Продолжение Дианы",
+    description: "▓▒░ Анаид ░▒▓ — девушка-зверолюд, по имени Анаид, хорошо ладит с животными, и очень хорошо может выживать. О ней мало что известно, понятно одно — она продолжение Дианы, и у них синергия, и взаимопонимание. Когда Диана не может — Анаид может. Когда Анаид не знает — Диана знает. Они — две половины одного целого, и вместе они сильнее, чем каждая по отдельности.",
+    imageUrl: "/heroes/anaid.png",
+    sigil: "🐾",
+  };
+  const displayRecord = (record.name === "Диана" && swappedToAnaid) ? anaidRecord : record;
+
   const isSealed = record.isLocked && !unlockedIds.includes(record.id);
-  const isCorrupted = record.isCorrupted;
+  const isCorrupted = displayRecord.isCorrupted;
   const shardCollected = record.shardWord ? shards.includes(record.shardWord) : false;
   const secretRevealed = revealedSecrets.includes(record.id);
 
@@ -181,7 +193,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
     }
   };
 
-  const corruptedDisplay = censorText(record.description);
+  const corruptedDisplay = censorText(displayRecord.description);
   const isReflection = record.name === "Отражение";
   const isEntity = record.name === "???" || record.name === "Неизвестная личность";
   const isCursed = record.name === "Кали";
@@ -199,7 +211,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
       onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-label={record.name}
+      aria-label={displayRecord.name}
     >
       {/* ОТРАЖЕНИЕ overlay — разбросанные слова по всему экрану (только для Кали) */}
       {isCursed && (
@@ -256,7 +268,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
           <span className="led led-green" />
           <span className="text-[10px] text-dim tracking-widest ml-2 truncate">
             {"// ПРОТОКОЛ_ДОСЬЕ // "}
-            <span className="glow-green">{record.name}</span>
+            <span className="glow-green">{displayRecord.name}</span>
           </span>
           <span className="flex-1" />
           <button onClick={onClose} className="btn-crt btn-red clip-hud-sm px-2 py-0.5 text-[11px]" aria-label="Закрыть">
@@ -269,10 +281,10 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
           {/* LEFT: text */}
           <div className="md:w-[55%] p-4 sm:p-6 overflow-y-auto crt-scroll border-b md:border-b-0 md:border-r border-[var(--line)]">
             <div className="mb-4">
-              <h2 className={`font-medieval text-2xl sm:text-3xl leading-tight mb-1 ${isCorrupted ? "glow-red glitch" : "glow-green"} ${isEntity ? "entity-title" : ""}`} data-text={record.name}>
-                {record.name}
+              <h2 className={`font-medieval text-2xl sm:text-3xl leading-tight mb-1 ${isCorrupted ? "glow-red glitch" : "glow-green"} ${isEntity ? "entity-title" : ""}`} data-text={displayRecord.name}>
+                {displayRecord.name}
               </h2>
-              <div className={`text-sm tracking-wider ${isEntity ? "text-[var(--cyan)] opacity-80" : "text-dim"}`}>{record.subtitle}</div>
+              <div className={`text-sm tracking-wider ${isEntity ? "text-[var(--cyan)] opacity-80" : "text-dim"}`}>{displayRecord.subtitle}</div>
             </div>
 
             <div className="flex items-center gap-1.5 mb-4 flex-wrap">
@@ -353,7 +365,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
             {!isSealed ? (
               isUnknown ? (
                 <div className="text-[14px] leading-relaxed space-y-2">
-                  {record.description.split("\n").map((line, i) => {
+                  {displayRecord.description.split("\n").map((line, i) => {
                     if (line.includes("★★★")) {
                       return <p key={i} className="glow-amber text-lg font-bold text-center tracking-wider pulse-slow">{line}</p>;
                     }
@@ -366,14 +378,14 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
                 // Никчёмность, Смерть, Боль) всегда отображались.
                 <p
                   className="text-[14px] leading-relaxed text-[var(--text)]"
-                  dangerouslySetInnerHTML={{ __html: record.description.replace(/\n/g, "<br/>") }}
+                  dangerouslySetInnerHTML={{ __html: displayRecord.description.replace(/\n/g, "<br/>") }}
                 />
               ) : (
                 <p
                   className={`text-[14px] leading-relaxed ${isEntity ? "text-[var(--cyan)]" : "text-[var(--text)]"}`}
                   dangerouslySetInnerHTML={isCorrupted ? { __html: corruptedDisplay } : undefined}
                 >
-                  {isCorrupted ? undefined : record.description}
+                  {isCorrupted ? undefined : displayRecord.description}
                 </p>
               )
             ) : (
@@ -459,6 +471,24 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
                   }
                 `}</style>
               </div>
+            )}
+
+            {/* Кнопка SWAP — только для Дианы (PF2E) */}
+            {record.name === "Диана" && (
+              <button
+                onClick={() => {
+                  sfx.whisper();
+                  setSwappedToAnaid(!swappedToAnaid);
+                }}
+                className="btn-crt clip-hud-sm px-4 py-2 text-xs mt-3 w-full"
+                style={{
+                  borderColor: "var(--amber-dim)",
+                  color: "var(--amber)",
+                  background: "rgba(232, 161, 58, 0.08)",
+                }}
+              >
+                🔄 SWAP → {swappedToAnaid ? "ДИАНУ" : "АНАИД"}
+              </button>
             )}
 
             {/* Кнопка «Проникнуть в память» — только для Кали */}
@@ -563,7 +593,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
             <div className="text-[10px] text-dim tracking-widest mb-3 absolute top-3 left-4 z-30">{"// ПРОЕКЦИЯ //"}</div>
             <div className="flex-1 flex items-center justify-center w-full min-h-[280px]">
               {record.imageUrl && !isSealed ? (
-                <HoloPortrait src={record.imageUrl} corrupted={isCorrupted} sealed={isSealed} status={record.status} full fallbackGlyph={record.sigil} />
+                <HoloPortrait src={displayRecord.imageUrl} corrupted={isCorrupted} sealed={isSealed} status={record.status} full fallbackGlyph={record.sigil} />
               ) : (
                 <div className="flex flex-col items-center gap-4">
                   <Sigil glyph={record.sigil} corrupted={isCorrupted} size={180} />

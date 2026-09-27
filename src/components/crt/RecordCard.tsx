@@ -76,6 +76,8 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
   const isCursed = record.name === "Кали";
   // Алдуин — душа повреждена, досье не открывается
   const isSoulDamaged = record.name === "Алдуин";
+  // Адам/Ева — скованы контрактом (MISSING), досье не открывается
+  const isContractBound = record.status === "MISSING";
   const shardCollected = record.shardWord
     ? shards.includes(record.shardWord)
     : false;
@@ -93,6 +95,7 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
   const [riddleOpen, setRiddleOpen] = useState(false);
   const [sozidatelReveal, setSozidatelReveal] = useState(false);
   const [soulDamagedOpen, setSoulDamagedOpen] = useState(false);
+  const [contractBoundOpen, setContractBoundOpen] = useState(false);
   const [hopeVideo, setHopeVideo] = useState(false);
   const [remiSelectorOpen, setRemiSelectorOpen] = useState(false);
   const readRef = useRef(false);
@@ -181,6 +184,12 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
     if (isSoulDamaged) {
       sfx.error();
       setSoulDamagedOpen(true);
+      return;
+    }
+    // Адам/Ева — скованы контрактом, досье не открывается
+    if (isContractBound) {
+      sfx.error();
+      setContractBoundOpen(true);
       return;
     }
     // Реми — особое меню выбора формы (4 элемента)
@@ -388,6 +397,46 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
             </div>
             <button
               onClick={() => setSoulDamagedOpen(false)}
+              className="btn-crt clip-hud-sm px-6 py-2 text-xs"
+            >
+              ◂ ЗАКРЫТЬ
+            </button>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {contractBoundOpen && typeof document !== "undefined" && createPortal(
+        <div
+          className="fixed inset-0 z-[9700] flex items-center justify-center p-4"
+          style={{ background: "rgba(0, 0, 10, 0.9)", backdropFilter: "blur(4px)" }}
+          onClick={() => setContractBoundOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Сковано контрактом"
+        >
+          <div
+            className="panel clip-hud brackets w-full max-w-md p-8 text-center fade-in"
+            style={{
+              borderColor: "rgba(200, 50, 50, 0.4)",
+              boxShadow: "0 0 40px rgba(200, 50, 50, 0.2)",
+              animation: "modalIn 0.3s ease-out forwards",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-5xl mb-4 pulse-slow">⛓</div>
+            <div className="font-medieval text-lg tracking-wider mb-3 glitch" data-text="СКОВАНО КОНТРАКТОМ" style={{ color: "rgba(200, 100, 100, 0.9)" }}>
+              СКОВАНО КОНТРАКТОМ
+            </div>
+            <div className="text-[14px] text-[var(--text)] leading-relaxed mb-4">
+              Существо сковано контрактом.<br />
+              Прочесть невозможно.
+            </div>
+            <div className="text-[12px] text-dim italic mb-6">
+              P.S. Асмодей.
+            </div>
+            <button
+              onClick={() => setContractBoundOpen(false)}
               className="btn-crt clip-hud-sm px-6 py-2 text-xs"
             >
               ◂ ЗАКРЫТЬ

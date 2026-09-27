@@ -39,10 +39,10 @@ export function Sidebar() {
     gaze >= 90 ? "var(--red)" : gaze >= 60 ? "var(--amber)" : "var(--green)";
 
   // Вкладка «Секреты» появляется только когда собраны ВСЕ осколки памяти.
-  // В PF2E (Голарион) секреты скрыты (пока что — пользователь запросил).
+  // DND и PF2E осколки — раздельны (считаются только для текущего мира).
   const allShardsCollected =
     totalShardWords > 0 && shards.length >= totalShardWords;
-  const showSecrets = allShardsCollected && user?.system !== "PF2E";
+  const showSecrets = allShardsCollected;
 
   const fullNav = showSecrets
     ? [

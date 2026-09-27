@@ -17,7 +17,7 @@ interface ArchiveSectionProps<T> {
   revealAtMaxGaze?: string;
   /** Если true — сортировать по дружбе (по убыванию), мёртвые внизу. */
   sortByFriendship?: boolean;
-  /** Если true — мёртвые внизу, живые сверху (затем по sortOrder). */
+  /** Если true — не-живые (DEAD, MISSING, etc.) внизу, живые сверху. */
   sortDeadLast?: boolean;
 }
 
@@ -52,10 +52,10 @@ export function ArchiveSection<T>({
       const rb = b as Record<string, unknown>;
 
       if (sortByFriendship) {
-        // Мёртвые — внизу
-        const aDead = ra.status === "DEAD";
-        const bDead = rb.status === "DEAD";
-        if (aDead !== bDead) return aDead ? 1 : -1;
+        // Не-живые — внизу
+        const aAlive = ra.status === "ALIVE" || ra.status === undefined;
+        const bAlive = rb.status === "ALIVE" || rb.status === undefined;
+        if (aAlive !== bAlive) return aAlive ? -1 : 1;
         // По дружбе по убыванию (null → 0)
         const fa = (ra.friendship as number) ?? 0;
         const fb = (rb.friendship as number) ?? 0;
@@ -63,10 +63,10 @@ export function ArchiveSection<T>({
       }
 
       if (sortDeadLast) {
-        // Мёртвые — внизу, живые — сверху, затем по sortOrder
-        const aDead = ra.status === "DEAD";
-        const bDead = rb.status === "DEAD";
-        if (aDead !== bDead) return aDead ? 1 : -1;
+        // Не-живые (DEAD, MISSING, etc.) — внизу, живые — сверху
+        const aAlive = ra.status === "ALIVE" || ra.status === undefined;
+        const bAlive = rb.status === "ALIVE" || rb.status === undefined;
+        if (aAlive !== bAlive) return aAlive ? -1 : 1;
       }
 
       const sa = (ra.sortOrder as number) ?? 0;
