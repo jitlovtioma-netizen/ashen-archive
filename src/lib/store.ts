@@ -12,7 +12,8 @@ export type Section =
   | "lore_npcs"
   | "locations"
   | "achievements"
-  | "secrets";
+  | "secrets"
+  | "inspiration";
 
 export interface Toast {
   id: string;
