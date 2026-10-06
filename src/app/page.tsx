@@ -24,7 +24,6 @@ import {
   LoreNpcsSection,
   LoreSecretsSection,
   LocationsSection,
-  InspirationSection,
 } from "@/components/sections/Sections";
 import { FactionsSection } from "@/components/sections/FactionsSection";
 import { AchievementsSection } from "@/components/sections/AchievementsSection";
@@ -50,8 +49,6 @@ function Viewport({ system }: { system: "DND" | "PF2E" }) {
       return <LocationsSection system={system} />;
     case "secrets":
       return <SecretsSection system={system} />;
-    case "inspiration":
-      return <InspirationSection system={system} />;
     case "achievements":
       return <AchievementsSection system={system} />;
     default:

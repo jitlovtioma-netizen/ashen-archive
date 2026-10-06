@@ -18,7 +18,6 @@ const NAV: NavItem[] = [
   { key: "lore_npcs", label: "Второстеп. герои", code: "ЛОР_НПС", sigil: "🎭" },
   { key: "locations", label: "Локации", code: "РЕЕСТР_МЕСТ", sigil: "🗺" },
   { key: "achievements", label: "Достижения", code: "ДОСТИЖЕНИЯ", sigil: "🏆" },
-  { key: "inspiration", label: "Вдохновение", code: "ВДОХНОВЕНИЕ", sigil: "💡" },
 ];
 
 export function Sidebar() {

@@ -1,9 +1,6 @@
 "use client";
 
-import { useState } from "react";
 import { ArchiveSection } from "@/components/crt/ArchiveSection";
-import { InspirationModal } from "@/components/crt/InspirationModal";
-import { sfx } from "@/lib/audio";
 import type { CardRecord } from "@/components/crt/RecordCard";
 import type {
   Character,
@@ -14,30 +11,6 @@ import type {
 
 interface SectionProps {
   system: GameSystem;
-}
-
-function InspirationButton({ system }: { system: GameSystem }) {
-  const [open, setOpen] = useState(true);
-  return (
-    <div className="flex flex-col items-center gap-4">
-      <button
-        onClick={() => {
-          sfx.whisper();
-          setOpen(true);
-        }}
-        className="btn-crt btn-amber clip-hud-sm px-8 py-3 text-sm"
-        style={{
-          background: "linear-gradient(90deg, rgba(232,161,58,0.15), rgba(232,161,58,0.05))",
-        }}
-      >
-        💡 ПОЛУЧИТЬ ВДОХНОВЕНИЕ
-      </button>
-      <div className="text-[10px] text-dim tracking-widest text-center max-w-xs">
-        {"// обмен кодами между напарниками DnD и PF2e //"}
-      </div>
-      {open && <InspirationModal system={system} onClose={() => setOpen(false)} />}
-    </div>
-  );
 }
 
 const loreNormalize = (r: Lore) => ({
@@ -147,26 +120,6 @@ export function LoreSecretsSection({ system }: SectionProps) {
       filter={(r) => (r as Record<string, unknown>).folder === "SECRETS"}
       normalize={loreNormalize}
     />
-  );
-}
-
-export function InspirationSection({ system }: SectionProps) {
-  return (
-    <section className="flex flex-col gap-3 h-full">
-      <div className="panel clip-hud-sm px-3 py-2 flex items-center gap-2 flex-wrap">
-        <span className="text-[10px] text-dim tracking-widest">
-          КОРЕНЬ &gt; СЕКТОР_{system} &gt;
-        </span>
-        <span className="text-[11px] glow-amber tracking-widest">ВДОХНОВЕНИЕ</span>
-        <span className="flex-1" />
-        <span className="text-[10px] text-dim hidden sm:inline">
-          {"// обмен кодами между напарниками //"}
-        </span>
-      </div>
-      <div className="flex-1 flex items-center justify-center">
-        <InspirationButton system={system} />
-      </div>
-    </section>
   );
 }
 
