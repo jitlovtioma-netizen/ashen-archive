@@ -3,17 +3,18 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { sfx } from "@/lib/audio";
+import { useArchive } from "@/lib/store";
 
 interface ShortcutGroup {
   title: string;
-  shortcuts: { keys: string[]; label: string }[];
+  shortcuts: { keys: string[]; label: string; adminOnly?: boolean }[];
 }
 
 const GROUPS: ShortcutGroup[] = [
   {
     title: "НАВИГАЦИЯ",
     shortcuts: [
-      { keys: ["1", "—", "7"], label: "Перейти в секцию (1=Герои, 2=Фракции...)" },
+      { keys: ["1", "—", "7"], label: "Перейти в секцию (1=Профиль, 2=Герои, 3=Фракции...)" },
       { keys: ["↑", "↓"], label: "Навигация в списках / Command Palette" },
       { keys: ["Enter"], label: "Выбрать элемент" },
       { keys: ["Esc"], label: "Закрыть модалку / оверлей" },
@@ -31,7 +32,11 @@ const GROUPS: ShortcutGroup[] = [
     shortcuts: [
       { keys: ["?"], label: "Показать эту справку" },
       { keys: ["M"], label: "Свернуть/развернуть мини-карту" },
-      { keys: ["W"], label: "Переключить мир (DND ↔ PF2E) без logout" },
+      {
+        keys: ["W"],
+        label: "Переключить мир (DND ↔ PF2E) без logout — только Длань",
+        adminOnly: true,
+      },
       { keys: ["G"], label: "Сбросить прогрессию Взгляда (gaze)" },
     ],
   },
@@ -48,6 +53,9 @@ const GROUPS: ShortcutGroup[] = [
 
 export function KeyboardShortcuts() {
   const [open, setOpen] = useState(false);
+  // W (смена мира) виден в справке только админам — игроки Эларии
+  // не должны знать про Голарион и наоборот
+  const isAdmin = useArchive((s) => s.user?.role === "ADMIN");
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -113,36 +121,40 @@ export function KeyboardShortcuts() {
         {/* Группы шорткатов */}
         <div className="overflow-y-auto crt-scroll p-3 max-h-[60vh]">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {GROUPS.map((g) => (
-              <div key={g.title} className="panel-inset clip-hud-sm p-3">
-                <div className="text-[10px] glow-green tracking-widest mb-2 border-b border-[var(--line)] pb-1">
-                  {g.title}
+            {GROUPS.map((g) => {
+              const items = g.shortcuts.filter((sc) => !sc.adminOnly || isAdmin);
+              if (items.length === 0) return null;
+              return (
+                <div key={g.title} className="panel-inset clip-hud-sm p-3">
+                  <div className="text-[10px] glow-green tracking-widest mb-2 border-b border-[var(--line)] pb-1">
+                    {g.title}
+                  </div>
+                  <ul className="flex flex-col gap-2">
+                    {items.map((sc, i) => (
+                      <li
+                        key={i}
+                        className="flex items-start justify-between gap-2 text-[11px]"
+                      >
+                        <span className="text-dim flex-1 leading-tight">
+                          {sc.label}
+                        </span>
+                        <span className="flex items-center gap-0.5 shrink-0 flex-wrap justify-end">
+                          {sc.keys.map((k, j) => (
+                            <kbd
+                              key={j}
+                              className="cmdk-hint text-[10px]"
+                              style={{ minWidth: "20px", textAlign: "center" }}
+                            >
+                              {k}
+                            </kbd>
+                          ))}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-                <ul className="flex flex-col gap-2">
-                  {g.shortcuts.map((sc, i) => (
-                    <li
-                      key={i}
-                      className="flex items-start justify-between gap-2 text-[11px]"
-                    >
-                      <span className="text-dim flex-1 leading-tight">
-                        {sc.label}
-                      </span>
-                      <span className="flex items-center gap-0.5 shrink-0 flex-wrap justify-end">
-                        {sc.keys.map((k, j) => (
-                          <kbd
-                            key={j}
-                            className="cmdk-hint text-[10px]"
-                            style={{ minWidth: "20px", textAlign: "center" }}
-                          >
-                            {k}
-                          </kbd>
-                        ))}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Подсказка снизу */}

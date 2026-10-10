@@ -31,12 +31,7 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
-.env
-.env.local
-.env.production
-.env.*.local
-# .env.example КОММИТИМ — это шаблон без секретов
-!.env.example
+.env*
 
 # vercel
 .vercel
@@ -57,17 +52,11 @@ prompt
 server.log
 # Skills directory
 /skills/
+# presence runtime state
+mini-services/presence-service/lastseen.json
 
-# ─── SQLite (больше не используется после миграции на Supabase) ───
-db/custom.db
-db/custom.db-journal
+# delivery artifact (regenerable, contains seeds with passwords)
+public/seed.zip
 
-# ─── Исходные PDF (не нужны в репозитории, ~30MB) ───
-upload/
-
-# ─── Контекст агентов (внутренние заметки, не для публикации) ───
-agent-ctx/
-
-# ─── Бэкапы БД ───
-*.sql
-backups/
+# agent tool artifacts
+tool-results/

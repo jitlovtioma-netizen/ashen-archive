@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic'
 
 // POST /api/auth/login
 // Body: { login: string, password: string }
-// 200 → { ok: true, user: { login, displayName, system } }
+// 200 → { ok: true, user: { login, displayName, system, role, characterId } }
 // 401 → { ok: false, error: 'INVALID_CREDENTIALS' }
 // Пароль в этом sandbox-архиве хранится открыто в SQLite.
 export async function POST(request: NextRequest) {
@@ -44,6 +44,8 @@ export async function POST(request: NextRequest) {
       login: user.login,
       displayName: user.displayName,
       system: user.system,
+      role: user.role === 'ADMIN' ? 'ADMIN' : 'USER',
+      characterId: user.characterId ?? null,
     },
   })
 }

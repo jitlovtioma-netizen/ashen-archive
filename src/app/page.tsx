@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import { useArchive } from "@/lib/store";
+import { useArchive, flushProgressSave, hydrateProgressFromServer } from "@/lib/store";
+import { initPresence, disconnectPresence } from "@/lib/presence";
 import { CRTOverlays } from "@/components/crt/CRTOverlays";
 import { BootSequence } from "@/components/crt/BootSequence";
 import { LoginForm } from "@/components/crt/LoginForm";
@@ -17,6 +18,7 @@ import { SecretBanner } from "@/components/crt/SecretBanner";
 import { CommandPalette } from "@/components/crt/CommandPalette";
 import { KeyboardShortcuts } from "@/components/crt/KeyboardShortcuts";
 import { KeyboardShortcutsHandler } from "@/components/crt/KeyboardShortcutsHandler";
+import { AdminBroadcastOverlay } from "@/components/crt/AdminBroadcastOverlay";
 import {
   CharactersSection,
   LoreSection,
@@ -26,7 +28,7 @@ import {
   LocationsSection,
 } from "@/components/sections/Sections";
 import { FactionsSection } from "@/components/sections/FactionsSection";
-import { AchievementsSection } from "@/components/sections/AchievementsSection";
+import { ProfileSection } from "@/components/crt/ProfileSection";
 
 function SecretsSection({ system }: { system: "DND" | "PF2E" }) {
   return <LoreSecretsSection system={system} />;
@@ -35,6 +37,8 @@ function SecretsSection({ system }: { system: "DND" | "PF2E" }) {
 function Viewport({ system }: { system: "DND" | "PF2E" }) {
   const section = useArchive((s) => s.section);
   switch (section) {
+    case "profile":
+      return <ProfileSection system={system} />;
     case "characters":
       return <CharactersSection system={system} />;
     case "factions":
@@ -49,8 +53,6 @@ function Viewport({ system }: { system: "DND" | "PF2E" }) {
       return <LocationsSection system={system} />;
     case "secrets":
       return <SecretsSection system={system} />;
-    case "achievements":
-      return <AchievementsSection system={system} />;
     default:
       return <CharactersSection system={system} />;
   }
@@ -72,6 +74,52 @@ export default function Home() {
       })
       .catch(() => {});
   }, [user, setTotalShardWords]);
+
+  // ─── Онлайн-присутствие: подключаемся к presence-сокету ───
+  useEffect(() => {
+    if (!user) {
+      disconnectPresence();
+      return;
+    }
+    initPresence(user.login, user.system);
+    return () => {
+      // при смене пользователя/выходе сокет переинициализируется в след. рендере
+    };
+  }, [user?.login, user?.system, user]);
+
+  // ─── Обновляем роль/привязку из БД (всегда при монтировании:
+  //     админ мог изменить привязку, а сессия могла устареть) ───
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    fetch(`/api/auth/me?login=${encodeURIComponent(user.login)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!cancelled && d?.ok && d.user) {
+          useArchive.getState().patchUser({
+            role: d.user.role,
+            characterId: d.user.characterId,
+          });
+        }
+      })
+      .catch(() => {});
+    // восстановление прогресса после перезагрузки страницы
+    void hydrateProgressFromServer(user.login, user.system);
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.login, user?.system]);
+
+  // ─── Сохраняем прогресс при закрытии вкладки ───
+  useEffect(() => {
+    const onLeave = () => flushProgressSave();
+    window.addEventListener("beforeunload", onLeave);
+    window.addEventListener("pagehide", onLeave);
+    return () => {
+      window.removeEventListener("beforeunload", onLeave);
+      window.removeEventListener("pagehide", onLeave);
+    };
+  }, []);
 
   useEffect(() => {
     if (!booted || !user) return;
@@ -131,6 +179,7 @@ export default function Home() {
 
       <AchievementToaster />
       <SecretBanner />
+      <AdminBroadcastOverlay />
 
       {!booted && <BootSequence />}
 

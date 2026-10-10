@@ -5,14 +5,15 @@ import { useArchive, type Section } from "@/lib/store";
 import { sfx } from "@/lib/audio";
 
 // Цифровые клавиши 1-7 → быстрый переход по секциям архива
+// (порядок как в сайдбаре: профиль → … → локации)
 const NUM_TO_SECTION: Record<string, Section> = {
-  Digit1: "characters",
-  Digit2: "factions",
-  Digit3: "lore",
-  Digit4: "lore_gods",
-  Digit5: "lore_npcs",
-  Digit6: "locations",
-  Digit7: "achievements",
+  Digit1: "profile",
+  Digit2: "characters",
+  Digit3: "factions",
+  Digit4: "lore",
+  Digit5: "lore_gods",
+  Digit6: "lore_npcs",
+  Digit7: "locations",
 };
 
 export function KeyboardShortcutsHandler() {
@@ -50,6 +51,27 @@ export function KeyboardShortcutsHandler() {
           title: "ВЗГЛЯД СБРОШЕН",
           body: "// созидатель снова дремлет //",
         });
+        return;
+      }
+
+      // W → переключить мир (DND ↔ PF2E) без logout — ТОЛЬКО ДЛЯ АДМИНОВ.
+      // Игроки Эларии не должны видеть Голарион и наоборот.
+      if (e.code === "KeyW" && !e.shiftKey) {
+        e.preventDefault();
+        if (!S.user) return;
+        if (S.user.role !== "ADMIN") {
+          // загадочный отказ: не раскрываем, что скрывается за клавишей
+          sfx.error();
+          S.pushToast({
+            kind: "warn",
+            sigil: "🚫",
+            title: "ПУТЬ ЗАПЕЧАТАН",
+            body: "// некоторые двери открывает только Длань //",
+          });
+          return;
+        }
+        S.switchWorld();
+        sfx.glitch();
         return;
       }
     };

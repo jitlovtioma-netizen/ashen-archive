@@ -1,0 +1,144 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Провайдер переключается скриптом:
+//   bun run db:use-sqlite    → локальная база (песочница / свой сервер)
+//   bun run db:use-postgres  → Supabase PostgreSQL (деплой на Vercel, см. README_VERCEL.md)
+// Все типы — String, enums не используются (совместимо с обоими провайдерами).
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(cuid())
+  login       String   @unique
+  password    String
+  displayName String
+  system      String
+  role        String   @default("USER")
+  characterId String?
+  createdAt   DateTime @default(now())
+  progress    Progress[]
+}
+
+// Прогресс стража — персистентный, привязан к пользователю и миру.
+// Массивы хранятся JSON-строками (SQLite не поддерживает списки).
+model Progress {
+  id              String   @id @default(cuid())
+  userId          String
+  system          String
+  achievements    String   @default("[]")
+  shards          String   @default("[]")
+  unlockedIds     String   @default("[]")
+  revealedSecrets String   @default("[]")
+  solvedRiddles   String   @default("[]")
+  konamiUnlocked  Boolean  @default(false)
+  secretRevealed  Boolean  @default(false)
+  gaze            Int      @default(7)
+  updatedAt       DateTime @updatedAt
+  createdAt       DateTime @default(now())
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, system])
+  @@index([userId])
+}
+
+model Faction {
+  id          String       @id @default(cuid())
+  name        String
+  system      String
+  sigil       String
+  description String
+  sortOrder   Int          @default(0)
+  isCorrupted Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+  npcs        Character[]
+}
+
+model Character {
+  id             String   @id @default(cuid())
+  name           String
+  title          String
+  system         String
+  category       String
+  race           String
+  description    String
+  sigil          String
+  mapX           Int      @default(0)
+  mapY           Int      @default(0)
+  isLocked       Boolean  @default(false)
+  isCorrupted    Boolean  @default(false)
+  secretFragment String?
+  shardWord      String?
+  kind           String   @default("HERO")
+  factionId      String?
+  faction        Faction? @relation(fields: [factionId], references: [id])
+  imageUrl       String?
+  status         String   @default("ALIVE")
+  createdAt      DateTime @default(now())
+}
+
+model Lore {
+  id             String   @id @default(cuid())
+  title          String
+  category       String
+  system         String
+  description    String
+  sigil          String
+  mapX           Int      @default(0)
+  mapY           Int      @default(0)
+  isLocked       Boolean  @default(false)
+  isCorrupted    Boolean  @default(false)
+  secretFragment String?
+  shardWord      String?
+  folder         String?
+  imageUrl       String?
+  sortOrder      Int      @default(0)
+  status         String   @default("ALIVE")
+  friendship     Int?
+  createdAt      DateTime @default(now())
+}
+
+model Location {
+  id             String   @id @default(cuid())
+  name           String
+  type           String
+  system         String
+  description    String
+  sigil          String
+  mapX           Int      @default(0)
+  mapY           Int      @default(0)
+  isLocked       Boolean  @default(false)
+  isCorrupted    Boolean  @default(false)
+  secretFragment String?
+  shardWord      String?
+  createdAt      DateTime @default(now())
+}
+
+model Chronicle {
+  id             String   @id @default(cuid())
+  sessionNumber  Int
+  title          String
+  summary        String
+  date           String
+  system         String
+  isLocked       Boolean  @default(false)
+  isCorrupted    Boolean  @default(false)
+  secretFragment String?
+  shardWord      String?
+  createdAt      DateTime @default(now())
+}
+
+model Achievement {
+  id             String   @id @default(cuid())
+  code           String   @unique
+  name           String
+  description    String
+  sigil          String
+  secretFragment String?
+  system         String?
+  createdAt      DateTime @default(now())
+}

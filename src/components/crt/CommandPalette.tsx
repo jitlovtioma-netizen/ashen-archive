@@ -15,6 +15,7 @@ interface SearchResult {
 }
 
 const SECTION_META: Record<string, { label: string; code: string }> = {
+  profile: { label: "Профиль", code: "ПРОФИЛЬ_СТРАЖА" },
   characters: { label: "Герои", code: "АРХИВ_ГЕРОЕВ" },
   lore: { label: "Лор", code: "БАЗА_ЛОРА" },
   lore_gods: { label: "Божества", code: "ЛОР_ПАНТЕОН" },
@@ -23,13 +24,13 @@ const SECTION_META: Record<string, { label: string; code: string }> = {
 };
 
 const QUICK_NAV: SearchResult[] = [
+  { id: "nav-profile", title: "Перейти: Профиль", subtitle: "досье, прогресс, стражи онлайн", sigil: "👤", section: "profile", system: "DND" },
   { id: "nav-characters", title: "Перейти: Герои", subtitle: "быстрый переход", sigil: "⚔", section: "characters", system: "DND" },
   { id: "nav-factions", title: "Перейти: Фракции", subtitle: "быстрый переход", sigil: "🜲", section: "factions", system: "DND" },
   { id: "nav-lore", title: "Перейти: Лор", subtitle: "быстрый переход", sigil: "📖", section: "lore", system: "DND" },
   { id: "nav-lore_gods", title: "Перейти: Божества", subtitle: "быстрый переход", sigil: "✦", section: "lore_gods", system: "DND" },
   { id: "nav-lore_npcs", title: "Перейти: Второстеп. герои", subtitle: "быстрый переход", sigil: "🎭", section: "lore_npcs", system: "DND" },
   { id: "nav-locations", title: "Перейти: Локации", subtitle: "быстрый переход", sigil: "🗺", section: "locations", system: "DND" },
-  { id: "nav-achievements", title: "Перейти: Достижения", subtitle: "быстрый переход", sigil: "🏆", section: "achievements", system: "DND" },
 ];
 
 export function CommandPalette() {

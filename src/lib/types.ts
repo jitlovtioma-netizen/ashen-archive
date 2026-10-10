@@ -2,10 +2,59 @@
 
 export type GameSystem = "DND" | "PF2E";
 
+export type UserRole = "USER" | "ADMIN";
+
 export interface User {
   login: string;
   displayName: string;
   system: GameSystem;
+  role?: UserRole;
+  characterId?: string | null;
+}
+
+// Персистентный прогресс стража (хранится на сервере, per user+system)
+export interface ProgressData {
+  achievements: string[];
+  shards: string[];
+  unlockedIds: string[];
+  revealedSecrets: string[];
+  solvedRiddles: string[];
+  konamiUnlocked: boolean;
+  secretRevealed: boolean;
+  gaze: number;
+  updatedAt?: string;
+}
+
+// Краткая сводка прогресса для списка пользователей
+export interface ProgressSummary {
+  achievements: number;
+  shards: number;
+  unlockedIds: number;
+  solvedRiddles: number;
+  revealedSecrets: number;
+  konamiUnlocked: boolean;
+  gaze: number;
+  updatedAt: string;
+}
+
+// Публичная карточка стража (из /api/users)
+export interface UserSummary {
+  login: string;
+  displayName: string;
+  system: GameSystem;
+  role: UserRole;
+  characterId: string | null;
+  createdAt: string;
+  summary: ProgressSummary | null;
+}
+
+// Страж в онлайне (из presence-сокета)
+export interface PresenceUser {
+  login: string;
+  displayName: string;
+  system: GameSystem;
+  role: UserRole;
+  since: number;
 }
 
 export interface BaseRecord {

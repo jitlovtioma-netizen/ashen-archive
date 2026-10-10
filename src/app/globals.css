@@ -1522,3 +1522,67 @@ body.cursed-screen .glow-green {
   0% { background-position: 0 0; }
   100% { background-position: 0 100%; }
 }
+
+/* ─── Профиль: админ-вещание на весь экран ─── */
+.broadcast-backdrop {
+  background: rgba(4, 0, 2, 0.92);
+  backdrop-filter: blur(6px);
+  animation: fadeIn 0.15s ease-out;
+}
+.broadcast-panel {
+  animation: modalIn 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+.broadcast-text {
+  text-shadow: 0 0 12px rgba(220, 60, 60, 0.55);
+  animation: broadcastFlicker 3.2s infinite;
+}
+@keyframes broadcastFlicker {
+  0%, 100% { opacity: 1; }
+  92% { opacity: 1; }
+  93% { opacity: 0.72; }
+  94% { opacity: 1; }
+  96% { opacity: 0.85; }
+  97% { opacity: 1; }
+}
+
+/* ─── Профиль: карточки стражей ─── */
+.guard-card {
+  transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.guard-card:hover {
+  transform: translateY(-2px);
+}
+.guard-card.guard-admin {
+  background:
+    linear-gradient(135deg, rgba(232, 161, 58, 0.10), transparent 55%),
+    var(--panel);
+}
+.guard-card.guard-admin.guard-online {
+  box-shadow: 0 0 18px rgba(232, 161, 58, 0.22);
+}
+.guard-card.guard-self {
+  outline: 1px dashed var(--green-dim);
+  outline-offset: 2px;
+}
+.online-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+  animation: onlinePulse 1.6s infinite;
+}
+.offline-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: var(--line);
+}
+@keyframes onlinePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.8); }
+}
+.kicked-banner {
+  border: 1px solid var(--red-dim);
+  background: rgba(220, 60, 60, 0.08);
+}

@@ -2,10 +2,13 @@
 
 import { useState } from "react";
 import { useArchive } from "@/lib/store";
+import { usePresence } from "@/lib/presence";
 import { sfx } from "@/lib/audio";
 
 export function LoginForm() {
   const login = useArchive((s) => s.login);
+  const kickedBy = usePresence((s) => s.kickedBy);
+  const setKickedBy = usePresence((s) => s.setKickedBy);
   const [loginStr, setLoginStr] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -52,6 +55,7 @@ export function LoginForm() {
       sfx.error();
     } else {
       sfx.boot();
+      setKickedBy(null);
     }
   };
 
@@ -68,6 +72,17 @@ export function LoginForm() {
             {"// ОРДЕН ПЕПЕЛЬНОЙ ДЛАНИ //"}
           </div>
         </div>
+
+        {kickedBy && (
+          <div className="kicked-banner clip-hud-sm p-3 mb-4 text-center fade-in">
+            <div className="glow-red text-sm glitch" data-text="ВЫ ИЗГНАНЫ ИЗ АРХИВА">
+              ВЫ ИЗГНАНЫ ИЗ АРХИВА
+            </div>
+            <div className="text-[10px] text-dim tracking-wider mt-1">
+              {`// решение принял: ${kickedBy} //`}
+            </div>
+          </div>
+        )}
 
         <form
           onSubmit={onSubmit}

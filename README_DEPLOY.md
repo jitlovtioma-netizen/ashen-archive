@@ -1,264 +1,183 @@
-# Деплой «Архива Пепельной Длани» на Supabase + Vercel
+# Деплой «Архива Пепельной Длани» на свой сервер
 
-Эта инструкция проведёт тебя по всем шагам — от создания аккаунтов до живого сайта.
-**Никакого программирования с твоей стороны не нужно** — только клики в дашбордах и пара команд в терминале.
+Инструкция для пакета `seed.zip` (все файлы проекта, кроме `public/`).
 
----
-
-## Что у тебя будет в конце
-
-```
-https://твой-проект.vercel.app  ← живой сайт
-         │
-         ├─ GitHub (код) → автодеплой при пуше
-         ├─ Vercel (фронтенд + API, бесплатно)
-         ├─ Supabase PostgreSQL (база, 500MB бесплатно)
-         └─ Supabase Storage (картинки, 1GB бесплатно)
-```
-
-Время: ~25 минут.
+> ⚠ Для хостинга на связке **Git + Supabase + Vercel** используй отдельный
+> гайд: [README_VERCEL.md](README_VERCEL.md) — там база переключается на
+> PostgreSQL, а presence работает опционально.
 
 ---
 
-## Шаг 1. Создай проект Supabase (5 мин)
+## Что внутри пакета
 
-1. Зайди на [supabase.com](https://supabase.com), нажми **Start your project**, войди через GitHub
-2. **New Project**
-   - Name: `ashen-archive`
-   - Database Password: придумай и **сохрани** (например `MyP3ssw0rd!2024`)
-   - Region: `Frankfurt` (ближайший к России/Европе)
-   - Plan: Free
-3. Дождись создания (~2 минуты)
-
-### Создай bucket для картинок
-
-1. В левом меню Supabase → **Storage**
-2. **New bucket**
-   - Name: `images` (строго так)
-   - Public bucket: ✅ **включи**
-3. Создай
-
-### Получи ключи
-
-В Supabase → **Project Settings** (шестерёнка внизу слева) → **API**:
-
-| Что нужно | Где взять |
-|-----------|-----------|
-| `NEXT_PUBLIC_SUPABASE_URL` | Project URL, например `https://abc123.supabase.co` |
-| `SUPABASE_SERVICE_ROLE_KEY` | Project API keys → `service_role` (длинная строка) |
-
-В **Project Settings → Database → Connection string**:
-
-| Что нужно | Где взять |
-|-----------|-----------|
-| `DATABASE_URL` | Connection pooling (порт 6543) — замени `[YOUR-PASSWORD]` на свой пароль |
-| `DIRECT_URL` | Direct connection (порт 5432) — замени `[YOUR-PASSWORD]` |
-
-**Формат будет такой:**
 ```
-DATABASE_URL=postgresql://postgres.abc123:ТВОЙ_ПАРОЛЬ@aws-0-fra1.pooler.supabase.com:6543/postgres?pgbouncer=true
-DIRECT_URL=postgresql://postgres:ТВОЙ_ПАРОЛЬ@db.abc123.supabase.co:5432/postgres
-NEXT_PUBLIC_SUPABASE_URL=https://abc123.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ashen-archive/
+├── src/                  ← код сайта (Next.js 16, App Router)
+├── prisma/               ← схема БД + seed.ts + утилиты
+│   ├── schema.prisma     ← модели: User, Faction, Character, Lore,
+│   │                        Location, Chronicle, Achievement, Progress
+│   ├── seed.ts           ← полный сид (10 стражей, 41 герой, 77 лора...)
+│   ├── bind-characters.ts← привязка персонажей к аккаунтам (идемпотентен)
+│   └── backfill-lastseen.ts
+├── db/custom.db          ← ГОТОВАЯ SQLite-база со всеми данными и прогрессом
+├── mini-services/presence-service/ ← сервис онлайна (socket.io, порт 3003)
+├── scripts/              ← утилита загрузки картинок в Supabase (опционально)
+├── package.json, bun.lock, конфиги (tailwind, eslint, tsconfig...)
+└── README_DEPLOY.md      ← этот файл
 ```
 
-⚠️ **Сохрани эти 4 строки** — они понадобятся в следующих шагах.
+**Важно:** папки `public/` в пакете НЕТ — картинки и видео положи сам
+(герои → `public/heroes/`, боги → `public/gods/`, видео → `public/videos/`).
 
 ---
 
-## Шаг 2. Подготовь локальный `.env` (2 мин)
+## Требования
 
-В корне проекта скопируй `.env.example` в `.env`:
+- **Bun** (рекомендуется): https://bun.sh — `curl -fsSL https://bun.sh/install | bash`
+- либо Node.js 20+ (команды: `npm install` / `npm run dev`)
+
+---
+
+## Быстрый старт (5 минут)
 
 ```bash
-cp .env.example .env
-```
+# 1. Распакуй архив и перейди в папку
+unzip seed.zip -d ashen-archive && cd ashen-archive
 
-Открой `.env` в редакторе и вставь свои 4 значения из Шага 1.
+# 2. Установи зависимости
+bun install
+cd mini-services/presence-service && bun install && cd ../..
 
-> `.env` в `.gitignore` — он не попадёт в GitHub. Это правильно, там секреты.
+# 3. Настрой .env в корне (абсолютный путь к базе на ТВОЁМ сервере!)
+echo 'DATABASE_URL=file:/abs/path/to/ashen-archive/db/custom.db' > .env
 
----
+# 4. Сгенерируй Prisma-клиент
+bunx prisma generate
 
-## Шаг 3. Залей картинки в Supabase Storage (2 мин)
-
-Скрипт `scripts/upload-images.ts` берёт все картинки из `public/heroes/` и `public/gods/` и загружает их в твой Supabase Storage bucket `images`.
-
-```bash
-bun run upload-images
-```
-
-**Ожидаемый вывод:**
-```
-  ✓ Bucket "images" существует
-▸ Загрузка 5 файлов из heroes/ → heroes/
-  ✓ heroes/eiri.png → https://abc123.supabase.co/storage/v1/object/public/images/heroes/eiri.png
-  ✓ heroes/remi.png → ...
-  ...
-▸ Загрузка 12 файлов из gods/ → gods/
-  ✓ gods/alarus.png → ...
-  ...
-✓ Готово.
-```
-
-Проверь в Supabase → Storage → `images` bucket — там должны быть папки `heroes/` (5 файлов) и `gods/` (12 файлов).
-
----
-
-## Шаг 4. Создай таблицы и заполни данными (2 мин)
-
-**Одна команда сделает всё:**
-- сгенерирует Prisma клиент под PostgreSQL
-- создаст все таблицы в Supabase
-- заполнит их данными из сида (с правильными URL картинок)
-
-```bash
-bun run setup:supabase
-```
-
-Это алиас для `db:generate && db:push && upload-images && db:seed`. Если картинки уже залил на Шаге 3 — скрипт их обновит (upsert).
-
-**Проверь, что данные появились:**
-- Supabase → **Table Editor** → таблица `Character` — должно быть 48 строк
-- таблица `Faction` — 15 строк
-- таблица `User` — 2 строки (`dnd`, `pf2e`)
-
----
-
-## Шаг 5. Проверь локально (1 мин)
-
-```bash
+# 5. Запусти сайт (порт 3000)
 bun run dev
+
+# 6. Запусти сервис онлайна (порт 3003) — в отдельном терминале
+cd mini-services/presence-service
+PRESENCE_DB_URL=file:/abs/path/to/ashen-archive/db/custom.db bun run dev
 ```
 
-Открой `http://localhost:3000`, залогинься:
-- `dnd` / `ashen` → мир Эларии
-- `pf2e` / `ashen` → мир Голариона
+Готово: сайт на `http://localhost:3000`.
 
-Картинки должны подтягиваться из Supabase Storage (публичные URL). Если работают — локальная часть готова, глуш сервер (`Ctrl+C`).
+> База `db/custom.db` уже засеяна и содержит все аккаунты, записи и прогресс.
+> `bun run db:push` / `bun run db:seed` нужны ТОЛЬКО если хочешь начать с чистого листа
+> (seed пересоздаст данные; привязки персонажей применит `bun run prisma/bind-characters.ts`).
 
 ---
 
-## Шаг 6. Запушь на GitHub (3 мин)
+## Сервис онлайна (обязателен для профиля и вещания)
 
-Если ещё не создал репозиторий:
+`presence-service` — отдельный процесс на порту **3003**: кто онлайн,
+«был в сети», админ-вещание на весь экран, изгнание стража.
 
-1. Зайди на [github.com](https://github.com), **New repository**
-   - Name: `ashen-archive`
-   - Private (рекомендую — там твои тексты лора)
-   - **НЕ** добавляй README/gitignore (они уже есть)
+Сайт подключается к сокету по адресу из `NEXT_PUBLIC_PRESENCE_URL`.
+⚠ Если переменная **не задана — presence выключен** (сокет не открывается,
+счётчик «в сети» скрыт, статус-бар показывает «ОФЛАЙН»). Это безопасный
+дефолт для деплоя на Vercel, где сервис онлайна жить не может.
+На своём сервере задай её явно:
 
-В терминале, в папке проекта:
+### Вариант А — Caddy (проще всего)
+
+`Caddyfile`:
+```
+example.com {
+    handle /socket.io/* {
+        reverse_proxy localhost:3003
+    }
+    handle {
+        reverse_proxy localhost:3000
+    }
+}
+```
+
+`.env` в корне сайта:
+```
+DATABASE_URL=file:/abs/path/to/db/custom.db
+NEXT_PUBLIC_PRESENCE_URL=/
+```
+
+`.env` рядом с presence-service (`mini-services/presence-service/.env`):
+```
+PRESENCE_DB_URL=file:/abs/path/to/db/custom.db
+PRESENCE_SOCKET_PATH=/socket.io
+```
+
+### Вариант Б — nginx
+
+```nginx
+server {
+    server_name example.com;
+
+    location /socket.io/ {
+        proxy_pass http://127.0.0.1:3003;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+    }
+}
+```
+Переменные окружения — как в варианте А.
+
+> Если на своём сервере не задать `NEXT_PUBLIC_PRESENCE_URL`, presence будет
+> выключен — сайт работает, но без «кто в сети»/вещания/изгнания.
+
+---
+
+## Продакшен-режим (вместо dev)
 
 ```bash
-git init
-git add .
-git status   # проверь, что .env НЕ в списке (должен быть в .gitignore)
-git commit -m "Архив Пепельной Длани — миграция на Supabase"
-git branch -M main
-git remote add origin https://github.com/ТВОЙ_НИК/ashen-archive.git
-git push -u origin main
+bun run build:standalone && bun run start   # сайт, порт 3000 (standalone-сборка)
+# либо проще:
+bun run build && bun run start:next           # обычный next start
+
+cd mini-services/presence-service && bun index.ts   # сервис онлайна
 ```
 
-> ⚠️ **ВАЖНО:** перед `git add` убедись, что `.env` в `.gitignore`. Проверь:
-> ```bash
-> git status --ignored | grep ".env"
-> ```
-> Если `.env` виден как untracked (не ignored) — не коммить, добавь в `.gitignore` сначала.
+> `bun run build` (plain `next build`) совместим с Vercel; копирование
+> standalone-файлов вынесено в отдельный скрипт `build:standalone`.
+
+`NEXT_PUBLIC_PRESENCE_URL` читается при сборке — при её смене нужен
+пересборка (`bun run build`).
 
 ---
 
-## Шаг 7. Деплой на Vercel (5 мин)
+## Аккаунты (из сида)
 
-1. Зайди на [vercel.com](https://vercel.com), войди через GitHub
-2. **Add New → Project → Import** твой репозиторий `ashen-archive`
-3. Vercel сам определит Next.js — **Framework Preset: Next.js**
-4. **Environment Variables** — добавь те же 4 переменные из Шага 1:
+| Логин | Пароль | Мир | Роль |
+|---|---|---|---|
+| dnd | ashen | Элария (D&D 5e) | **АДМИН** |
+| pf2e | ashen | Голарион (PF2e) | **АДМИН** |
+| GTT_EDMI | EldMaster | Голарион | страж |
+| sashakarev1809, IlyaKazakhStrong, NiT, ps1x0k1d | ashen | Элария | стражи |
+| xlov21, EvaMoon, Mira | ashen | Голарион | стражи |
 
-| Key | Value |
-|-----|-------|
-| `DATABASE_URL` | `postgresql://postgres.abc123:...:6543/postgres?pgbouncer=true` |
-| `DIRECT_URL` | `postgresql://postgres:...:5432/postgres` |
-| `NEXT_PUBLIC_SUPABASE_URL` | `https://abc123.supabase.co` |
-| `SUPABASE_SERVICE_ROLE_KEY` | `eyJhbGci...` |
-
-5. **Deploy** — подожди ~2 минуты
-6. Получишь URL: `ashen-archive-xxx.vercel.app`
-
-🎉 **Готово!** Зайди на URL, залогинься `dnd` / `ashen` — сайт живёт в облаке.
+Горячие клавиши: `1–7` — секции, `Ctrl+K` — командная палитра, `?` — справка,
+`W` — смена мира **(только админам: dnd / pf2e)**, `G` — сброс Взгляда.
+Konami-код (↑↑↓↓←→←→BA) — сам найди, что он делает.
 
 ---
 
-## Дальнейшее обслуживание
+## Частые вопросы
 
-### Обновить код (автодеплой)
+**Изображения не грузятся?** — Проверь, что `public/heroes/…`, `public/gods/…`
+на месте; у портретов есть fallback-глиф, но лучше положить оригиналы.
 
-```bash
-git add .
-git commit -m "что изменил"
-git push
-```
+**«СТРАЖЕЙ В СЕТИ: 0» при работающем сервисе?** — Сокет не пробрасывается:
+проверь прокси на `/socket.io/*` и переменные из вариантов А/Б.
 
-Vercel сам пересоберёт и опубликует — через ~1 минуту изменения будут на сайте.
-
-### Добавить нового героя / бога
-
-**Вариант А — через код (рекомендую):**
-1. Отредактируй `prisma/seed.ts` — добавь запись
-2. Залей картинку: `bun run upload-images` (если новая)
-3. `bun run db:seed` — пересоздаст данные
-4. `git push` — Vercel задеплоит
-
-**Вариант Б — прямо в Supabase:**
-1. Залей картинку в Storage (drag-and-drop в дашборде)
-2. Скопируй публичный URL картинки
-3. В Table Editor → `Character` → Insert row → вставь URL в `imageUrl`
-
-### Бэкапы
-
-Supabase Free делает **ежедневные бэкапы** (хранятся 7 дней). Для ручного:
-```bash
-pg_dump "postgresql://postgres:ПАРОЛЬ@db.PROJECT.supabase.co:5432/postgres" > backup-$(date +%Y%m%d).sql
-```
-
-### Логи и мониторинг
-
-- **Vercel:** dashboard → твой проект → Logs (виден каждый запрос)
-- **Supabase:** dashboard → Logs (SQL-запросы, Storage-доступ)
-
----
-
-## Если что-то сломалось
-
-| Симптом | Решение |
-|---------|---------|
-| `P1001: Can't reach database server` | Проверь `DATABASE_URL` — возможно, пароль без спецсимволов или регион в хосте не тот |
-| Картинки не грузятся (404) | Проверь, что bucket `images` = **public**. Settings → Storage → Policies |
-| `PrismaClientInitializationError` на Vercel | Не задан `DIRECT_URL` в env Vercel |
-| Логин не работает | Проверь, что `db:seed` отработал — в Supabase Table Editor → User должны быть 2 строки |
-| `STORAGE_NOT_CONFIGURED` при загрузке | Не задан `SUPABASE_SERVICE_ROLE_KEY` |
-
----
-
-## Чек-лист перед публикацией
-
-- [ ] `.env` НЕ в git (`git status` не показывает его)
-- [ ] `.env.example` в git (шаблон для других разработчиков)
-- [ ] Картинки загружены в Supabase Storage
-- [ ] Таблицы созданы и заполнены (`db:seed` отработал)
-- [ ] Локально `bun run dev` работает и картинки подтягиваются
-- [ ] Репозиторий на GitHub — private
-- [ ] На Vercel введены все 4 env-переменные
-- [ ] Первый деплой прошёл успешно
-- [ ] Логин `dnd`/`ashen` работает на live-URL
-
----
-
-## Контакты и поддержка
-
-Если что-то не работает — проверь:
-1. Логи Vercel: dashboard → твой проект → Logs
-2. Логи Supabase: dashboard → Logs → Database / Storage
-3. Этот README — раздел «Если что-то сломалось»
-
-Удачного деплоя! 🐉
+**Как дать игрокам новые пароли?** — Пока только через правку БД
+(пароли в seed хранятся открытым текстом — sandbox-уровень безопасности).

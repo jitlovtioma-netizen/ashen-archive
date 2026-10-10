@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useArchive } from "@/lib/store";
+import { usePresence, presenceEnabled } from "@/lib/presence";
 import type { GameSystem, Stats } from "@/lib/types";
 
 export function StatusBar({ system }: { system: GameSystem }) {
@@ -10,6 +11,8 @@ export function StatusBar({ system }: { system: GameSystem }) {
   const gaze = useArchive((s) => s.gaze);
   const witching = useArchive((s) => s.witching);
   const user = useArchive((s) => s.user);
+  const onlineCount = usePresence((s) => s.online.length);
+  const connected = usePresence((s) => s.connected);
 
   useEffect(() => {
     fetch(`/api/stats?system=${system}`)
@@ -37,9 +40,15 @@ export function StatusBar({ system }: { system: GameSystem }) {
       className="panel clip-hud-sm flex items-center gap-2 sm:gap-3 px-3 py-1.5 text-[10px] sm:text-[11px] tracking-wider overflow-x-auto crt-scroll shrink-0"
       role="contentinfo"
     >
-      <span className="flex items-center gap-1.5 shrink-0">
-        <span className="led led-green" />
-        <span className="glow-green">В СЕТИ</span>
+      <span className="flex items-center gap-1.5 shrink-0" title={presenceEnabled ? (connected ? "Сервис онлайна подключён" : "Переподключение к сервису онлайна…") : "Сервис онлайна не подключён в этой сборке (см. README_VERCEL.md)"}>
+        {presenceEnabled ? (
+          <span className={connected ? "led led-green" : "led led-amber"} />
+        ) : (
+          <span className="led led-amber" />
+        )}
+        <span className={connected ? "glow-green" : "text-dim"}>
+          {presenceEnabled ? "В СЕТИ" : "ОФЛАЙН"}
+        </span>
       </span>
       <Sep />
       <span className="text-dim shrink-0 hidden sm:inline">
@@ -64,6 +73,15 @@ export function StatusBar({ system }: { system: GameSystem }) {
         ИСКАЖЕНО:{" "}
         <span className="glow-red">{stats?.corruptedRecords ?? "···"}</span>
       </span>
+      {presenceEnabled && (
+        <>
+          <Sep className="hidden sm:inline" />
+          <span className="text-dim shrink-0 hidden sm:inline" title="Стражи в архиве прямо сейчас">
+            СТРАЖЕЙ В СЕТИ:{" "}
+            <span className="glow-green">{onlineCount}</span>
+          </span>
+        </>
+      )}
       {witching && (
         <>
           <Sep />

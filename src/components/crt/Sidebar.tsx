@@ -11,13 +11,13 @@ interface NavItem {
 }
 
 const NAV: NavItem[] = [
+  { key: "profile", label: "Профиль", code: "ПРОФИЛЬ_СТРАЖА", sigil: "👤" },
   { key: "characters", label: "Герои", code: "АРХИВ_ГЕРОЕВ", sigil: "⚔" },
   { key: "factions", label: "Фракции", code: "РЕЕСТР_ФРАКЦИЙ", sigil: "🜲" },
   { key: "lore", label: "Лор", code: "БАЗА_ЛОРА", sigil: "📖" },
   { key: "lore_gods", label: "Божества", code: "ЛОР_ПАНТЕОН", sigil: "✦" },
   { key: "lore_npcs", label: "Второстеп. герои", code: "ЛОР_НПС", sigil: "🎭" },
   { key: "locations", label: "Локации", code: "РЕЕСТР_МЕСТ", sigil: "🗺" },
-  { key: "achievements", label: "Достижения", code: "ДОСТИЖЕНИЯ", sigil: "🏆" },
 ];
 
 export function Sidebar() {
@@ -136,9 +136,20 @@ export function Sidebar() {
         {user && (
           <div className="panel-inset p-2 mt-1">
             <div className="text-[9px] text-dim tracking-widest mb-0.5">
-              {"// СТРАЖ"}
+              {"// СТРАЖ"}{user.role === "ADMIN" ? " · ⚡ АДМИН" : ""}
             </div>
-            <div className="text-[11px] glow-green truncate">{user.displayName}</div>
+            <div
+              className="text-[11px] truncate"
+              style={{
+                color: user.role === "ADMIN" ? "var(--amber)" : "var(--green)",
+                textShadow:
+                  user.role === "ADMIN"
+                    ? "0 0 8px rgba(232,161,58,0.6)"
+                    : "0 0 8px rgba(79,239,134,0.5)",
+              }}
+            >
+              {user.displayName}
+            </div>
             <div
               className="text-[9px] tracking-wider"
               style={{ color: user.system === "DND" ? "var(--red)" : "var(--cyan)" }}

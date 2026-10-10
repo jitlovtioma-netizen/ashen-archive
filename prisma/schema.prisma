@@ -2,10 +2,14 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// Провайдер переключается скриптом:
+//   bun run db:use-sqlite    → локальная база (песочница / свой сервер)
+//   bun run db:use-postgres  → Supabase PostgreSQL (деплой на Vercel, см. README_VERCEL.md)
+// Все типы — String, enums не используются (совместимо с обоими провайдерами).
+
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -14,7 +18,32 @@ model User {
   password    String
   displayName String
   system      String
+  role        String   @default("USER")
+  characterId String?
   createdAt   DateTime @default(now())
+  progress    Progress[]
+}
+
+// Прогресс стража — персистентный, привязан к пользователю и миру.
+// Массивы хранятся JSON-строками (SQLite не поддерживает списки).
+model Progress {
+  id              String   @id @default(cuid())
+  userId          String
+  system          String
+  achievements    String   @default("[]")
+  shards          String   @default("[]")
+  unlockedIds     String   @default("[]")
+  revealedSecrets String   @default("[]")
+  solvedRiddles   String   @default("[]")
+  konamiUnlocked  Boolean  @default(false)
+  secretRevealed  Boolean  @default(false)
+  gaze            Int      @default(7)
+  updatedAt       DateTime @updatedAt
+  createdAt       DateTime @default(now())
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, system])
+  @@index([userId])
 }
 
 model Faction {
