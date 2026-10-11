@@ -13,8 +13,9 @@ generator client {
 // Все типы — String, enums не используются (совместимо с обоими провайдерами).
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
