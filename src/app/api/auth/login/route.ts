@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { dbHint } from '@/lib/db-diagnostics'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,23 +30,33 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const user = await db.user.findUnique({ where: { login } })
+  try {
+    const user = await db.user.findUnique({ where: { login } })
 
-  if (!user || user.password !== password) {
+    if (!user || user.password !== password) {
+      return NextResponse.json(
+        { ok: false, error: 'INVALID_CREDENTIALS' },
+        { status: 401 },
+      )
+    }
+
+    return NextResponse.json({
+      ok: true,
+      user: {
+        login: user.login,
+        displayName: user.displayName,
+        system: user.system,
+        role: user.role === 'ADMIN' ? 'ADMIN' : 'USER',
+        characterId: user.characterId ?? null,
+      },
+    })
+  } catch (e) {
+    // База недоступна (частая причина — конфигурация Vercel+Supabase):
+    // отдаём 503 с подсказкой вместо безликого 500
+    console.error('[api/auth/login] DB error:', e)
     return NextResponse.json(
-      { ok: false, error: 'INVALID_CREDENTIALS' },
-      { status: 401 },
+      { ok: false, error: 'DB_UNAVAILABLE', hint: dbHint(e) },
+      { status: 503 },
     )
   }
-
-  return NextResponse.json({
-    ok: true,
-    user: {
-      login: user.login,
-      displayName: user.displayName,
-      system: user.system,
-      role: user.role === 'ADMIN' ? 'ADMIN' : 'USER',
-      characterId: user.characterId ?? null,
-    },
-  })
 }

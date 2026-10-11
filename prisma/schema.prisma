@@ -2,9 +2,14 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// Провайдер переключается скриптом:
-//   bun run db:use-sqlite    → локальная база (песочница / свой сервер)
-//   bun run db:use-postgres  → Supabase PostgreSQL (деплой на Vercel, см. README_VERCEL.md)
+// Провайдер синхронизируется АВТОМАТИЧЕСКИ скриптом scripts/sync-db-provider.mjs
+// (запускается из postinstall / dev / build): он читает DATABASE_URL и сам
+// ставит правильный provider:
+//   postgresql://… (Supabase)  → provider = "postgresql"
+//   file:…        (SQLite)      → provider = "sqlite"
+// Если задан DIRECT_URL — в postgres-режиме добавляется directUrl для CLI
+// (db push / migrate мимо pooler'а). Вручную ничего править не нужно.
+// Принудительно: bun run db:use-postgres / db:use-sqlite.
 // Все типы — String, enums не используются (совместимо с обоими провайдерами).
 
 datasource db {

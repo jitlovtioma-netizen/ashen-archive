@@ -21,13 +21,22 @@ ashen-archive/
 │   └── backfill-lastseen.ts
 ├── db/custom.db          ← ГОТОВАЯ SQLite-база со всеми данными и прогрессом
 ├── mini-services/presence-service/ ← сервис онлайна (socket.io, порт 3003)
-├── scripts/              ← утилита загрузки картинок в Supabase (опционально)
+├── scripts/              ← sync-db-provider.mjs (авто-провайдер БД),
+│                          upload-images.ts (картинки в Supabase, опционально)
 ├── package.json, bun.lock, конфиги (tailwind, eslint, tsconfig...)
 └── README_DEPLOY.md      ← этот файл
 ```
 
 **Важно:** папки `public/` в пакете НЕТ — картинки и видео положи сам
 (герои → `public/heroes/`, боги → `public/gods/`, видео → `public/videos/`).
+
+**Провайдер БД выставляется автоматически** (v4.3.2+): скрипт
+`scripts/sync-db-provider.mjs` запускается из `postinstall` / `dev` / `build`,
+читает `DATABASE_URL` из `.env` и сам ставит правильный `provider` в
+`prisma/schema.prisma` (`postgresql://…` → postgresql, `file:…` → sqlite).
+Какой провайдер лежит в git — не важно: при первой же установке/запуске
+он подстроится под твою ссылку. Для своего сервера с SQLite достаточно
+указать в `.env` файловую ссылку (шаг 3 быстрого старта).
 
 ---
 
@@ -46,18 +55,19 @@ unzip seed.zip -d ashen-archive && cd ashen-archive
 
 # 2. Установи зависимости
 bun install
+
 cd mini-services/presence-service && bun install && cd ../..
 
 # 3. Настрой .env в корне (абсолютный путь к базе на ТВОЁМ сервере!)
+#    Провайдер Prisma подстроится под эту ссылку автоматически
+#    при bun run dev / bun install (scripts/sync-db-provider.mjs).
 echo 'DATABASE_URL=file:/abs/path/to/ashen-archive/db/custom.db' > .env
 
-# 4. Сгенерируй Prisma-клиент
-bunx prisma generate
-
-# 5. Запусти сайт (порт 3000)
+# 4. Запусти сайт (порт 3000)
+#    (схема и Prisma-клиент синхронизируются с .env сами)
 bun run dev
 
-# 6. Запусти сервис онлайна (порт 3003) — в отдельном терминале
+# 5. Запусти сервис онлайна (порт 3003) — в отдельном терминале
 cd mini-services/presence-service
 PRESENCE_DB_URL=file:/abs/path/to/ashen-archive/db/custom.db bun run dev
 ```

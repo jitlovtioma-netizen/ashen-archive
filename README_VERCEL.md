@@ -7,12 +7,52 @@
 
 ---
 
+## 🚨 Быстрый фикс: «Не удалось получить данные http 500» на всех разделах
+
+**Симптом:** сайт открывается, интерфейс живёт, но герои/лор/профиль пустые,
+везде ошибка HTTP 500. Часто появляется после загрузки в git файлов из
+старого seed.zip (до v4.3.2).
+
+**Причина №1 (99% случаев): в `prisma/schema.prisma` стоял `provider = "sqlite"`
+при postgres-ссылке в `DATABASE_URL`.** На Vercel база — Supabase PostgreSQL;
+Prisma-клиент, собранный под SQLite, не может открыть postgres-ссылку → каждый
+запрос в БД падает.
+
+**Начиная с v4.3.2 это невозможно в принципе:** скрипт
+`scripts/sync-db-provider.mjs` читает `DATABASE_URL` и сам ставит правильный
+provider. Он запускается автоматически из `postinstall`, `dev` и `build` —
+на Vercel при деплое, на своём сервере при `bun install` / `bun run dev`.
+Если задан `DIRECT_URL`, в схему добавляется `directUrl` (нужен для
+`prisma db push` / сида мимо pooler'а); не задан — строка убирается.
+
+**Что сделать на старой версии (фикс за 1 минуту, прямо на GitHub):**
+1. Обнови файлы до v4.3.2+ (залей свежий seed.zip в репозиторий) — и всё,
+   дальше провайдер подстраивается сам.
+2. Либо вручную: `prisma/schema.prisma` → Edit →
+   ```diff
+   - provider = "sqlite"
+   + provider = "postgresql"
+   ```
+   → Commit → Vercel пересоберёт сам.
+
+**Причина №2: не задана/неверна `DATABASE_URL`.**
+Vercel → Settings → Environment Variables:
+`DATABASE_URL` = Supabase **transaction pooler** (порт 6543) с параметрами
+`?pgbouncer=true&connection_limit=1`. После смены — Redeploy.
+
+**Причина №3: в Supabase нет таблиц** (новый проект).
+Локально: в `.env` — direct-ссылка (5432), затем
+`bunx prisma db push && bun run db:seed && bun run prisma/bind-characters.ts`
+(подробно — шаг 2 ниже).
+
+---
+
 ## Итог аудита совместимости (что уже готово, а что нельзя)
 
 | Часть | Vercel + Supabase | Комментарий |
 |---|---|---|
 | Next.js 16 (страницы, API-роуты) | ✅ работает | API-роуты не пишут на диск — serverless-совместимы |
-| База: Prisma + SQLite | ❌ → ✅ заменено | У Vercel ФС read-only, SQLite не выживает. Скрипт `db:use-postgres` переключает схему на Supabase PostgreSQL |
+| База: Prisma + SQLite | ❌ → ✅ заменено | У Vercel ФС read-only, SQLite не выживает. Провайдер подстраивается автоматически: `sync-db-provider.mjs` в postinstall/dev/build ставит `postgresql` для postgres-ссылок |
 | Картинки из `public/` | ✅ работает | Vercel раздаёт `public/` статику как есть. Supabase Storage — опция |
 | Прогресс стражей (achievements, загадки…) | ✅ работает | Хранится в БД (модель Progress), никуда не денется |
 | Авторизация, админ-права (dnd / pf2e) | ✅ работает | Всё через БД |
@@ -62,8 +102,10 @@ postgresql://postgres.ПРОЕКТ_REF:ПАРОЛЬ@aws-0-РЕГИОН.pooler.su
 # 1. Установи зависимости
 bun install
 
-# 2. Переключи Prisma на PostgreSQL (правит prisma/schema.prisma)
-bun run db:use-postgres
+# 2. Убедись, что Prisma настроен на PostgreSQL.
+#    В свежем seed.zip схема УЖЕ postgresql — команда ниже только для
+#    старых версий архива (когда в схеме было sqlite):
+bun run db:use-postgres   # или проверь: grep provider prisma/schema.prisma
 
 # 3. В .env поставь DIRECT-ссылку (порт 5432) из Шага 1
 #    DATABASE_URL=postgresql://postgres:ПАРОЛЬ@db.ПРОЕКТ_REF.supabase.co:5432/postgres

@@ -1,11 +1,28 @@
 # ПЕПЕЛЬНЫЙ АРХИВ (Ashen Archive) — Worklog
 
-## Текущий статус проекта
+## Текущий статус проекта (актуально: v4.3.2, задача «фикс HTTP 500 на проде»)
 
-Проект полностью перенесён из GitHub-репозитория
-`https://github.com/jitlovtioma-netizen/ashen-archive` в песочницу
-`/home/z/my-project` и работает на локальной SQLite-базе (вместо Supabase
-PostgreSQL). Dev-сервер запущен на порту 3000, lint чистый, ошибок в рантайме нет.
+Проект работает в песочнице `/home/z/my-project` на локальной SQLite-базе
+(`.env` → `DATABASE_URL=file:...db/custom.db`), dev-сервер на порту 3000
+поддерживается сторожем `mini-services/presence-service/devkeeper.ts`
+(переживает зачистку процессов harness'ом). Продакшен пользователя —
+**Git + Supabase (PostgreSQL) + Vercel**, боевой .env получен и проверен
+(read-only): 10 стражей, 41 персонаж, 77 лора, 14 фракций — данные живы.
+
+### ⚠ ГЛАВНЫЕ ПРАВИЛА для всех будущих агентов (НЕ НАРУШАТЬ)
+1. **НЕ переключай provider Prisma вручную** (никаких `db:use-postgres` /
+   `db:use-sqlite` / правок schema.prisma «руками»). С v4.3.2 провайдер
+   синхронизируется АВТОМАТИЧЕСКИ скриптом `scripts/sync-db-provider.mjs`
+   (запускается из postinstall/dev/build по DATABASE_URL). Ручные правки
+   схемы БЕЗ понимания этого механизма ломают прод (инцидент HTTP 500,
+   см. Task 6-7 ниже). Провайдер в git-коммите может быть любым — это
+   нормально, авто-синк выровняет при установке.
+2. **НЕ запускай** `bun run db:push` / `db:seed` с postgres-ссылкой боевой
+   базы в .env — это пишет в прод. В песочнице .env всегда sqlite.
+3. Рабочее дерево может содержать изменённые `prisma/schema.prisma`
+   (provider sqlite/postgresql) — это шум авто-синка, НЕ «поломка».
+4. QA через agent-browser: логинься, смотри героев/лор, НО не активируй
+   секретные механики без нужды (konami, загадки) — пишут прогресс.
 
 **Что это:** тёмно-фэнтезийный CRT-архив настольной ролевой кампании «Орден
 Пепельной Длани». Два мира: Элария (D&D 5e) и Голарион (Pathfinder 2e).
@@ -301,3 +318,251 @@ Stage Summary:
 3. Эдмунт Ван Рейх и Лэфтарион — кандидаты во «Второстепенные герои» PF2E.
 4. Идеи: звук вещания уже есть; можно добавить сортировку стражей по прогрессу,
    историю хроник в досье, счётчик «дней в архиве».
+---
+Task ID: 5
+Agent: main (Z.ai Code)
+Task: Хоткей W — только для админов (изоляция миров DND/PF2E) +
+аудит и подготовка к хостингу Git + Supabase + Vercel
+
+Work Log:
+- **W только для админов** (запрос: игроки DnD не должны видеть PF2e и наоборот):
+  • store.ts switchWorld: guard `role !== "ADMIN"` → no-op (защита в глубину);
+  • KeyboardShortcutsHandler: W у не-админа → sfx.error + атмосферный тост
+    «ПУТЬ ЗАПЕЧАТАН // некоторые двери открывает только Длань //» (не раскрывает,
+    что за клавишей); у админа — как раньше, глитч + world flash;
+  • KeyboardShortcuts (справка ?): строка W помечена adminOnly и скрыта
+    для не-админов (useArchive selector на role), остальные хоткеи на месте.
+- **Аудит Git+Supabase+Vercel** (по итогам: 3_blocker исправлены):
+  1) Prisma provider=sqlite на Vercel нежизнеспособ (ФС read-only) →
+     scripts/set-db-provider.ts: переключает provider в ОБОИХ схемах (основной
+     + presence-service); скрипты `db:use-postgres` / `db:use-sqlite`;
+     протестирован туда-обратно, песочница осталась на sqlite;
+  2) presence-сервис (socket.io:3003) на Vercel не запускается → graceful
+     degradation: без NEXT_PUBLIC_PRESENCE_URL сокет вообще не открывается
+     (раньше дефолт /?XTransformPort=3003 дал бы бесконечные 404-реконнекты);
+     export presenceEnabled; StatusBar: LED отражает реальное состояние
+     (green=подключён / amber=оффлайн), «СТРАЖЕЙ В СЕТИ» скрывается, лейбл
+     «ОФЛАЙН»; ProfileSection: вместо «В СЕТИ: 0» → чипы «◌ ЗЕРКАЛО ТУМАННО»/
+     «◌ БЕЗ ЗЕРКАЛА»; песочнице вернули presence через явную запись в .env;
+  3) build-скрипт с cp в standalone ломал бы Vercel-сборку → build = plain
+     `next build` (Vercel-совместим), standalone-копия вынесена в
+     `build:standalone`, добавлен `start:next` и `postinstall: prisma generate`.
+- **.env убран из git-трекинга** (был закоммичен до .gitignore-правила;
+  git rm --cached) — на Vercel переменные задаются в дашборде.
+- **.env.example** переписан: 4 блока (SQLite / Supabase direct+pooler URL /
+  presence 4 варианта / Supabase Storage опция).
+- **README_VERCEL.md (новый)**: полный гайд Git+Supabase+Vercel — таблица
+  аудита «что работает/что нет», шаги 0-6 (Supabase проект → direct 5432 для
+  сида → db:use-postgres → prisma db push → seed → bind → git push → Vercel
+  env DATABASE_URL=pooler 6543 ?pgbouncer=true → deploy), картинки двумя
+  путями (public в репо / Supabase Storage), presence на Railway/Render
+  (PRESENCE_DB_URL=pooler, PRESENCE_SOCKET_PATH=/socket.io,
+  NEXT_PUBLIC_PRESENCE_URL на Vercel + redeploy), FAQ (P1001, прогресс,
+  возврат на sqlite).
+- **README_DEPLOY.md** обновлён: ссылка на README_VERCEL, presence теперь
+  opt-in (без env выключен), build:standalone/start:next, W=только админам.
+- Комментарии в prisma/schema.prisma (обеих) про переключение провайдера.
+- **seed.zip пересобран** (533KB, 180 файлов, HTTP 200 по /seed.zip):
+  включены README_VERCEL.md, scripts/set-db-provider.ts, свежие схемы и
+  package.json; .env по-прежнему НЕ внутри; public/ исключён.
+
+QA (agent-browser, сессия qa1 через шлюз :81):
+- dnd (АДМИН): W → ЭЛАРИЯ→ГОЛАРИОН ✓, W обратно → ГОЛАРИОН→ЭЛАРИЯ ✓,
+  справка показывает W («только Длань») ✓
+- GTT_EDMI (страж PF2E): вход → ГОЛАРИОН; W → мир НЕ сменился ✓,
+  тост «ПУТЬ ЗАПЕЧАТАН» появился ✓; справка: W скрыт, остальные хоткеи
+  (G, 1-7, Ctrl+K, Konami-подсказка) на месте ✓
+- presence в песочнице жив после .env-правки: footer «В СЕТИ»,
+  СТРАЖЕЙ В СЕТИ: 1 ✓; профиль: СТРАЖИ_АРХИВА рендерится ✓
+- Мобильная вёрстка 390x844: scrollWidth=390, переполнения нет ✓
+- Консоль браузера: только HMR-логи, 0 ошибок; dev.log: 0 ошибок,
+  все API 200; lint: 0 ошибок ✓
+
+Stage Summary:
+- W — админская привилегия на трёх уровнях: guard в сторе, проверка в
+  обработчике, скрытие из справки; игрокам — загадочный отказ
+- Проект готов к Vercel: build-скрипт совместим, presence выключается
+  безопасно, база переключается на Supabase PostgreSQL одной командой
+  (`bun run db:use-postgres` + инструкция в README_VERCEL.md)
+- Проверка «всё ли подойдёт» для Git+Supabase+Vercel: ДА, кроме
+  presence-сервиса (он требует отдельный хост — задокументировано);
+  SQLite-база в репо на Vercel мертва (нужен Supabase Postgres)
+
+Нерешённые вопросы / приоритеты следующей фазы:
+1. Реальный smoke-тест на Vercel невозможен из песочницы — при первом деплое
+   проверить: DATABASE_URL pooler, postinstall prisma generate, картинки.
+2. В seed.zip и в сиде пароли открытым текстом — напоминать пользователю
+   не выкладывать public/seed.zip на боевой сайт.
+3. Изображения для замены (пути): public/heroes/kael.png, tey.png,
+   stranger.png, edmund.png (задел под второстепенных PF2E).
+4. Идеи: Эдмунт Ван Рейх и Лэфтарион как второстепенные герои PF2E,
+   история хроник в досье, счётчик «дней в архиве».
+---
+Task ID: 6
+Agent: main (Z.ai Code)
+Task: Инцидент на проде: после загрузки файлов из seed.zip на Vercel+Supabase
+все разделы выдают «Не удалось получить данные http 500»
+
+Work Log:
+- **Диагноз**: seed.zip v4.3 собирался с prisma/schema.prisma
+  provider = "sqlite" (конфиг песочницы/само-хостинга). Пользователь
+  заливает файлы из zip в git → Vercel собирает Prisma-клиент под SQLite,
+  а DATABASE_URL у него postgres (Supabase) → PrismaClientInitializationError
+  ("must start with the protocol file://") на каждом запросе → 500 на всех
+  API (архив, статы, юзеры, логин). Симптом точно совпал: «сервер стоял и
+  работал, после изменений всё сломалось» — раньше в его репо была
+  postgres-схема, файлы из zip её перезаписали на sqlite.
+- **Пользователю выдан фикс на 1 минуту**: в prisma/schema.prisma
+  provider = "sqlite" → "postgresql" (можно прямо на GitHub), push →
+  Vercel пересоберёт (postinstall: prisma generate уже есть). Плюс
+  проверка DATABASE_URL (pooler 6543, ?pgbouncer=true).
+- **seed.zip теперь postgres-first** (под workflow пользователя
+  «zip → git → Vercel»): при сборке обе схемы патчатся на postgresql
+  через staging-оверлей (/tmp/patch + zip update), в корень архива
+  добавлен README_FIRST.txt (два сценария: Vercel — пушить как есть;
+  свой сервер — сначала bun run db:use-sqlite). Проверено: в zip обе
+  схемы provider="postgresql", README_FIRST на месте, роуты свежие
+  (grep dbHint = 2 в stats и login), скачивание /seed.zip HTTP 200 (538KB).
+- **Диагностика в API**: новый src/lib/db-diagnostics.ts (dbHint) —
+  превращает ошибку Prisma в человеческую инструкцию (провайдер не
+  совпадает / нет DATABASE_URL / база недоступна P1001 / нет таблиц
+  P2021 / prepared statements pgbouncer). Обёрнуты в try/catch →
+  503 {error: DB_UNAVAILABLE, hint} вместо безликого 500:
+  /api/archive, /api/stats, /api/users, /api/auth/login. Теперь причину
+  видно, открыв /api/stats?system=DND прямо в браузере на проде.
+- **README_VERCEL.md**: секция «🚨 Быстрый фикс: HTTP 500 на всех
+  разделах» в самом верху (3 причины + фикс через GitHub UI + diff),
+  шаг 2 переписан (в свежем zip уже postgres, db:use-postgres — только
+  для старых версий).
+- **README_DEPLOY.md**: быстрый старт дополнен шагом «bun run
+  db:use-sqlite» (zip теперь postgres по умолчанию), примечание о схеме.
+
+QA:
+- lint: 0 ошибок; smoke через curl: archive/stats/users/login — все 200
+  (try/catch не сломал рабочий sqlite-путь песочницы)
+- agent-browser: вход dnd → 8 карточек героев, «http 500» на странице нет,
+  dev.log чистый, консоль без ошибок
+- zip: схемы внутри postgresql, README_FIRST.txt есть, размер 538KB,
+  HTTP 200 при скачивании
+
+Stage Summary:
+- Корневая причина инцидента устранена на уровне архива: seed.zip больше
+  не может занести sqlite-схему в Vercel-репозиторий (по умолчанию postgres)
+- API-роуты научились объяснять, что именно не так с БД (hint в 503)
+- Пользователю отправлена инструкция фикса на 1 минуту (правка одной
+  строки в репо на GitHub)
+
+Нерешённые вопросы / приоритеты следующей фазы:
+1. Ждать подтверждения от пользователя, что после правки провайдера
+   прод ожил (если нет — просить вывод /api/stats?system=DND с прода,
+   там теперь будет hint).
+2. Проверить, что в его Vercel DATABASE_URL — pooler-ссылка (6543,
+   pgbouncer=true), иначе возможны prepared statement ошибки под
+   нагрузкой.
+3. Напомнить: db/custom.db в репо на Vercel не используется (данные
+   в Supabase) — это норм.
+4. Прошлые идеи в силе: Эдмунт/Лэфтарион как второстепенные PF2E,
+   история хроник в досье, счётчик «дней в архиве».
+---
+Task ID: 7
+Agent: main (Z.ai Code)
+Task: Пользователь прислал боевой .env (Supabase postgres pooler 6543 +
+DIRECT_URL 5432) — воспроизвести его конфигурацию, доказать работоспособность
+postgres-пути и сделать так, чтобы рассинхрон провайдера Prisma (причина
+HTTP 500 на проде) был невозможен в принципе.
+
+Work Log:
+- **Проанализирован присланный .env** (upload/.env): DATABASE_URL =
+  transaction pooler 6543 (?pgbouncer=true), DIRECT_URL = 5432 (session
+  pooler), Supabase URL + service role key. Оба порта доступны из песочницы
+  (TCP-проверка). Учтено, что «с другим ИИ делали по-другому»: их сетап —
+  DIRECT_URL через pooler-хост:5432 (прямая db.*.supabase.co:5432 у них
+  не работала).
+- **Скрипты sync-db-provider.mjs** (новый, engine-agnostic .mjs: node|bun,
+  без зависимостей): читает DATABASE_URL (process.env → .env → .env.local),
+  ставит provider в ОБОИХ схемах (postgresql:// → postgresql, file: →
+  sqlite); управляет directUrl = env("DIRECT_URL") — добавляет в
+  postgres-режиме при заданном DIRECT_URL (нужно для db push/миграций мимо
+  pooler'а), иначе убирает (иначе prisma generate падает «Environment
+  variable not found»); флаги --quiet/--generate/--force-generate
+  (перегенерация при изменении провайдера или отсутствии клиента).
+  Старый scripts/set-db-provider.ts удалён.
+- **package.json**: sync встроен в postinstall `(node … || bun …) && prisma
+  generate` (работает на Vercel с любым пакетным менеджером), dev
+  (`bun scripts/… --generate && next dev`), build и build:standalone.
+  Явные оверрайды db:use-postgres / db:use-sqlite сохранены + db:sync.
+- **Верификация postgres-пути на боевой базе (read-only)**: песочница
+  временно переключена на присланный .env (pooler + connection_limit=5),
+  схемы → postgresql + directUrl, клиент перегенерирован. Прямой запрос
+  через PrismaClient (scripts/__prodcheck.mjs, удалён после) прочитал
+  боевую Supabase: users 10 (2 ADMIN: dnd, pf2e; 8 USER), characters 41
+  (8 DND-героев, 12 DND-NPC, 7 PF2E-героев, 14 PF2E-NPC), lore 77,
+  factions 14, locations 13, chronicles 6, achievements 6, progress 6.
+  Герои: Каэль Валькрейн, Бруно, Мурасаки Каэдэ, Диана, Ева, Реми…
+  → конфигурация пользователя («postgres + DIRECT_URL») полностью рабочая,
+  данные на месте, чинить в базе нечего.
+- **Расследование «призрака»**: во время верификации schema.prisma
+  осциллировал sqlite↔postgres, клиент перегенерировался под sqlite на
+  лету → Turbopack перегружал модуль → воспроизведён ровно тот же
+  Validation Error («URL must start with the protocol file:»), что и на
+  проде пользователя. Источник — QA-агент старой cron-задачи webDevReview
+  (логины dnd/GTT_EDMI в dev.log после 08:43), которая «чинила» проект по
+  устаревшему worklog. Cron-задача 450313 удалена. Вывод зафиксирован в
+  правилах вверху worklog: провайдер руками не трогать.
+- **devkeeper.ts** (mini-services/presence-service/): harness убивает все
+  процессы, порождённые tool-вызовами (проверено setsid-экспериментом), а
+  бут-процессы выживают. Presence-service — бут-процесс → он теперь
+  поднимает основной `bun run dev`, если :3000 свободен. Активен ТОЛЬКО в
+  песочнице (маркер — ZAI Control Service на :12600; на сервере
+  пользователя/Vercel молча не работает). Импорт в index.ts, hot-reload
+  безопасен (guard по порту). Сервер теперь живёт между tool-вызовами.
+- **Песочница возвращена на sqlite**: .env (file:custom.db + presence URL),
+  sync → sqlite (directUrl убран), клиент sqlite, сервер перезапущен,
+  API 200 (stats DND: 63 записи / 8 героев; PF2E: 56 / 7), логин dnd OK.
+- **Документация**: .env.example создан и ЗАКОММИЧЕН (его съедало правило
+  .env* в .gitignore — добавлено исключение !.env.example; именно поэтому
+  он терялся в прошлых релизах); README_VERCEL (быстрый-фикс переписан под
+  авто-синк), README_DEPLOY (db:use-sqlite больше не нужен в quick start),
+  README_FIRST.txt (новая версия: «залей и всё подстроится само»),
+  CHANGES.md (v4.3.2 с инструкцией применения на 1 минуту).
+- **Коммиты**: 90c1cbf (v4.3.2 авто-синк; тег ashen-archive-v4.3.2-auto-db-provider),
+  4583513 (.env.example + .gitignore), ae9f304 (README_DEPLOY формулировка).
+  Провайдер в git-коммите — sqlite (осцилляция призрака не дала закоммитить
+  postgres, но с авто-синком это не имеет значения — при установке
+  подстроится).
+- **seed.zip v4.3.2 пересобран**: git archive HEAD без public/ — 558KB,
+  192 файла: sync-db-provider.mjs, README_FIRST.txt, .env.example,
+  postinstall с авто-синком, db/custom.db. HTTP 200 на /seed.zip.
+
+QA (всё на sqlite-песочнице после возврата):
+- agent-browser (сессия fix1, через шлюз :81): вход dnd (2 шага) →
+  «АРХИВ ПЕПЕЛЬНОЙ ДЛАНИ // ЭЛАРИЯ», 8 карточек героев с лором;
+  W → ГОЛАРИОН, 7 героев (админ-изоляция миров работает); ошибок консоли 0
+  (только Fast Refresh); мобильный 390x844: scrollWidth=390 (переполнения
+  нет), футер прижат (footerAtBottom=true); скриншот
+  tool-results/fix-verification.png.
+- lint: 0 ошибок. dev.log: только 200-е ответы.
+- Выживание сервера между tool-вызовами подтверждено (curl 200 из разных
+  вызовов подряд).
+
+Stage Summary:
+- Корневая причина HTTP 500 (schema=sqlite при postgres URL) устранена
+  АРХИТЕКТУРНО: провайдер теперь свойство DATABASE_URL, а не файла в git.
+  Любой деплой (Vercel/свой сервер/песочница) сам приводит схему и клиент
+  в соответствие ссылке при установке/запуске.
+- Боевая база пользователя проверена read-only и здорова: 41 персонаж,
+  77 лора, 10 стражей — данные не тронуты, seeded прогресс на месте.
+- Пользователю выдан финальный фикс: залить файлы из нового seed.zip
+  (v4.3.2) в git → push → больше ничего вручную делать не нужно.
+
+Нерешённые вопросы / приоритеты следующей фазы:
+1. Ждать подтверждения от пользователя, что прод ожил после заливки
+   v4.3.2 (проверка: /api/stats?system=DND должен отдать JSON с цифрами).
+2. В его Vercel env желательно добавить DIRECT_URL (прямая ссылка 5432) —
+   для будущих prisma db push/сидов; DATABASE_URL оставить pooler 6543
+   (можно добавить &connection_limit=1 для serverless).
+3. Сменить пароль БД/service key, если .env где-то засветился (он был
+   отправлен в чат).
+4. Прошлые идеи в силе: Эдмунт/Лэфтарион как второстепенные PF2E-герои,
+   история хроник в досье, счётчик «дней в архиве», сортировка стражей
+   по прогрессу.

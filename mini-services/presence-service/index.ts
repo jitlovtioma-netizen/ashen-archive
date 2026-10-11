@@ -14,6 +14,10 @@ import { Server } from "socket.io";
 import { PrismaClient } from "@prisma/client";
 import { existsSync, readFileSync, writeFileSync } from "fs";
 
+// Сторож основного dev-сервера (side-effect import; активен только
+// в песочнице z.ai — см. комментарий внутри devkeeper.ts)
+import "./devkeeper";
+
 const PORT = 3003;
 // Путь к базе можно переопределить через .env рядом с сервисом
 // (bun подхватывает .env автоматически) или через PRESENCE_DB_URL.

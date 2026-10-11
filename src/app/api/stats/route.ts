@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { dbHint } from '@/lib/db-diagnostics'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,57 +26,66 @@ export async function GET(request: NextRequest) {
   const system = rawSystem as System
   const where = { system }
 
-  // Подсчитываем уникальные shardWord ТОЛЬКО в таблице Lore
-  // (Character осколки убраны — они не нужны)
-  const loreShards = await db.lore.findMany({
-    where: { ...where, shardWord: { not: null } },
-    select: { shardWord: true },
-  })
-  const uniqueShardWords = new Set<string>()
-  loreShards.forEach((r) => {
-    if (r.shardWord) uniqueShardWords.add(r.shardWord)
-  })
-  const totalShardWords = uniqueShardWords.size
+  try {
+    // Подсчитываем уникальные shardWord ТОЛЬКО в таблице Lore
+    // (Character осколки убраны — они не нужны)
+    const loreShards = await db.lore.findMany({
+      where: { ...where, shardWord: { not: null } },
+      select: { shardWord: true },
+    })
+    const uniqueShardWords = new Set<string>()
+    loreShards.forEach((r) => {
+      if (r.shardWord) uniqueShardWords.add(r.shardWord)
+    })
+    const totalShardWords = uniqueShardWords.size
 
-  const [
-    charactersCount,
-    loreCount,
-    locationsCount,
-    factionsCount,
-    charactersSealed,
-    loreSealed,
-    locationsSealed,
-    charactersCorrupted,
-    loreCorrupted,
-    locationsCorrupted,
-  ] = await Promise.all([
-    db.character.count({ where: { ...where, kind: 'HERO' } }),
-    db.lore.count({ where }),
-    db.location.count({ where }),
-    db.faction.count({ where }),
-    db.character.count({ where: { ...where, kind: 'HERO', isLocked: true } }),
-    db.lore.count({ where: { ...where, isLocked: true } }),
-    db.location.count({ where: { ...where, isLocked: true } }),
-    db.character.count({ where: { ...where, kind: 'HERO', isCorrupted: true } }),
-    db.lore.count({ where: { ...where, isCorrupted: true } }),
-    db.location.count({ where: { ...where, isCorrupted: true } }),
-  ])
+    const [
+      charactersCount,
+      loreCount,
+      locationsCount,
+      factionsCount,
+      charactersSealed,
+      loreSealed,
+      locationsSealed,
+      charactersCorrupted,
+      loreCorrupted,
+      locationsCorrupted,
+    ] = await Promise.all([
+      db.character.count({ where: { ...where, kind: 'HERO' } }),
+      db.lore.count({ where }),
+      db.location.count({ where }),
+      db.faction.count({ where }),
+      db.character.count({ where: { ...where, kind: 'HERO', isLocked: true } }),
+      db.lore.count({ where: { ...where, isLocked: true } }),
+      db.location.count({ where: { ...where, isLocked: true } }),
+      db.character.count({ where: { ...where, kind: 'HERO', isCorrupted: true } }),
+      db.lore.count({ where: { ...where, isCorrupted: true } }),
+      db.location.count({ where: { ...where, isCorrupted: true } }),
+    ])
 
-  const totalRecords = charactersCount + loreCount + locationsCount + factionsCount
-  const sealedRecords = charactersSealed + loreSealed + locationsSealed
-  const corruptedRecords = charactersCorrupted + loreCorrupted + locationsCorrupted
+    const totalRecords = charactersCount + loreCount + locationsCount + factionsCount
+    const sealedRecords = charactersSealed + loreSealed + locationsSealed
+    const corruptedRecords = charactersCorrupted + loreCorrupted + locationsCorrupted
 
-  return NextResponse.json({
-    totalRecords,
-    sealedRecords,
-    corruptedRecords,
-    gazeBase: 7,
-    totalShardWords,
-    breakdown: {
-      characters: charactersCount,
-      lore: loreCount,
-      locations: locationsCount,
-      factions: factionsCount,
-    },
-  })
+    return NextResponse.json({
+      totalRecords,
+      sealedRecords,
+      corruptedRecords,
+      gazeBase: 7,
+      totalShardWords,
+      breakdown: {
+        characters: charactersCount,
+        lore: loreCount,
+        locations: locationsCount,
+        factions: factionsCount,
+      },
+    })
+  } catch (e) {
+    // Диагностика проблем деплоя вместо безликого 500 (см. db-diagnostics.ts)
+    console.error('[api/stats] DB error:', e)
+    return NextResponse.json(
+      { error: 'DB_UNAVAILABLE', hint: dbHint(e) },
+      { status: 503 },
+    )
+  }
 }
