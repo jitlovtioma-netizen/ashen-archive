@@ -7,7 +7,6 @@ import { sfx } from "@/lib/audio";
 import type {
   Achievement,
   Character,
-  Chronicle,
   GameSystem,
   PresenceUser,
   UserSummary,
@@ -59,9 +58,6 @@ export function ProfileSection({ system }: { system: GameSystem }) {
   // ── сортировка стражей: сеть / прогресс / стаж ──
   const [sortMode, setSortMode] = useState<SortMode>("ONLINE");
 
-  // ── летопись сессий текущего мира (блок «Летопись» в досье) ──
-  const [chronicles, setChronicles] = useState<Chronicle[] | null>(null);
-
   // ── тикер, чтобы относительные времена («был в сети N мин») обновлялись ──
   const [, setTick] = useState(0);
   useEffect(() => {
@@ -109,32 +105,6 @@ export function ProfileSection({ system }: { system: GameSystem }) {
       cancelled = true;
     };
   }, []);
-
-  // летопись сессий текущего мира — перезагружается при смене мира (W)
-  useEffect(() => {
-    let cancelled = false;
-    setChronicles(null);
-    fetch(`/api/archive?type=chronicles&system=${system}`)
-      .then((r) => r.json())
-      .then((d) => {
-        if (!cancelled) setChronicles(Array.isArray(d) ? d : []);
-      })
-      .catch(() => {
-        if (!cancelled) setChronicles([]);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [system]);
-
-  // последние сессии летописи (новые сверху)
-  const chronicleList = useMemo(
-    () =>
-      [...(chronicles ?? [])]
-        .sort((a, b) => b.sessionNumber - a.sessionNumber)
-        .slice(0, 6),
-    [chronicles],
-  );
 
   const achList = useMemo(
     () => (achCatalog ?? []).filter((a) => !a.system || a.system === system),
@@ -227,7 +197,7 @@ export function ProfileSection({ system }: { system: GameSystem }) {
       sfx.glitch();
       pushToast({
         kind: "warn",
-        title: "ЛЕТОПИСЬ ОБНУЛЕНА",
+        title: "ПРОГРЕСС ОБНУЛЁН",
         body: "Архив забыл ваши шаги. Прогресс этого мира сброшен до нуля.",
       });
     } else {
@@ -353,7 +323,7 @@ export function ProfileSection({ system }: { system: GameSystem }) {
           </div>
 
           {/* статистика прогресса */}
-          <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-2 content-start">
+          <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-2 content-start stagger-children">
             <Stat
               label="ОСКОЛКИ ПАМЯТИ"
               value={`${shards.length}${totalShardWords > 0 ? `/${totalShardWords}` : ""}`}
@@ -439,7 +409,7 @@ export function ProfileSection({ system }: { system: GameSystem }) {
               className="text-[10px] tracking-widest"
               style={{ color: "var(--red)" }}
             >
-              {"// ОБНУЛЕНИЕ_ЛЕТОПИСИ //"}
+              {"// ОБНУЛЕНИЕ_ПРОГРЕССА //"}
             </div>
             <div className="text-[10px] text-dim italic">
               стереть достижения, осколки, снятые печати и разгадки этого
@@ -549,88 +519,6 @@ export function ProfileSection({ system }: { system: GameSystem }) {
             );
           })}
         </div>
-      </div>
-
-      {/* ─── летопись сессий мира ─── */}
-      <div className="panel clip-hud-sm p-3">
-        <div className="flex items-center gap-2 flex-wrap mb-3">
-          <div className="text-[10px] text-dim tracking-widest">
-            {"// ЛЕТОПИСЬ_СЕССИЙ //"}
-          </div>
-          <span className="text-[10px] text-dim italic">
-            {"// хроника партии этого мира //"}
-          </span>
-          <span className="flex-1" />
-          <span className="chip chip-warn text-[10px]">
-            СЕССИЙ: {chronicles?.length ?? "···"}
-          </span>
-        </div>
-
-        {!chronicles && (
-          <div className="space-y-2">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="panel-inset p-3 h-14 animate-pulse" />
-            ))}
-          </div>
-        )}
-
-        {chronicles && chronicles.length === 0 && (
-          <div className="text-[11px] text-dim italic p-2">
-            {"// летопись этого мира пока чиста — сессии не записаны //"}
-          </div>
-        )}
-
-        {chronicles && chronicleList.length > 0 && (
-          <div className="space-y-1.5 max-h-96 overflow-y-auto crt-scroll pr-1">
-            {chronicleList.map((c) => (
-              <div
-                key={c.id}
-                className="panel-inset p-2.5 flex gap-3 items-start border-l-2 transition-[filter] hover:brightness-110"
-                style={{
-                  borderLeftColor: c.isLocked
-                    ? "var(--violet)"
-                    : "var(--amber-dim)",
-                }}
-              >
-                <div
-                  className="font-vt323 text-xl glow-amber w-12 text-center shrink-0 leading-none pt-0.5"
-                  title={`Сессия №${c.sessionNumber}`}
-                >
-                  {toRoman(c.sessionNumber)}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span
-                      className={`font-medieval text-sm leading-tight ${
-                        c.isLocked ? "text-dim" : "glow-amber"
-                      }`}
-                    >
-                      {c.title}
-                    </span>
-                    <span className="chip text-[9px] shrink-0">{c.date}</span>
-                    {c.isCorrupted && (
-                      <span className="chip chip-err text-[9px]">▓ ИСКАЖЕНО</span>
-                    )}
-                  </div>
-                  {c.isLocked ? (
-                    <p className="text-[11px] text-dim italic mt-1">
-                      {"// печать не снята — текст под грифом Ордена //"}
-                    </p>
-                  ) : (
-                    <p className="text-[11px] text-dim mt-1 leading-relaxed line-clamp-2">
-                      {c.summary}
-                    </p>
-                  )}
-                </div>
-              </div>
-            ))}
-            {chronicles.length > chronicleList.length && (
-              <div className="text-[10px] text-dim italic text-center pt-1">
-                {"// показаны последние сессии летописи //"}
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       {/* ─── стражи архива (все + онлайн) ─── */}
@@ -1073,26 +961,6 @@ function daysInArchive(createdAt: string): number {
 }
 
 // римские цифры для номеров сессий — атмосфера старой хроники
-function toRoman(n: number): string {
-  if (!Number.isFinite(n) || n <= 0) return "—";
-  const map: [number, string][] = [
-    [40, "XL"],
-    [10, "X"],
-    [9, "IX"],
-    [5, "V"],
-    [4, "IV"],
-    [1, "I"],
-  ];
-  let rest = Math.min(Math.floor(n), 3999);
-  let out = "";
-  for (const [v, s] of map) {
-    while (rest >= v) {
-      out += s;
-      rest -= v;
-    }
-  }
-  return out || "—";
-}
 
 // дата в русском формате ДД.ММ.ГГГГ
 function formatDateRu(iso: string): string {

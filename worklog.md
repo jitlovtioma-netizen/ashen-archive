@@ -950,3 +950,183 @@ Stage Summary:
 2. Ротация пароля БД (светился в чате) + обновление .env/Vercel env.
 3. Бэклог: Эдмунт/Лэфтарион (PF2E NPC), модалка досье сессии,
    «ветеран месяца», экспорт летописи для мастера.
+
+---
+Task ID: 14
+Agent: main (Z.ai Code)
+Task: Запрос пользователя (всё работает, продолжаем): 1) полностью убрать
+летописи из профиля; 2) красивые анимации переходов в досье и по вкладкам
++ свои улучшения UI; 3) объяснить, как включить онлайн игроков.
+
+Work Log:
+- **Летописи убраны полностью**: ProfileSection — удалены состояние
+  chronicles, эффект загрузки, memo chronicleList, весь JSX-блок
+  «ЛЕТОПИСЬ_СЕССИЙ», хелпер toRoman; формулировки зоны сброса
+  переименованы (ОБНУЛЕНИЕ_ЛЕТОПИСИ → ОБНУЛЕНИЕ_ПРОГРЕССА, тост
+  ЛЕТОПИСЬ ОБНУЛЕНА → ПРОГРЕСС ОБНУЛЁН); UserProfileModal — «летопись
+  обновлена» → «прогресс обновлён». Удалён мёртвый
+  sections/ChroniclesSection.tsx (секция не была в навигации и типе
+  Section); MiniMap — выпилены case "chronicles" и маппинг; types.ts —
+  ArchiveType без "chronicles"; CommandPalette — убран неиспользуемый
+  импорт Chronicle. Данные Chronicle в БД и API-роут /api/archive
+  НЕ тронуты (на будущее мастеру).
+- **Анимации (CSS-слой v4.4 в globals.css, ~180 строк)**:
+  1) переход секций sectionEnterV2 — подъём из blur+brightness +
+     сканирующая полоса (свип) по контенту (::before, sectionSweep);
+  2) каскад карточек .card-stagger (--card-i * 45мс) + фолбэк
+     .stagger-children (nth-child 1-8);
+  3) досье: modalInV2 (подъём+масштаб+blur, 0.42s) и modalOut (сжатие
+     в глубину, 0.16s) + фейды бэкдропа backdrop-in/out;
+  4) голограмма досье .holo-reveal — проявление «строкой» (clip-path
+     inset 48%→0 + прогрев яркости/сaturate, задержка 0.12s);
+  5) сайдбар navActivate (сдвиг при активации) + микро-сдвиг иконок
+     при ховере;
+  6) заголовки секций .title-sweep — прорисовка световой линии;
+  7) папки фракций .folder-expand (разворот сверху вниз);
+  8) prefers-reduced-motion — всем анимациям 0.01s (доступность).
+- **Анимации (компоненты)**: ArchiveSection — карты в .card-stagger
+  (обёртка div, delay min(i,14)), h2 + title-sweep; FactionsSection —
+  папки каскадом, тело папки .folder-expand, NPC внутри
+  .stagger-children; RecordModal — closing-состояние + requestClose
+  (Esc/клики/кнопки): 170мс на modalOut, затем настоящий onClose;
+  голограмма в .holo-reveal; для cursed/reflection-досье комбинированные
+  классы glitch-in/glitch-out (reflectionGlitch перенесён из
+  .reflection-panel c !important, чтобы не перебивал вход/выход);
+  UserProfileModal — modal-anim-in + backdrop-in; RecordCard —
+  hover:-translate-y-[2px]; ProfileSection — сетка статов
+  .stagger-children (волна).
+- **presence-service**: PORT теперь `process.env.PORT ?? 3003`
+  (облачные платформы Railway/Render/Fly выдают порт через env — без
+  этого сервис там не поднялся бы). Проверен живой прогон (HTTP 200).
+- **Дока онлайна**: README_VERCEL.md Шаг 6 переписан — объяснение
+  «почему не на Vercel» (serverless ≠ долгоживущий websocket), рецепт
+  Railway за 5 минут (репозиторий → root directory → build/start
+  команды → PRESENCE_DB_URL → NEXT_PUBLIC_PRESENCE_URL + Redeploy →
+  проверка двумя вкладками), альтернативы Render/Fly/Koyeb.
+- **QA**: lint 0 ошибок; dev.log чист (компиляции без error);
+  agent-browser: вход dnd/ashen → профиль (летописей нет, статы с
+  «ОБНУЛЕНИЕ_ПРОГРЕССА») → ГЕРОИ (каскад) → ФРАКЦИИ (папка
+  раскрывается) → досье героя открывается (ПРОТОКОЛ_ДОСЬЕ + ПРОЕКЦИЯ)
+  и закрывается по Escape (с анимацией выхода); ошибок консоли 0;
+  VLM-проверка скриншота досье: окно целое, портрет не обрезан, текст
+  читаем.
+
+Stage Summary:
+- Профиль без летописей: UI-блок, загрузка и формулировки убраны;
+  данные в БД сохранены (API-эндпоинт остался для будущего).
+- Переходы: вкладки со свип-эффектом, каскад карточек, досье с
+  входом/выходом и проявлением голограммы, микро-анимации сайдбара,
+  заголовков, папок фракций; уважение prefers-reduced-motion.
+- Онлайн: сервис слушает PORT из env (готов к Railway/Render/Fly),
+  дока с рецептом написана; пользователю выдана инструкция в чате.
+
+Нерешённые вопросы / приоритеты следующей фазы:
+1. Пользователь планирует хостить presence — если выберет платформу,
+   помочь с деплоем и переменными (Railway рецепт в README_VERCEL).
+2. Бэклог: Эдмунт/Лэфтарион (PF2E NPC), модалка досье сессии,
+   «ветеран месяца», экспорт летописи для мастера (летопись теперь
+   только как будущая фича мастера, в UI её нет).
+3. После пуша в git: Vercel пересоберёт сам; убедиться, что
+   NEXT_PUBLIC_PRESENCE_URL не задана (или задана осознанно).
+
+---
+Task ID: 15
+Agent: main (Z.ai Code)
+Task: v4.5 — живые коррупты (Досье Кали + все искажённые записи), пасхалка
+«Божественная мощь» на частые переключения ЗВУК, бесплатный онлайн через
+Supabase Realtime, прочие улучшения, seed.zip v4.5.
+
+Work Log:
+- Изучил текущее состояние: censorText (статичный глитч) в RecordModal +
+  RecordCard; у Кали в БД залит zalgo-текст (melt() при сиде) с 6 якорями;
+  presence = socket.io mini-service :3003 (в песочнице работает, на проде
+  требует платный хостинг — пользователь просил БЕСПЛАТНЫЙ вариант).
+- НОВЫЙ src/components/crt/CorruptedText.tsx: живые коррупты. Слова →
+  глифы (блоки помех 65% + руны 35%), длина = длина слова, пунктуация
+  читаема. Тик 620мс: мутация 1-3 случайных слов + «призрак смысла»
+  (9% — настоящее слово на 1.2с с классом .corrupt-ghost). zalgoAware:
+  слова с комбинирующими метками всегда испорчены (метки+блоки срезаются
+  глобальными регекспами /g — БАГ-ФИКС: первый replace без /g оставлял
+  мусор в sr-only). protect: якоря Кали. live=false для карточек.
+  prefers-reduced-motion и document.hidden уважаются. sr-only для
+  скринридеров.
+- RecordModal: Кали → CorruptedText(zalgoAware, ratio 0.3, protect
+  KALI_ANCHORS, violet, syncLine); обычные искажённые → (ratio 0.42, red,
+  syncLine); censorText/GLITCH_CHARS удалены. KALI_ANCHORS экспортируется
+  из CorruptedText. ФИКС: оверлей ОТРАЖЕНИЕ — animationDelay вшит в
+  шорткат animation (React-ворнинг при живых ререндерах).
+- RecordCard: превью через CorruptedText(live=false), текст плоский
+  (переносы → пробелы, слайс 260), line-clamp на самом <p>.
+- НОВЫЙ DivineWarning.tsx: пасхалка Создателя (глаз, глитч-заголовок,
+  текст «божественная мощь — не ночник», автозакрытие 12с, ESC/клик,
+  sfx thud+gaze+whisper, fade-out 200мс). TitleBar: клики в окне 6с,
+  порог 6 → оверлей; кулдаун 60с; тултип-намёк на кнопке. Версия UI v4.5.
+- CSS v4.5 в globals.css (~230 строк): .corrupt-word (хроматическая
+  аберрация красная/фиолетовая, дыхание 2.6с, hover-ускорение),
+  .corrupt-ghost (янтарная вспышка brightness), .corrupt-sync (полоса
+  процента, дрожит 31-68%), .divine-overlay/.divine-card/.divine-eye/
+  .divine-title (пульсации, radial-свечение), reduced-motion блок.
+- presence.ts переписан: 3 режима (PRESENCE_URL → socket.io; иначе
+  SUPABASE_URL+ANON_KEY → Supabase Realtime канал «archive-online»
+  presence-track {login, system, since}, sync→online, leave→lastSeen;
+  heartbeat POST /api/presence раз в 60с + GET при старте; иначе выкл).
+  Динамический import @supabase/supabase-js (не тяжелит бандл когда
+  выключен). Экспортирован presenceBackend.
+- НОВЫЙ /api/presence: GET — карта login→epoch за 30 дней (take 100);
+  POST {login} → User.lastSeenAt=now; 404/400/503 обработаны.
+- prisma/schema.prisma: User.lastSeenAt DateTime? (nullable). db:push
+  выполнен в песочнице.
+- ИНЦИДЕНТ ПЕСОЧНИЦЫ (важно для будущих агентов): после db:push дев-сервер
+  держал в памяти старый Prisma-клиент (lastSeenAt unknown arg). Рестарт
+  дев-сервера осложнён: (1) harness убивает ВСЕ процессы, заспавненные из
+  tool-вызова, В МОМЕНТ ЗАВЕРШЕНИЯ вызова (проверено тестами: sleep и
+  bun run dev умирают на границе вызовов); (2) bun --hot presence-сервиса
+  перестал обрабатывать inotify-события (ватчер смотрел верные иноды, но
+  релоад не происходил). РЕШЕНИЕ: double-fork daemonization (python3
+  os.fork → setsid → fork → exec; внук репарентится к PID 1 ДО конца
+  вызова и выпадает из дерева убийства) — проверено, выживает. Этим
+  способом перезапущен presence-service с НОВЫМ devkeeper (интервальный
+  дозор каждые 20с — больше не зависит от хот-релоада), который сам
+  поднял next dev как своего потомка. Схема: survivor(boot) → service →
+  devkeeper → detached dev-server.
+- QA (agent-browser + VLM): вход dnd/ashen → ЛОР_НПС → карточка Кали
+  (фиолетовые спаны) → досье Кали (85+ живых спанов, синхра «СИНХРОНИЗАЦИЯ
+  ПАМЯТИ… 52%», якоря читаемы, sr-only чистые) — VLM: «corrupted with
+  glitch glyphs, blocks, runes in violet-red, readable words mixed,
+  sync bar present, layout intact, no defects». Мерика: 50 красных
+  спанов — VLM подтвердил. Пасхалка: 6 кликов → оверлей «ПРЕДУПРЕЖДЕНИЕ
+  СОЗИДАТЕЛЯ» (VLM: глаз, красный титул, карточка без дефектов),
+  автозакрытие, повторный спам НЕ ретриггерит (кулдаун). Консоль чиста
+  после фикса animation (пустой вывод 9с при открытом досье). Мобильный
+  вьюпорт 390px: без горизонтального скролла, футер прилип, наложений
+  нет (VLM). socket.io presence: node-клиент → join dnd → PRESENCE OK
+  (displayName/role из БД). /api/presence: POST dnd→ok, GET→{dnd:ts},
+  ghost→404. lint: 0 ошибок.
+- Доки: README_VERCEL.md Шаг 6 → два варианта (А: БЕСПЛАТНО Supabase
+  Realtime — anon public ключ, 2 env, db:push один раз; Б: socket.io для
+  вещания/изгнания); таблица совместимости обновлена (presence: работает
+  БЕСПЛАТНО). CHANGES.md: секция v4.5.
+
+Stage Summary:
+- Коррупты 2.0 живут: случайный узор при каждом открытии, дрейф глифов,
+  руны, призраки смысла, синхра-процент, hover-сопротивление; Кали —
+  фиолетовая тема с читаемыми якорями-грехами; карточки — статичная порча.
+- Пасхалка: 6 щелчков ЗВУК за 6с → «ПРЕДУПРЕЖДЕНИЕ СОЗИДАТЕЛЯ» (глаз,
+  гром, 12с, кулдаун 60с).
+- Бесплатный онлайн: Supabase Realtime (2 env) + /api/presence heartbeat
+  + User.lastSeenAt; прод-инструкция в README_VERCEL Шаг 6 вариант А;
+  db:push обязателен один раз.
+- Инфра песочницы: double-fork паттерн обхода убийцы harness-процессов;
+  devkeeper с 20-секундным дозором; сервис и дев-сервер стабильно живы.
+- Все проверки пройдены (lint 0, консоль чиста, VLM ×4, API, сокеты).
+
+Нерешённые вопросы / приоритеты следующей фазы:
+1. Пользователю на проде: git pull → push → `bun run db:push` → (опц.)
+   включить бесплатный онлайн по README_VERCEL Шаг 6 (А).
+2. Supabase Realtime-режим не проверялся вживую в песочнице (нет anon
+   ключа) — только код-ревью + API-тесты; если пользователь включит и
+   что-то не взлетит — смотреть браузерную консоль на websocket Realtime.
+3. Бэклог: Эдмунт/Лэфтарион (PF2E NPC), модалка досье сессии, «ветеран
+   месяца», экспорт летописи для мастера; идея — ачивка за пасхалку
+   (требует миграции Achievement в сид+БД — пока сознательно отложено).
+4. Ротация пароля БД (светился в чате ранее) — напоминать пользователю.

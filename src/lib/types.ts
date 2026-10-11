@@ -136,8 +136,7 @@ export interface Achievement {
 export type ArchiveType =
   | "characters"
   | "lore"
-  | "locations"
-  | "chronicles";
+  | "locations";
 
 export interface Stats {
   totalRecords: number;

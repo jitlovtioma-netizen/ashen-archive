@@ -13,20 +13,22 @@ generator client {
 // Все типы — String, enums не используются (совместимо с обоими провайдерами).
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
 }
 
 model User {
-  id          String   @id @default(cuid())
-  login       String   @unique
+  id          String    @id @default(cuid())
+  login       String    @unique
   password    String
   displayName String
   system      String
-  role        String   @default("USER")
+  role        String    @default("USER")
   characterId String?
-  createdAt   DateTime @default(now())
+  // Бесплатный режим онлайна (Supabase Realtime): heartbeat /api/presence
+  // пишет сюда время последнего визита стража. Nullable — миграция без потерь.
+  lastSeenAt  DateTime?
+  createdAt   DateTime  @default(now())
   progress    Progress[]
 }
 

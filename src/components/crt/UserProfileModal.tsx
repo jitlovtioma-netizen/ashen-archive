@@ -73,7 +73,7 @@ export function UserProfileModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9600] flex items-center justify-center p-4"
+      className="fixed inset-0 z-[9600] flex items-center justify-center p-4 backdrop-in"
       style={{ background: "rgba(2, 0, 2, 0.88)", backdropFilter: "blur(5px)" }}
       onClick={onClose}
       role="dialog"
@@ -81,9 +81,8 @@ export function UserProfileModal({
       aria-label={`Досье стража ${target.displayName}`}
     >
       <div
-        className="panel clip-hud brackets w-full max-w-3xl max-h-[88vh] overflow-y-auto crt-scroll fade-in relative"
+        className="panel clip-hud brackets w-full max-w-3xl max-h-[88vh] overflow-y-auto crt-scroll modal-anim-in relative"
         style={{
-          animation: "modalIn 0.3s ease-out",
           borderColor: isAdmin ? "var(--amber-dim)" : "var(--line)",
           boxShadow: isAdmin
             ? "0 0 50px rgba(232,161,58,0.18)"
@@ -216,7 +215,7 @@ export function UserProfileModal({
                 </div>
                 {progress.updatedAt && (
                   <div className="text-[9px] text-dim tracking-wider">
-                    {"// летопись обновлена: "}
+                    {"// прогресс обновлён: "}
                     {new Date(progress.updatedAt).toLocaleString("ru-RU", {
                       day: "2-digit",
                       month: "2-digit",

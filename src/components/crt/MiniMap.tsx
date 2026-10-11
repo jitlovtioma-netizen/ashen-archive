@@ -8,7 +8,6 @@ import type {
   Character,
   Lore,
   Location,
-  Chronicle,
   GameSystem,
 } from "@/lib/types";
 
@@ -31,7 +30,7 @@ interface MapPoint {
 
 // Нормализация разных типов записей в MapPoint
 function toPoint(
-  r: Character | Lore | Location | Chronicle,
+  r: Character | Lore | Location,
   section: Section,
 ): MapPoint {
   const rec = r as Record<string, unknown>;
@@ -72,17 +71,6 @@ function toPoint(
         isCorrupted: (rec.isCorrupted as boolean) ?? false,
         system: rec.system as GameSystem,
       };
-    case "chronicles":
-      return {
-        id: rec.id as string,
-        label: `#${rec.sessionNumber as number}`,
-        sigil: "📜",
-        mapX: ((rec.sessionNumber as number) - 1) * 120 + 40,
-        mapY: 200,
-        isLocked: (rec.isLocked as boolean) ?? false,
-        isCorrupted: (rec.isCorrupted as boolean) ?? false,
-        system: rec.system as GameSystem,
-      };
     default:
       return {
         id: rec.id as string,
@@ -98,13 +86,12 @@ function toPoint(
 }
 
 // Маппинг секций на API-тип
-const SECTION_TO_TYPE: Partial<Record<Section, "characters" | "lore" | "locations" | "chronicles">> = {
+const SECTION_TO_TYPE: Partial<Record<Section, "characters" | "lore" | "locations">> = {
   characters: "characters",
   lore: "lore",
   lore_gods: "lore",
   lore_npcs: "lore",
   locations: "locations",
-  chronicles: "chronicles",
 };
 
 // Фильтр по folder для lore-секций
@@ -129,7 +116,7 @@ export function MiniMap({ system, section }: MiniMapProps) {
 
   // Загружаем данные только для секций, у которых есть API-тип
   const { data, loading } = useArchiveData<
-    Character | Lore | Location | Chronicle
+    Character | Lore | Location
   >(
     apiType ?? "characters",
     system,

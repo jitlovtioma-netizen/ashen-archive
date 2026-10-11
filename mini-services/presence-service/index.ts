@@ -18,7 +18,9 @@ import { existsSync, readFileSync, writeFileSync } from "fs";
 // в песочнице z.ai — см. комментарий внутри devkeeper.ts)
 import "./devkeeper";
 
-const PORT = 3003;
+// Порт: на облачных платформах (Railway/Render/Fly) порт выдаётся
+// через env PORT — слушаем его; локально/в песочнице — 3003.
+const PORT = Number(process.env.PORT ?? 3003);
 // Путь к базе можно переопределить через .env рядом с сервисом
 // (bun подхватывает .env автоматически) или через PRESENCE_DB_URL.
 // Фолбэк — путь песочницы.
@@ -195,7 +197,7 @@ io.on("connection", (socket) => {
 });
 
 httpServer.listen(PORT, () => {
-  console.log(`▸ presence-service готов: порт ${PORT}`);
+  console.log(`▸ presence-service готов: порт ${PORT} [rev 2]`);
   // периодически актуализируем lastSeen для онлайн-стражей,
   // чтобы после рестарта сервиса времена не «устарели»
   setInterval(() => {

@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { useArchiveData } from "@/lib/useArchiveData";
 import { RecordCard, type CardRecord } from "./RecordCard";
 import { useArchive } from "@/lib/store";
@@ -87,7 +88,7 @@ export function ArchiveSection<T>({
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">
-        <h2 className="font-medieval text-2xl glow-green-strong tracking-wider">
+        <h2 className="font-medieval text-2xl glow-green-strong tracking-wider title-sweep">
           {title}
         </h2>
         <span className="chip chip-ok text-[10px]">
@@ -126,8 +127,14 @@ export function ArchiveSection<T>({
               : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 content-start pb-2"
           }
         >
-          {records.map((r) => (
-            <RecordCard key={r.id} record={r} horizontal={columns === 1} />
+          {records.map((r, i) => (
+            <div
+              key={r.id}
+              className="card-stagger"
+              style={{ "--card-i": Math.min(i, 14) } as CSSProperties}
+            >
+              <RecordCard record={r} horizontal={columns === 1} />
+            </div>
           ))}
         </div>
       )}

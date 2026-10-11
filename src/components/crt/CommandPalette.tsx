@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useArchive, type Section } from "@/lib/store";
 import { sfx } from "@/lib/audio";
-import type { Character, Lore, Location, Chronicle, GameSystem } from "@/lib/types";
+import type { Character, Lore, Location, GameSystem } from "@/lib/types";
 
 interface SearchResult {
   id: string;

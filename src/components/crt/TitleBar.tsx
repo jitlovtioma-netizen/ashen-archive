@@ -1,8 +1,17 @@
 "use client";
 
+import { useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useArchive } from "@/lib/store";
 import { sfx, setAmbientEnabled } from "@/lib/audio";
+import { DivineWarning } from "./DivineWarning";
 import { SYSTEM_WORLD, SYSTEM_SHORT, SYSTEM_COLOR } from "@/lib/types";
+
+// Пасхалка «Божественная мощь»: сколько щелчков ЗВУК за какое окно
+// считается «слишком часто». После срабатывания — минута тишины.
+const DIVINE_CLICKS = 6;
+const DIVINE_WINDOW_MS = 6000;
+const DIVINE_COOLDOWN_MS = 60000;
 
 export function TitleBar() {
   const soundOn = useArchive((s) => s.soundOn);
@@ -12,10 +21,32 @@ export function TitleBar() {
   const user = useArchive((s) => s.user);
   const logout = useArchive((s) => s.logout);
 
+  const clickTimes = useRef<number[]>([]);
+  const lastDivineAt = useRef(0);
+  const [divineOpen, setDivineOpen] = useState(false);
+  const [divineCount, setDivineCount] = useState(0);
+
   const onToggleSound = () => {
     toggleSound();
     setAmbientEnabled(!soundOn);
     sfx.blip();
+
+    // Слишком частые переключения звука будят Создателя
+    const now = Date.now();
+    const recent = clickTimes.current.filter(
+      (t) => now - t < DIVINE_WINDOW_MS,
+    );
+    recent.push(now);
+    clickTimes.current = recent;
+    if (
+      recent.length >= DIVINE_CLICKS &&
+      now - lastDivineAt.current > DIVINE_COOLDOWN_MS
+    ) {
+      lastDivineAt.current = now;
+      clickTimes.current = [];
+      setDivineCount(recent.length);
+      setDivineOpen(true);
+    }
   };
 
   const onLogout = () => {
@@ -43,7 +74,7 @@ export function TitleBar() {
             className="hidden sm:inline font-mono-crt text-xs ml-2"
             style={{ color: sysColor }}
           >
-            {" // "}{SYSTEM_SHORT[system]}{" v4.1"}
+            {" // "}{SYSTEM_SHORT[system]}{" v4.5"}
           </span>
         </h1>
       </div>
@@ -77,6 +108,7 @@ export function TitleBar() {
           onClick={onToggleSound}
           className="btn-crt clip-hud-sm px-2 py-1"
           aria-label="Звук"
+          title="Не искушай Создателя частыми переключениями…"
         >
           ЗВУК:{soundOn ? "ВКЛ" : "ВЫКЛ"}
         </button>
@@ -92,6 +124,15 @@ export function TitleBar() {
           ВЫХОД
         </button>
       </div>
+
+      {divineOpen && typeof document !== "undefined" && createPortal(
+        <DivineWarning
+          count={divineCount}
+          guardName={user?.displayName}
+          onClose={() => setDivineOpen(false)}
+        />,
+        document.body,
+      )}
     </header>
   );
 }

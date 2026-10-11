@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { useFactions } from "@/lib/useFactions";
 import { RecordCard } from "@/components/crt/RecordCard";
 import { Sigil } from "@/components/crt/Sigil";
@@ -57,7 +57,7 @@ export function FactionsSection({ system }: FactionSectionProps) {
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">
-        <h2 className="font-medieval text-2xl glow-amber tracking-wider">
+        <h2 className="font-medieval text-2xl glow-amber tracking-wider title-sweep">
           Фракции
         </h2>
         <span className="text-[10px] text-dim">
@@ -90,7 +90,7 @@ export function FactionsSection({ system }: FactionSectionProps) {
 
       {!loading && !error && (
         <div className="space-y-2 pb-2">
-          {data?.map((f) => {
+          {data?.map((f, fi) => {
             const isOpen = open === f.id;
             const npcCount = f.npcs.length;
             const collectedInFaction = f.npcs.filter((n) =>
@@ -99,9 +99,10 @@ export function FactionsSection({ system }: FactionSectionProps) {
             return (
               <div
                 key={f.id}
-                className={`panel clip-hud brackets transition-all ${
+                className={`panel clip-hud brackets transition-all card-stagger ${
                   isOpen ? "border-[var(--amber-dim)]" : ""
                 }`}
+                style={{ "--card-i": Math.min(fi, 10) } as CSSProperties}
               >
                 {/* folder header */}
                 <button
@@ -140,7 +141,7 @@ export function FactionsSection({ system }: FactionSectionProps) {
 
                 {/* expanded body */}
                 {isOpen && (
-                  <div className="px-3 pb-3 fade-in">
+                  <div className="px-3 pb-3 folder-expand">
                     <div className="divider-glow mb-3" />
                     <p className="text-[12px] text-[var(--text)] leading-relaxed mb-3 italic">
                       {f.description}
@@ -150,7 +151,7 @@ export function FactionsSection({ system }: FactionSectionProps) {
                         {"/// значимые персонажи не записаны. данные ожидаются. ///"}
                       </div>
                     ) : (
-                      <div className="flex flex-col gap-3">
+                      <div className="flex flex-col gap-3 stagger-children">
                         {f.npcs.map((npc) => (
                           <RecordCard
                             key={npc.id}

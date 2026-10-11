@@ -10,6 +10,7 @@ import { SozidatelReveal } from "./SozidatelReveal";
 import { HopeVideo } from "./HopeVideo";
 import { RemiTransformSelector } from "./RemiTransformSelector";
 import { RecordModal } from "./RecordModal";
+import { CorruptedText, KALI_ANCHORS } from "./CorruptedText";
 import { useArchive } from "@/lib/store";
 import { sfx } from "@/lib/audio";
 import { SYSTEM_LABEL, SYSTEM_COLOR, type GameSystem } from "@/lib/types";
@@ -35,25 +36,6 @@ export interface CardRecord {
 interface RecordCardProps {
   record: CardRecord;
   horizontal?: boolean;
-}
-
-const GLITCH_CHARS = "█▓▒░▚▞▐▌╳╲╱▀▄";
-
-function censorText(text: string, corrupted: boolean, revealed: boolean) {
-  if (!corrupted) return text;
-  if (revealed) return text;
-  const words = text.split(/(\s+)/);
-  return words
-    .map((w) => {
-      if (/\s/.test(w) || w.length === 0) return w;
-      if (Math.random() > 0.55) return w;
-      let out = "";
-      for (let i = 0; i < w.length; i++) {
-        out += GLITCH_CHARS[Math.floor(Math.random() * GLITCH_CHARS.length)];
-      }
-      return `<span class="censor-glitch">${out}</span>`;
-    })
-    .join(" ");
 }
 
 export function RecordCard({ record, horizontal = false }: RecordCardProps) {
@@ -209,13 +191,19 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
     setModalOpen(true);
   };
 
-  const corruptedDisplay = censorText(record.description, isCorrupted, false);
+  // Превью искажённой записи в сетке: плоский обрывок текста без переносов
+  // (чтобы line-clamp работал корректно). Порча статична — без живого
+  // дрейфа: в сетке десятки карточек, и таймер в каждой — лишняя нагрузка.
+  const corruptPreview = record.description
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 260);
 
   return (
     <>
       <article
         data-record-id={record.id}
-        className={`panel clip-hud brackets relative p-4 transition-all duration-200 cursor-pointer hover:border-[var(--green-dim)] hover:shadow-[0_0_16px_rgba(74,246,38,0.15)] ${
+        className={`panel clip-hud brackets relative p-4 transition-all duration-200 cursor-pointer hover:border-[var(--green-dim)] hover:shadow-[0_0_16px_rgba(74,246,38,0.15)] hover:-translate-y-[2px] ${
           isSealed ? "opacity-90" : ""
         } ${record.name === "???" ? "entity-card" : ""}`}
         onClick={onOpen}
@@ -282,16 +270,25 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
                 </div>
               </div>
             ) : !isSealed ? (
-              <p
-                className={`text-[13px] leading-relaxed ${
-                  isEntity ? "text-[var(--cyan)]" : isCorrupted ? "text-[var(--red-dim)]" : "text-[var(--text)]"
-                } line-clamp-2`}
-                dangerouslySetInnerHTML={
-                  isCorrupted ? { __html: corruptedDisplay } : undefined
-                }
-              >
-                {isCorrupted ? undefined : record.description}
-              </p>
+              isCorrupted ? (
+                <CorruptedText
+                  text={corruptPreview}
+                  ratio={isCursed ? 0.3 : 0.42}
+                  zalgoAware={isCursed}
+                  protect={isCursed ? KALI_ANCHORS : undefined}
+                  variant={isCursed ? "violet" : "red"}
+                  live={false}
+                  paragraphClassName={`text-[13px] leading-relaxed line-clamp-2 ${
+                    isEntity ? "text-[var(--cyan)]" : isCursed ? "text-[var(--text)]" : "text-[var(--red-dim)]"
+                  }`}
+                />
+              ) : (
+                <p
+                  className="text-[13px] leading-relaxed text-[var(--text)] line-clamp-2"
+                >
+                  {record.description}
+                </p>
+              )
             ) : (
               <div className="text-dim text-[11px] italic">
                 {"// данные опечатаны //"}

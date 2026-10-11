@@ -33,6 +33,18 @@
 //                      или клиент ещё не собран)
 //          --force-generate (перегенерировать безусловно)
 //
+// ГЕНЕРАЦИЯ КЛИЕНТА (v4.3.5): prisma generate запускается по цепочке
+// стратегий, которая НЕ зависит от npx и от вида .bin-шимов:
+//   1. прямой JS-энтрипоинт node_modules/prisma/build/index.js через node
+//   2. он же через bun (смена интерпретатора, если упало под первым)
+//   3. локальные .bin-шимы: prisma.cmd (npm) / prisma.exe (bun на Windows)
+//   4. bunx / `bun x`
+//   5. npx (последняя надежда, с предварительной проверкой доступности)
+// Почему так: bun на Windows кладёт .exe-шим, а не prisma.cmd — старый код
+// искал только prisma.cmd, не находил и падал в буквальный `npx`; на машинах
+// без npm в PATH это давало «'npx' is not recognized» и роняло db:seed
+// (инцидент v4.3.5, Windows + bun).
+//
 // Подключён в package.json: postinstall, dev, build, build:standalone.
 // ============================================================================
 
@@ -180,18 +192,100 @@ for (const file of SCHEMAS) {
 }
 
 // --- Перегенерация клиента (по запросу) --------------------------------------
+// Цепочка стратегий запуска prisma generate. Порядок — от самой надёжной:
+// прямой вызов JS-энтрипоинта CLI не зависит ни от npx/bunx, ни от того,
+// какой именно шим (cmd/exe/без расширения) лежит в node_modules/.bin.
 function runGenerate() {
   const isWin = process.platform === "win32";
-  const bin = join(ROOT, "node_modules", ".bin", isWin ? "prisma.cmd" : "prisma");
-  const useBin = existsSync(bin);
-  const cmd = useBin ? bin : "npx";
-  const args = useBin ? ["generate"] : ["prisma", "generate"];
-  log(`→ prisma generate (${useBin ? "node_modules/.bin/prisma" : "npx prisma"})`);
-  const r = spawnSync(cmd, args, { stdio: "inherit", cwd: ROOT, shell: isWin });
-  if (r.status !== 0) {
-    console.error("✘ prisma generate завершился с ошибкой — смотри вывод выше.");
-    process.exit(1);
+  const isBun = !!(process.versions && process.versions.bun);
+  // «команда не найдена»: r.error.code=ENOENT у spawn / 127 (unix) / 9009 (cmd.exe)
+  const NOT_FOUND = new Set([127, 9009]);
+
+  const prismaCli = join(ROOT, "node_modules", "prisma", "build", "index.js");
+  const cliExists = existsSync(prismaCli);
+
+  const attempts = [];
+  if (cliExists) {
+    // Фаза 1 — прямой запуск CLI. node — родная среда prisma, поэтому он
+    // первый; на чисто bun-машине node даст ENOENT и сработает попытка 2.
+    attempts.push({
+      phase: 1,
+      label: `${isBun ? "node" : "node (текущий)"} → prisma/build/index.js`,
+      cmd: isBun ? "node" : process.execPath,
+      args: [prismaCli, "generate"],
+    });
+    attempts.push({
+      phase: 1,
+      label: `${isBun ? "bun (текущий)" : "bun"} → prisma/build/index.js`,
+      cmd: isBun ? process.execPath : "bun",
+      args: [prismaCli, "generate"],
+    });
   }
+  // Фаза 2 — локальные .bin-шимы: npm на Windows создаёт prisma.cmd
+  // (запускается только через shell), bun на Windows — prisma.exe,
+  // на unix — extensionless-скрипт с shebang.
+  for (const name of isWin ? ["prisma.cmd", "prisma.exe"] : ["prisma"]) {
+    const bin = join(ROOT, "node_modules", ".bin", name);
+    if (existsSync(bin)) {
+      attempts.push({
+        phase: 2,
+        label: `node_modules/.bin/${name}`,
+        cmd: bin,
+        args: ["generate"],
+        shell: isWin,
+      });
+    }
+  }
+  // Фаза 3 — пакетные раннеры (последняя линия обороны).
+  attempts.push(
+    isBun
+      ? { phase: 3, label: "bun x prisma", cmd: process.execPath, args: ["x", "prisma", "generate"] }
+      : { phase: 3, label: "bunx prisma", cmd: "bunx", args: ["prisma", "generate"], shell: isWin, check: true },
+  );
+  attempts.push({
+    phase: 3,
+    label: "npx prisma",
+    cmd: "npx",
+    args: ["prisma", "generate"],
+    shell: isWin,
+    check: true,
+  });
+
+  for (let i = 0; i < attempts.length; i++) {
+    const a = attempts[i];
+    // Раннеры проверяем заранее (--version), чтобы не путать
+    // «раннера нет в PATH» с реальной ошибкой prisma.
+    if (a.check) {
+      const probe = spawnSync(a.cmd, ["--version"], {
+        stdio: "ignore",
+        shell: !!a.shell,
+        timeout: 20000,
+      });
+      if (probe.status !== 0) {
+        log(`  ⊘ ${a.label}: раннер не найден в PATH — пропуск`);
+        continue;
+      }
+    }
+    log(`→ prisma generate (${a.label})`);
+    const r = spawnSync(a.cmd, a.args, { stdio: "inherit", cwd: ROOT, shell: !!a.shell });
+    if (r.status === 0) return; // успех
+
+    const notFound = (r.error && r.error.code === "ENOENT") || NOT_FOUND.has(r.status);
+    if (notFound) {
+      log(`  ⊘ ${a.label}: недоступен — пробую следующий способ…`);
+      continue;
+    }
+    // Команда ЗАПУСТИЛАСЬ, но prisma упал по-настоящему. Ретраи осмысленны
+    // только при смене интерпретатора (пара внутри фазы 1: node ↔ bun) —
+    // остальные пути выполняют тот же код и упадут так же.
+    const next = attempts[i + 1];
+    if (!(a.phase === 1 && next && next.phase === 1)) break;
+  }
+
+  console.error("✘ prisma generate не удалось выполнить ни одним из способов.");
+  console.error("  Запусти вручную:   bun run db:generate   (или npx prisma generate)");
+  console.error("  и повтори:         bun run db:seed");
+  process.exit(1);
 }
 
 const clientExists = existsSync(join(ROOT, "node_modules", ".prisma", "client", "index.js"));

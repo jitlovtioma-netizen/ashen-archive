@@ -6,27 +6,11 @@ import { HoloPortrait } from "./HoloPortrait";
 import { Sigil } from "./Sigil";
 import { MartinSecretModal } from "./MartinSecretModal";
 import { SinsWheel } from "./SinsWheel";
+import { CorruptedText, KALI_ANCHORS } from "./CorruptedText";
 import { useArchive } from "@/lib/store";
 import { sfx } from "@/lib/audio";
 import { SYSTEM_LABEL, SYSTEM_COLOR } from "@/lib/types";
 import type { CardRecord } from "./RecordCard";
-
-const GLITCH_CHARS = "█▓▒░▚▞▐▌╳╲╱▀▄";
-
-function censorText(text: string) {
-  const words = text.split(/(\s+)/);
-  return words
-    .map((w) => {
-      if (/\s/.test(w) || w.length === 0) return w;
-      if (Math.random() > 0.55) return w;
-      let out = "";
-      for (let i = 0; i < w.length; i++) {
-        out += GLITCH_CHARS[Math.floor(Math.random() * GLITCH_CHARS.length)];
-      }
-      return `<span class="censor-glitch">${out}</span>`;
-    })
-    .join(" ");
-}
 
 interface RecordModalProps {
   record: CardRecord;
@@ -70,6 +54,9 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
   const [martinSecretShown, setMartinSecretShown] = useState(false);
   const [sinsWheelOpen, setSinsWheelOpen] = useState(false);
   const [memoryProbeOpen, setMemoryProbeOpen] = useState(false);
+  // анимация закрытия: сначала проигрываем modalOut, потом умираем
+  const [closing, setClosing] = useState(false);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const readRef = useRef(false);
   const ritualRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const konamiSeq = useRef<string[]>([]);
@@ -120,11 +107,21 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
     }
   }, [isSealed, addGaze, record.id]);
 
+  // Плавное закрытие: 170мс на анимацию выхода, затем настоящий onClose.
+  const requestClose = useCallback(() => {
+    if (closeTimer.current) return; // уже закрываемся
+    setClosing(true);
+    closeTimer.current = setTimeout(() => {
+      closeTimer.current = null;
+      onClose();
+    }, 170);
+  }, [onClose]);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         sfx.blip();
-        onClose();
+        requestClose();
       }
     };
     window.addEventListener("keydown", onKey);
@@ -140,8 +137,9 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
       document.body.classList.remove("cursed-screen");
+      if (closeTimer.current) clearTimeout(closeTimer.current);
     };
-  }, [onClose, record.name]);
+  }, [onClose, record.name, requestClose]);
 
   const completeRitual = useCallback(() => {
     setRitualActive(false);
@@ -193,22 +191,34 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
     }
   };
 
-  const corruptedDisplay = censorText(displayRecord.description);
   const isReflection = record.name === "Отражение";
   const isEntity = record.name === "???" || record.name === "Неизвестная личность";
   const isCursed = record.name === "Кали";
   const isUnknown = record.name === "Неизвестная" || record.name === "Четвёртый" || record.name === "Мёртвый План";
 
+  // выбор анимации панели: cursed/reflection-досье живут с постоянным
+  // глитчем, поэтому им нужны комбинированные классы (глитч + вход/выход)
+  const glitchy = isReflection || isCursed;
+  const modalAnimClass = closing
+    ? glitchy
+      ? "glitch-out"
+      : "modal-anim-out"
+    : glitchy
+      ? "glitch-in"
+      : "modal-anim-in";
+
   if (typeof document === "undefined") return null;
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9700] flex items-center justify-center p-2 sm:p-4"
+      className={`fixed inset-0 z-[9700] flex items-center justify-center p-2 sm:p-4 ${
+        closing ? "backdrop-out" : "backdrop-in"
+      }`}
       style={{
         background: isReflection || isCursed ? "rgba(20, 0, 30, 0.9)" : "rgba(2, 0, 2, 0.85)",
         backdropFilter: isReflection || isCursed ? "blur(4px)" : "blur(2px)",
       }}
-      onClick={onClose}
+      onClick={requestClose}
       role="dialog"
       aria-modal="true"
       aria-label={displayRecord.name}
@@ -231,8 +241,9 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
                   opacity: 0.08 + Math.random() * 0.25,
                   transform: `rotate(${Math.random() * 60 - 30}deg)`,
                   textShadow: `0 0 8px ${colors[Math.floor(Math.random() * colors.length)]}`,
-                  animation: `reflectionFloat ${4 + Math.random() * 6}s ease-in-out infinite`,
-                  animationDelay: `${i * 0.2}s`,
+                  // задержка — внутри шортката, чтобы React не ругался на
+                  // конфликт animation/animationDelay при ререндерах
+                  animation: `reflectionFloat ${4 + Math.random() * 6}s ease-in-out ${i * 0.2}s infinite`,
                 }}
               >
                 ОТРАЖЕНИЕ
@@ -248,14 +259,11 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
         </div>
       )}
       <div
-        className={`panel clip-hud brackets w-full max-w-7xl max-h-[95vh] flex flex-col overflow-hidden fade-in ${isReflection ? "reflection-panel" : ""} ${isEntity ? "entity-modal" : ""} ${isCursed ? "cursed-modal" : ""}`}
+        className={`panel clip-hud brackets w-full max-w-7xl max-h-[95vh] flex flex-col overflow-hidden ${modalAnimClass} ${isReflection ? "reflection-panel" : ""} ${isEntity ? "entity-modal" : ""} ${isCursed ? "cursed-modal" : ""}`}
         style={{
           boxShadow: isReflection || isCursed
             ? "0 0 60px rgba(167, 139, 250, 0.4), 0 0 120px rgba(40, 0, 60, 0.9)"
             : "0 0 60px rgba(74, 246, 38, 0.2), 0 0 120px rgba(0, 0, 0, 0.8)",
-          animation: isReflection || isCursed
-            ? "reflectionGlitch 0.15s steps(2) infinite, modalIn 0.3s ease-out forwards"
-            : "modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards",
           background: isReflection || isCursed ? "rgba(15, 0, 25, 0.95)" : undefined,
           border: isReflection || isCursed ? "1px solid rgba(167, 139, 250, 0.5)" : undefined,
         }}
@@ -271,7 +279,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
             <span className="glow-green">{displayRecord.name}</span>
           </span>
           <span className="flex-1" />
-          <button onClick={onClose} className="btn-crt btn-red clip-hud-sm px-2 py-0.5 text-[11px]" aria-label="Закрыть">
+          <button onClick={requestClose} className="btn-crt btn-red clip-hud-sm px-2 py-0.5 text-[11px]" aria-label="Закрыть">
             ✕ ЗАКРЫТЬ
           </button>
         </div>
@@ -373,19 +381,36 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
                   })}
                 </div>
               ) : isCursed ? (
-                // Для Кали — рендерим сырое описание без censorText,
-                // чтобы 6 читаемых слов (Лицимерие, Двуличность, Враг,
-                // Никчёмность, Смерть, Боль) всегда отображались.
-                <p
-                  className="text-[14px] leading-relaxed text-[var(--text)]"
-                  dangerouslySetInnerHTML={{ __html: displayRecord.description.replace(/\n/g, "<br/>") }}
+                // Досье Кали: «расплавленный» при записи текст (zalgo-метки в
+                // самой БД) оживляется — искажённые слова дрейфуют, руны
+                // проступают и растворяются. Шесть якорей-грехов остаются
+                // читаемыми всегда. Каждое открытие досье — новый узор порчи.
+                <CorruptedText
+                  text={displayRecord.description}
+                  zalgoAware
+                  ratio={0.3}
+                  protect={KALI_ANCHORS}
+                  variant="violet"
+                  syncLine
+                  paragraphClassName="text-[14px] leading-relaxed text-[var(--text)] mb-2 last:mb-0"
+                />
+              ) : isCorrupted ? (
+                // Искажённые досье: при каждом открытии порча выбирает
+                // случайные слова — прочесть текст до конца невозможно.
+                <CorruptedText
+                  text={displayRecord.description}
+                  ratio={0.42}
+                  variant="red"
+                  syncLine
+                  paragraphClassName={`text-[14px] leading-relaxed mb-2 last:mb-0 ${
+                    isEntity ? "text-[var(--cyan)]" : "text-[var(--text)]"
+                  }`}
                 />
               ) : (
                 <p
                   className={`text-[14px] leading-relaxed ${isEntity ? "text-[var(--cyan)]" : "text-[var(--text)]"}`}
-                  dangerouslySetInnerHTML={isCorrupted ? { __html: corruptedDisplay } : undefined}
                 >
-                  {isCorrupted ? undefined : displayRecord.description}
+                  {displayRecord.description}
                 </p>
               )
             ) : (
@@ -575,7 +600,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
                   )}
                 </button>
               ) : (
-                <button onClick={onClose} className="btn-crt clip-hud-sm px-4 py-2 text-xs">◂ ЗАКРЫТЬ ДОСЬЕ</button>
+                <button onClick={requestClose} className="btn-crt clip-hud-sm px-4 py-2 text-xs">◂ ЗАКРЫТЬ ДОСЬЕ</button>
               )}
               {!isSealed && record.shardWord && (
                 <button onClick={onCollectShard} disabled={shardCollected} className={`btn-crt clip-hud-sm px-4 py-2 text-xs ${shardCollected ? "opacity-50 cursor-default" : ""}`}>
@@ -591,7 +616,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
           {/* RIGHT: hologram */}
           <div className="md:w-[45%] p-4 sm:p-6 flex flex-col bg-[var(--bg-deep)] min-h-[300px] relative">
             <div className="text-[10px] text-dim tracking-widest mb-3 absolute top-3 left-4 z-30">{"// ПРОЕКЦИЯ //"}</div>
-            <div className="flex-1 flex items-center justify-center w-full min-h-[280px]">
+            <div className="flex-1 flex items-center justify-center w-full min-h-[280px] holo-reveal">
               {record.imageUrl && !isSealed ? (
                 <HoloPortrait src={displayRecord.imageUrl} corrupted={isCorrupted} sealed={isSealed} status={record.status} full fallbackGlyph={record.sigil} />
               ) : (
