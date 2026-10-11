@@ -149,8 +149,12 @@ git push
 
 1. [vercel.com](https://vercel.com) → **Add New… → Project** → импортируй свой
    Git-репозиторий.
-2. Framework Preset определится как **Next.js** — настройки сборки не трогай
-   (скрипт `build` = `next build`, Vercel-совместимый).
+2. Framework Preset определится как **Next.js**. Настройки сборки можно не
+   трогать (`postinstall` сам синхронизирует prisma-провайдера и соберёт
+   клиент). Для гарантии (v4.3.6+) поставь в **Settings → General →
+   Build Command**: `bun run build` — тогда перед `next build` всегда
+   прогоняются проверка зависимостей и авто-синк провайдера из
+   package.json, независимо от того, выполнился ли postinstall.
 3. **Environment Variables** добавь:
 
    | Имя | Значение |

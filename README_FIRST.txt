@@ -2,14 +2,45 @@
   ПРОЧТИ ЭТО ПЕРВЫМ — что делать с архивом сразу после распаковки
 ================================================================
 
-⚗ v4.3.2: ПРОВАЙДЕР БД ВЫСТАВЛЯЕТСЯ САМ.
+⚗ v4.3.7: BUILD:STANDALONE РАБОТАЕТ НА WINDOWS (ФИКС «CP: ILLEGAL
+  OPTION -- R»). Сборка проходила, но падал ПОСЛЕДНИЙ шаг —
+  копирование статики Unix-командой cp -r, которой на Windows нет.
+  Копирование теперь делает Node-скрипт (fs.cpSync) — работает на
+  любой ОС. ВАЖНО: если продакшен на Vercel — build:standalone на
+  твоей машине вообще НЕ НУЖЕН: Vercel сам собирает при пуше в git.
+
+⚗ v4.3.6: СБОРКА САМА ДОУСТАНАВЛИВАЕТ ЗАВИСИМОСТИ (ФИКС «MODULE NOT
+  FOUND: SOCKET.IO-CLIENT»). При обновлении файлов поверх старой
+  установки node_modules остаётся от старой версии — новые импорты
+  роняли next build посреди сборки. Теперь bun run dev / build /
+  build:standalone сначала сверяют dependencies из package.json с
+  node_modules и ДОУСТАНАВЛИВАЮТ недостающее сами (bun install / npm
+  install), с внятным объяснением причины. Проверено матрицей из 7
+  тестов: детект, самолечение под node/bun, CI-режим --check-only.
+
+⚗ v4.3.5: DB:SEED БОЛЬШЕ НЕ ЗАВИСИТ ОТ NPX (ФИКС ДЛЯ WINDOWS).
+  В v4.3.4 `bun run db:seed` мог падать на машинах Windows с bun без
+  npm в PATH: «'npx' is not recognized …» — скрипт пересборки
+  prisma-клиента искал node_modules\.bin\prisma.cmd (его создаёт npm),
+  а bun кладёт prisma.exe, и в откате звал несуществующий npx.
+  Теперь prisma generate запускается по цепочке стратегий (прямой
+  вызов node_modules/prisma/build/index.js через node/bun → локальные
+  .bin-шимы → bunx → npx) и работает на любой конфигурации.
+  Проверено: bun, node, чисто-bun-машина, сломанные шимы, пустой PATH.
+
+⚗ v4.3.4: АВТО-СИНК ПРОВАЙДЕРА ИСПРАВЛЕН + СИД САМОЛЕЧИТСЯ.
   Скрипт scripts/sync-db-provider.mjs запускается автоматически при
   bun install / npm install / bun run dev / build, читает DATABASE_URL
   и сам ставит правильный provider в prisma/schema.prisma:
-    postgresql://… (Supabase)  → provider = "postgresql"
-    file:…        (SQLite)      → provider = "sqlite"
-  Ошибка «Не удалось получить данные http 500» из-за рассинхрона
-  провайдера (причина инцидента на v4.3) теперь невозможна в принципе.
+    postgresql://… (Supabase)  → провайдер postgresql
+    file:…        (SQLite)      → провайдер sqlite
+  В v4.3.3 у скрипта был баг: регулярка цеплялась за строку-КОММЕНТАРИЙ
+  в шапке схемы, и настоящий провайдер не переключался (из-за этого
+  db:push падал с «SQLite database error»). В v4.3.4 регулярка
+  привязана к строке datasource, а ложные паттерны убраны из
+  комментариев — переключение проверено матрицей из 6 сценариев.
+  `bun run db:seed` и `bun run db:push` сами прогоняют синк, а сид ещё
+  и ПЕРЕСОБИРАЕТ prisma-клиент перед заливкой.
 
 Твой сайт хостится на Vercel + Supabase (файлы заливаются в Git)?
   -> Просто закинь файлы из этого архива в репозиторий и запушь.
@@ -38,4 +69,83 @@
   открой https://твой-сайт.vercel.app/api/stats?system=DND — в ответе
   будет готовая подсказка (hint), что именно не так. См. также
   README_VERCEL.md, секция «Быстрый фикс» в самом верху.
+
+Если `bun run db:push` падает с «SQLite database error … unable to open
+  database file: postgresql://…» (архив v4.3.3 или старее):
+  → ПРИЧИНА: в prisma/schema.prisma в блоке datasource db стоит
+    provider = "sqlite", а DATABASE_URL у тебя postgres — старый
+    авто-синк не переключил провайдер (баг регулярки, см. выше).
+  → ФИКС (v4.3.3, вручную): открой prisma\schema.prisma, найди блок
+        datasource db {
+          provider = "sqlite"        ← замени ТОЛЬКО эту строку
+          url      = env("DATABASE_URL")
+        }
+    и постав provider = "postgresql" (строки с // — комментарии,
+    их не трогай). Затем по порядку:
+        bun run db:generate
+        bun run db:push
+        bun run db:seed
+  → В архиве v4.3.4+ этот фикс не нужен: авто-синк переключает
+    провайдер сам при установке/запуске.
+
+Если `bun run build:standalone` упал на «cp: illegal option -- r»
+  (или «cp: не является внутренней или внешней командой»):
+  → ХОРОШАЯ НОВОСТЬ: сборка УЖЕ прошла успешно — упало только
+    копирование статики (.next/static и public в standalone) после
+    неё. Причина: это Unix-команды cp, на Windows их нет.
+  → ТВОЙ СЛУЧАЙ — Vercel: build:standalone на твоей машине НЕ НУЖЕН
+    ВООБЩЕ. Vercel сам собирает проект при каждом пуше в git —
+    просто закоммить обновлённые файлы и запушь, деплой произойдёт
+    автоматически. Для гарантии авто-синка провайдера поставь на
+    Vercel: Settings → General → Build Command = `bun run build`.
+  → Если всё же нужна локальная прод-сборка на Windows (проверить
+    сайт до пуша):
+        bun run build
+        bun run start:next
+    (обе команды без Unix-специфики). В архиве v4.3.7+ заработал и
+    полный вариант: `bun run build:standalone` — копирование теперь
+    делает scripts/copy-standalone.mjs (Node, любая ОС).
+
+Если `bun run build:standalone` (или build / dev) падает с
+  «Module not found: Can't resolve 'socket.io-client'» (или другой
+  пакет) (архив v4.3.5 или старее):
+  → ПРИЧИНА: файлы обновлены поверх старой установки, а node_modules —
+    нет: новые версии проекта импортируют пакеты, которых не было в
+    старой установке (например, presence-модуль → socket.io-client).
+    Зависимости ставятся ТОЛЬКО командой install — замена файлов их
+    не обновляет.
+  → ФИКС (1 команда, затем повтори сборку):
+        bun install
+        bun run build:standalone
+  → В архиве v4.3.6+ это самолечится: недостающие пакеты доустанавливаются
+    автоматически перед сборкой (scripts/check-deps.mjs).
+
+Если `bun run db:seed` на Windows падает с «'npx' is not recognized
+  as an internal or external command» (архив v4.3.4 или старее):
+  → ПРИЧИНА: скрипт пересборки prisma-клиента звал npx, а на машине
+    стоит bun без npm в PATH (обычно Windows: bun кладёт в
+    node_modules\.bin шим prisma.exe, а скрипт ждал prisma.cmd от npm
+    и откатывался к npx).
+  → ФИКС (2 команды, файлы менять не нужно):
+        bun run db:generate
+        bun run prisma/seed.ts
+    Либо обнови scripts/sync-db-provider.mjs до v4.3.5 (или весь архив)
+    — тогда `bun run db:seed` работает как есть.
+
+Если локально `bun run db:seed` падает с «Unknown argument `role`»
+(или любое другое имя поля) в db.user.createMany / createMany:
+  → ПРИЧИНА: файлы обновлены поверх старой установки, а prisma-клиент
+    в node_modules остался от старой схемы (его генерит только install
+    / prisma generate — простая замена файлов его НЕ обновляет).
+  → ФИКС (4 команды, по порядку):
+       bun run db:sync        (схема ← .env: provider + directUrl)
+       bun run db:generate    (клиент ← схема, пересборка)
+       bun run db:push        (база ← схема: добавит новые колонки)
+       bun run db:seed        (данные ← база)
+    В версиях v4.3.3+ достаточно двух: `bun run db:push` и `bun run
+    db:seed` — они сами пересобирают клиент.
+  → ВАЖНО: если сид уже запускался и упал НА СЕРЕДИНЕ — таблицы очищены
+    (сид всегда начинает с очистки), просто повтори фикс и доведи сид
+    до конца. Прогресс стражей (осколки/ачивки) при этом сбрасывается —
+    это необратимо, контент же восстанавливается сидом полностью.
 ================================================================

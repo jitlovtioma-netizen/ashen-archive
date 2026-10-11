@@ -7,6 +7,7 @@ import { sfx } from "@/lib/audio";
 import type {
   Achievement,
   Character,
+  Chronicle,
   GameSystem,
   PresenceUser,
   UserSummary,
@@ -22,6 +23,14 @@ const SYS_LABEL: Record<GameSystem, string> = {
   DND: "D&D 5e · ЭЛАРИЯ",
   PF2E: "PF2E · ГОЛАРИОН",
 };
+
+// режимы сортировки реестра стражей
+const SORT_MODES = [
+  { id: "ONLINE", label: "ПО СЕТИ" },
+  { id: "PROGRESS", label: "ПО ПРОГРЕССУ" },
+  { id: "DAYS", label: "ПО СТАЖУ" },
+] as const;
+type SortMode = (typeof SORT_MODES)[number]["id"];
 
 export function ProfileSection({ system }: { system: GameSystem }) {
   const user = useArchive((s) => s.user);
@@ -46,6 +55,12 @@ export function ProfileSection({ system }: { system: GameSystem }) {
 
   // ── фильтр стражей по миру ──
   const [worldFilter, setWorldFilter] = useState<"ALL" | GameSystem>("ALL");
+
+  // ── сортировка стражей: сеть / прогресс / стаж ──
+  const [sortMode, setSortMode] = useState<SortMode>("ONLINE");
+
+  // ── летопись сессий текущего мира (блок «Летопись» в досье) ──
+  const [chronicles, setChronicles] = useState<Chronicle[] | null>(null);
 
   // ── тикер, чтобы относительные времена («был в сети N мин») обновлялись ──
   const [, setTick] = useState(0);
@@ -95,6 +110,32 @@ export function ProfileSection({ system }: { system: GameSystem }) {
     };
   }, []);
 
+  // летопись сессий текущего мира — перезагружается при смене мира (W)
+  useEffect(() => {
+    let cancelled = false;
+    setChronicles(null);
+    fetch(`/api/archive?type=chronicles&system=${system}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (!cancelled) setChronicles(Array.isArray(d) ? d : []);
+      })
+      .catch(() => {
+        if (!cancelled) setChronicles([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [system]);
+
+  // последние сессии летописи (новые сверху)
+  const chronicleList = useMemo(
+    () =>
+      [...(chronicles ?? [])]
+        .sort((a, b) => b.sessionNumber - a.sessionNumber)
+        .slice(0, 6),
+    [chronicles],
+  );
+
   const achList = useMemo(
     () => (achCatalog ?? []).filter((a) => !a.system || a.system === system),
     [achCatalog, system],
@@ -112,6 +153,14 @@ export function ProfileSection({ system }: { system: GameSystem }) {
     [characters, user?.characterId],
   );
 
+  // собственная карточка в реестре — оттуда берём дату вступления в архив
+  const myCreatedAt = useMemo(
+    () => users?.find((u) => u.login === user?.login)?.createdAt ?? null,
+    [users, user?.login],
+  );
+  const myDays = myCreatedAt ? daysInArchive(myCreatedAt) : 0;
+  const mySinceDate = myCreatedAt ? formatDateRu(myCreatedAt) : null;
+
   // id → персонаж (для имён в карточках стражей)
   const charById = useMemo(() => {
     const m = new Map<string, Character>();
@@ -119,13 +168,39 @@ export function ProfileSection({ system }: { system: GameSystem }) {
     return m;
   }, [characters]);
 
-  // сортировка стражей: онлайн первыми, затем админы, далее по логину
-  // (+ фильтр по миру, если выбран)
+  // балл прогресса стража (для сортировки «по прогрессу»):
+  // достижения и осколки памяти весят больше прочих находок
+  const progressScore = (u: UserSummary): number => {
+    const s = u.summary;
+    if (!s) return -1;
+    return (
+      s.achievements * 3 +
+      s.shards * 2 +
+      s.unlockedIds +
+      s.solvedRiddles +
+      s.revealedSecrets
+    );
+  };
+
+  // сортировка стражей — зависит от выбранного режима (+ фильтр по миру)
   const sortedUsers = useMemo(() => {
     if (!users) return null;
-    return [...users]
-      .filter((u) => worldFilter === "ALL" || u.system === worldFilter)
-      .sort((a, b) => {
+    const list = [...users].filter(
+      (u) => worldFilter === "ALL" || u.system === worldFilter,
+    );
+    if (sortMode === "PROGRESS") {
+      list.sort(
+        (a, b) => progressScore(b) - progressScore(a) || a.login.localeCompare(b.login),
+      );
+    } else if (sortMode === "DAYS") {
+      list.sort(
+        (a, b) =>
+          daysInArchive(b.createdAt) - daysInArchive(a.createdAt) ||
+          a.login.localeCompare(b.login),
+      );
+    } else {
+      // ПО СЕТИ: онлайн первыми, затем админы, далее по логину
+      list.sort((a, b) => {
         const aOn = onlineByLogin.has(a.login) ? 0 : 1;
         const bOn = onlineByLogin.has(b.login) ? 0 : 1;
         if (aOn !== bOn) return aOn - bOn;
@@ -134,7 +209,9 @@ export function ProfileSection({ system }: { system: GameSystem }) {
         if (aAdm !== bAdm) return aAdm - bAdm;
         return a.login.localeCompare(b.login);
       });
-  }, [users, onlineByLogin, worldFilter]);
+    }
+    return list;
+  }, [users, onlineByLogin, worldFilter, sortMode]);
 
   // сброс прогресса до нуля (сервер + локальный стор)
   const doReset = async () => {
@@ -237,6 +314,16 @@ export function ProfileSection({ system }: { system: GameSystem }) {
               <div className="text-[11px] text-dim tracking-wider mt-0.5">
                 логин: <span className="glow-green">{user?.login}</span>
               </div>
+              {mySinceDate && (
+                <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                  <span className="chip text-[9px]" title="Полных суток в архиве">
+                    ⌛ {myDays} дн.
+                  </span>
+                  <span className="text-[10px] text-dim italic">
+                    в архиве с {mySinceDate}
+                  </span>
+                </div>
+              )}
               <div className="flex flex-wrap gap-1.5 mt-2">
                 <span
                   className="chip text-[10px]"
@@ -298,6 +385,7 @@ export function ProfileSection({ system }: { system: GameSystem }) {
               color="green"
               valueColor={gazeColor}
             />
+            <Stat label="ДНЕЙ В АРХИВЕ" value={`${myDays}`} color="amber" />
           </div>
         </div>
 
@@ -463,6 +551,88 @@ export function ProfileSection({ system }: { system: GameSystem }) {
         </div>
       </div>
 
+      {/* ─── летопись сессий мира ─── */}
+      <div className="panel clip-hud-sm p-3">
+        <div className="flex items-center gap-2 flex-wrap mb-3">
+          <div className="text-[10px] text-dim tracking-widest">
+            {"// ЛЕТОПИСЬ_СЕССИЙ //"}
+          </div>
+          <span className="text-[10px] text-dim italic">
+            {"// хроника партии этого мира //"}
+          </span>
+          <span className="flex-1" />
+          <span className="chip chip-warn text-[10px]">
+            СЕССИЙ: {chronicles?.length ?? "···"}
+          </span>
+        </div>
+
+        {!chronicles && (
+          <div className="space-y-2">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="panel-inset p-3 h-14 animate-pulse" />
+            ))}
+          </div>
+        )}
+
+        {chronicles && chronicles.length === 0 && (
+          <div className="text-[11px] text-dim italic p-2">
+            {"// летопись этого мира пока чиста — сессии не записаны //"}
+          </div>
+        )}
+
+        {chronicles && chronicleList.length > 0 && (
+          <div className="space-y-1.5 max-h-96 overflow-y-auto crt-scroll pr-1">
+            {chronicleList.map((c) => (
+              <div
+                key={c.id}
+                className="panel-inset p-2.5 flex gap-3 items-start border-l-2 transition-[filter] hover:brightness-110"
+                style={{
+                  borderLeftColor: c.isLocked
+                    ? "var(--violet)"
+                    : "var(--amber-dim)",
+                }}
+              >
+                <div
+                  className="font-vt323 text-xl glow-amber w-12 text-center shrink-0 leading-none pt-0.5"
+                  title={`Сессия №${c.sessionNumber}`}
+                >
+                  {toRoman(c.sessionNumber)}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span
+                      className={`font-medieval text-sm leading-tight ${
+                        c.isLocked ? "text-dim" : "glow-amber"
+                      }`}
+                    >
+                      {c.title}
+                    </span>
+                    <span className="chip text-[9px] shrink-0">{c.date}</span>
+                    {c.isCorrupted && (
+                      <span className="chip chip-err text-[9px]">▓ ИСКАЖЕНО</span>
+                    )}
+                  </div>
+                  {c.isLocked ? (
+                    <p className="text-[11px] text-dim italic mt-1">
+                      {"// печать не снята — текст под грифом Ордена //"}
+                    </p>
+                  ) : (
+                    <p className="text-[11px] text-dim mt-1 leading-relaxed line-clamp-2">
+                      {c.summary}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
+            {chronicles.length > chronicleList.length && (
+              <div className="text-[10px] text-dim italic text-center pt-1">
+                {"// показаны последние сессии летописи //"}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* ─── стражи архива (все + онлайн) ─── */}
       <div className="panel clip-hud-sm p-3">
         <div className="flex items-center gap-2 flex-wrap mb-3">
@@ -525,6 +695,37 @@ export function ProfileSection({ system }: { system: GameSystem }) {
                   aria-pressed={active}
                 >
                   {f === "ALL" ? "ВСЕ" : f === "DND" ? "ЭЛАРИЯ" : "ГОЛАРИОН"}
+                </button>
+              );
+            })}
+          </div>
+          {/* сортировка реестра стражей */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[9px] text-dim tracking-widest">СОРТ:</span>
+            {SORT_MODES.map((m) => {
+              const active = sortMode === m.id;
+              return (
+                <button
+                  key={m.id}
+                  onClick={() => {
+                    setSortMode(m.id);
+                    sfx.hover();
+                  }}
+                  className={`chip text-[9px] cursor-pointer transition-all ${
+                    active ? "" : "opacity-45 hover:opacity-80"
+                  }`}
+                  style={
+                    active
+                      ? {
+                          color: "var(--green)",
+                          borderColor: "var(--green)",
+                          boxShadow: "0 0 10px rgba(120,255,170,0.18)",
+                        }
+                      : undefined
+                  }
+                  aria-pressed={active}
+                >
+                  {m.label}
                 </button>
               );
             })}
@@ -616,6 +817,14 @@ export function ProfileSection({ system }: { system: GameSystem }) {
                     <span className="chip text-[9px]" style={{ color, borderColor: color }}>
                       {u.system}
                     </span>
+                    {daysInArchive(u.createdAt) > 0 && (
+                      <span
+                        className="chip text-[9px]"
+                        title={`В архиве ${daysInArchive(u.createdAt)} дн. (с ${formatDateRu(u.createdAt)})`}
+                      >
+                        ⌛ {daysInArchive(u.createdAt)}д
+                      </span>
+                    )}
                     {u.summary ? (
                       <>
                         <span className="chip chip-warn text-[9px]">🏆 {u.summary.achievements}</span>
@@ -855,6 +1064,43 @@ function AdminPanel({
 // ─── мини-стат ──────────────────────────────────────────────────────────
 
 // ─── форматирование времени для карточек стражей ───────────────────────
+
+// «дней в архиве»: полных суток с момента регистрации стража
+function daysInArchive(createdAt: string): number {
+  const t = Date.parse(createdAt);
+  if (Number.isNaN(t)) return 0;
+  return Math.max(0, Math.floor((Date.now() - t) / 86_400_000));
+}
+
+// римские цифры для номеров сессий — атмосфера старой хроники
+function toRoman(n: number): string {
+  if (!Number.isFinite(n) || n <= 0) return "—";
+  const map: [number, string][] = [
+    [40, "XL"],
+    [10, "X"],
+    [9, "IX"],
+    [5, "V"],
+    [4, "IV"],
+    [1, "I"],
+  ];
+  let rest = Math.min(Math.floor(n), 3999);
+  let out = "";
+  for (const [v, s] of map) {
+    while (rest >= v) {
+      out += s;
+      rest -= v;
+    }
+  }
+  return out || "—";
+}
+
+// дата в русском формате ДД.ММ.ГГГГ
+function formatDateRu(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  const pad = (v: number) => String(v).padStart(2, "0");
+  return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
+}
 
 // «был в сети»: только что / N мин назад / N ч назад / вчера / DD.MM.YYYY
 function formatLastSeen(ts: number): string {

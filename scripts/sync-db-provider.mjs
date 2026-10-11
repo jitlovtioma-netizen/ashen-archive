@@ -139,18 +139,24 @@ for (const file of SCHEMAS) {
     continue;
   }
   const text = readFileSync(file, "utf-8");
-  if (!/provider\s*=\s*"(sqlite|postgresql)"/.test(text)) {
+  // ЯКОРНАЯ regex: только standalone-строка `provider = "…"` (datasource).
+  // НЕ якорная `/provider\s*=\s*"…"/` первой матчится на СТРОКУ-КОММЕНТАРИЙ
+  // в шапке схемы («// postgresql://… → provider = "postgresql"») — скрипт
+  // тогда «переключал» комментарий, а datasource оставался как был:
+  // sqlite-клиент с postgres-DATABASE_URL → HTTP 500 (инцидент v4.3).
+  const providerRe = /^([ \t]*)provider[ \t]*=[ \t]*"(sqlite|postgresql)"[ \t]*$/m;
+  if (!providerRe.test(text)) {
     log(`⚠ ${rel}: строка provider не распознана — файл не тронут`);
     continue;
   }
 
-  const curProvider = text.match(/provider\s*=\s*"(sqlite|postgresql)"/)[1];
+  const curProvider = text.match(providerRe)[2];
   const nextProvider = target ?? curProvider;
   let out = text;
   let changed = false;
 
   if (nextProvider !== curProvider) {
-    out = out.replace(/provider\s*=\s*"(sqlite|postgresql)"/, `provider = "${nextProvider}"`);
+    out = out.replace(providerRe, `$1provider = "${nextProvider}"`);
     changed = true;
   }
 
