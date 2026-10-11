@@ -1,12 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useArchive } from "@/lib/store";
 import type { ArchiveType, GameSystem } from "@/lib/types";
 
 export function useArchiveData<T>(type: ArchiveType, system: GameSystem) {
   const [data, setData] = useState<T[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // ревизия данных: после правки досье (владелец/админ) все секции
+  // перезагружают список — правки становятся видны без перезагрузки страницы
+  const dataRevision = useArchive((s) => s.dataRevision);
 
   useEffect(() => {
     let cancelled = false;
@@ -38,7 +42,7 @@ export function useArchiveData<T>(type: ArchiveType, system: GameSystem) {
       cancelled = true;
       controller.abort();
     };
-  }, [type, system]);
+  }, [type, system, dataRevision]);
 
   return { data, loading, error };
 }

@@ -28,6 +28,10 @@ function npcToCard(r: Character) {
     mapY: r.mapY,
     imageUrl: r.imageUrl,
     status: r.status as "ALIVE" | "DEAD" | "MISSING",
+    recordType: "character" as const,
+    characterTitle: r.title,
+    characterCategory: r.category,
+    characterRace: r.race,
   };
 }
 

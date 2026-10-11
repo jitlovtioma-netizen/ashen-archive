@@ -68,6 +68,7 @@ function buildLines(
   ratio: number,
   zalgoAware: boolean,
   protect: Set<string>,
+  zalgoChance = 1,
 ): Line[] {
   return text.split("\n").map((lineText) => {
     const line: Line = [];
@@ -93,8 +94,13 @@ function buildLines(
       }
       const isZalgo = zalgoAware && ZALGO_RE.test(token);
       const isProtected = protect.has(core) || protect.has(token);
+      // «расплавленные» (zalgo) слова портятся с шансом zalgoChance —
+      // остальные проступают читаемыми: сквозь помехи видна структура
       const doCorrupt =
-        !isProtected && (isZalgo || Math.random() < ratio);
+        !isProtected &&
+        (isZalgo
+          ? Math.random() < zalgoChance
+          : Math.random() < ratio);
       line.push(
         doCorrupt
           ? { t: "corrupt", core, tail, glyphs: toGlyphs(core.length) }
@@ -111,6 +117,8 @@ export interface CorruptedTextProps {
   ratio?: number;
   /** слова с zalgo-метками всегда искажаются (текст «расплавлен» при записи) */
   zalgoAware?: boolean;
+  /** шанс порчи «расплавленного» слова (0..1, по умолчанию 1 = все) */
+  zalgoChance?: number;
   /** слова-якоря, которые искажение не смеет тронуть */
   protect?: string[];
   /** цветовая тема: красная (обычные искажения) или фиолетовая (проклятые) */
@@ -127,15 +135,28 @@ export function CorruptedText({
   text,
   ratio = 0.42,
   zalgoAware = false,
+  zalgoChance = 1,
   protect = [],
   variant = "red",
   live = true,
   syncLine = false,
   paragraphClassName = "",
 }: CorruptedTextProps) {
+  // Текст мог измениться (владелец отредактировал досье) — перестраиваем
+  // узор порчи под новые данные. Каноничный паттерн «adjust state during
+  // render»: сравниваем ключ входов, при смене пересобираем прямо в рендере
+  // (без эффекта — нет каскадных ререндеров). Ключ вместо массива защищает
+  // от ререндеров с новым идентификатором массива protect.
+  const protectKey = protect.join("\u0000");
+  const buildKey = `${text}\u0001${ratio}\u0001${zalgoAware}\u0001${zalgoChance}\u0001${protectKey}`;
+  const [prevKey, setPrevKey] = useState(buildKey);
   const [lines, setLines] = useState<Line[]>(() =>
-    buildLines(text, ratio, zalgoAware, new Set(protect)),
+    buildLines(text, ratio, zalgoAware, new Set(protect), zalgoChance),
   );
+  if (buildKey !== prevKey) {
+    setPrevKey(buildKey);
+    setLines(buildLines(text, ratio, zalgoAware, new Set(protect), zalgoChance));
+  }
   const linesRef = useRef(lines);
   const ghostRef = useRef(false);
   const [syncPct, setSyncPct] = useState(47);

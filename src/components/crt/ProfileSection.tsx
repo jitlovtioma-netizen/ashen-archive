@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useArchive } from "@/lib/store";
 import { usePresence, sendBroadcast, kickUser, presenceEnabled } from "@/lib/presence";
 import { sfx } from "@/lib/audio";
@@ -13,6 +14,9 @@ import type {
 } from "@/lib/types";
 import { Sigil } from "@/components/crt/Sigil";
 import { UserProfileModal } from "@/components/crt/UserProfileModal";
+import { RecordModal } from "@/components/crt/RecordModal";
+import type { CardRecord } from "@/components/crt/RecordCard";
+import { SECRETS_SHARDS_REQUIRED } from "@/lib/types";
 
 const SYS_COLOR: Record<GameSystem, string> = {
   DND: "var(--red)",
@@ -51,6 +55,10 @@ export function ProfileSection({ system }: { system: GameSystem }) {
   const [achCatalog, setAchCatalog] = useState<Achievement[] | null>(null);
   const [characters, setCharacters] = useState<Character[] | null>(null);
   const [viewUser, setViewUser] = useState<UserSummary | null>(null);
+  // досье своего персонажа, открытое прямо из профиля (с правом редактирования)
+  const [myDossierOpen, setMyDossierOpen] = useState(false);
+  // ревизия данных: после правки досье перечитываем каталог персонажей
+  const dataRevision = useArchive((s) => s.dataRevision);
 
   // ── фильтр стражей по миру ──
   const [worldFilter, setWorldFilter] = useState<"ALL" | GameSystem>("ALL");
@@ -84,7 +92,7 @@ export function ProfileSection({ system }: { system: GameSystem }) {
   }, []);
 
   // каталог персонажей ОБЕИХ миров — своя привязка, имена персонажей
-  // в карточках стражей и админ-привязки
+  // в карточках стражей и админ-привязки (перечитывается после правок досье)
   useEffect(() => {
     let cancelled = false;
     Promise.all([
@@ -104,7 +112,7 @@ export function ProfileSection({ system }: { system: GameSystem }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [dataRevision]);
 
   const achList = useMemo(
     () => (achCatalog ?? []).filter((a) => !a.system || a.system === system),
@@ -121,6 +129,34 @@ export function ProfileSection({ system }: { system: GameSystem }) {
   const myCharacter = useMemo(
     () => characters?.find((c) => c.id === user?.characterId) ?? null,
     [characters, user?.characterId],
+  );
+
+  // карточка досье моего персонажа — для модалки из профиля
+  const myCharacterCard: CardRecord | null = useMemo(
+    () =>
+      myCharacter
+        ? {
+            id: myCharacter.id,
+            name: myCharacter.name,
+            subtitle: `${myCharacter.category} · ${myCharacter.race} · ${myCharacter.title}`,
+            system: myCharacter.system,
+            description: myCharacter.description,
+            sigil: myCharacter.sigil,
+            isLocked: myCharacter.isLocked,
+            isCorrupted: myCharacter.isCorrupted,
+            secretFragment: myCharacter.secretFragment,
+            shardWord: myCharacter.shardWord,
+            mapX: myCharacter.mapX,
+            mapY: myCharacter.mapY,
+            imageUrl: myCharacter.imageUrl,
+            status: myCharacter.status as "ALIVE" | "DEAD" | "MISSING",
+            recordType: "character",
+            characterTitle: myCharacter.title,
+            characterCategory: myCharacter.category,
+            characterRace: myCharacter.race,
+          }
+        : null,
+    [myCharacter],
   );
 
   // собственная карточка в реестре — оттуда берём дату вступления в архив
@@ -326,7 +362,7 @@ export function ProfileSection({ system }: { system: GameSystem }) {
           <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-2 content-start stagger-children">
             <Stat
               label="ОСКОЛКИ ПАМЯТИ"
-              value={`${shards.length}${totalShardWords > 0 ? `/${totalShardWords}` : ""}`}
+              value={`${Math.min(shards.length, SECRETS_SHARDS_REQUIRED)}/${SECRETS_SHARDS_REQUIRED}`}
               color="green"
             />
             <Stat
@@ -388,7 +424,25 @@ export function ProfileSection({ system }: { system: GameSystem }) {
                       ? "❓ ПРОПАЛ БЕЗ ВЕСТИ"
                       : "✓ ЖИВ"}
                 </div>
+                <div className="text-[9px] text-dim italic mt-1">
+                  {"// это ваше досье — вы можете вписывать в него свою историю //"}
+                </div>
               </div>
+              <button
+                onClick={() => {
+                  sfx.select();
+                  setMyDossierOpen(true);
+                }}
+                onMouseEnter={() => sfx.hover()}
+                className="btn-crt clip-hud-sm px-4 py-2 text-xs shrink-0 ml-auto"
+                style={{
+                  borderColor: "var(--amber-dim)",
+                  color: "var(--amber)",
+                  background: "rgba(232, 161, 58, 0.08)",
+                }}
+              >
+                ✎ ОТКРЫТЬ ДОСЬЕ
+              </button>
             </div>
           ) : (
             <div className="text-[11px] text-dim italic">
@@ -776,6 +830,17 @@ export function ProfileSection({ system }: { system: GameSystem }) {
           onClose={() => setViewUser(null)}
         />
       )}
+
+      {/* модалка досье своего персонажа — с правом редактирования */}
+      {myDossierOpen && myCharacterCard &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <RecordModal
+            record={myCharacterCard}
+            onClose={() => setMyDossierOpen(false)}
+          />,
+          document.body
+        )}
     </section>
   );
 }

@@ -17,6 +17,17 @@ interface RecordModalProps {
   onClose: () => void;
 }
 
+// Кали: «расплавленный» поток воспоминаний раскладываем на строки по
+// якорям-грехам — каждый грех начинает новую строку. Структура досье
+// проступает сквозь порчу вместо одной бесконечной строки месива.
+function structureKaliText(text: string): string {
+  let out = text;
+  for (const anchor of KALI_ANCHORS) {
+    out = out.split(anchor).join(`\n${anchor}`);
+  }
+  return out.replace(/\n{3,}/g, "\n\n");
+}
+
 export function RecordModal({ record, onClose }: RecordModalProps) {
   const {
     unlockedIds,
@@ -31,18 +42,43 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
     solvedRiddles,
     solveRiddle,
   } = useArchive();
+  const user = useArchive((s) => s.user);
+  const bumpDataRevision = useArchive((s) => s.bumpDataRevision);
+
+  // ── Локальные правки досье (после сохранения владельцем) — накладываются
+  // на проп до рефетча секции, чтобы правки были видны мгновенно
+  const [localPatch, setLocalPatch] = useState<Partial<CardRecord> | null>(null);
+  // ── Режим редактирования досье (владелец персонажа или Созидатель) ──
+  const [editMode, setEditMode] = useState(false);
+  const [editDraft, setEditDraft] = useState({
+    description: "",
+    title: "",
+    status: "ALIVE" as "ALIVE" | "DEAD" | "MISSING",
+  });
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const baseRecord: CardRecord = localPatch
+    ? { ...record, ...localPatch }
+    : record;
 
   // SWAP: Диана → Анаид (toggle) — нужно объявить до isSealed/isCorrupted
   const [swappedToAnaid, setSwappedToAnaid] = useState(false);
   const anaidRecord: CardRecord = {
-    ...record,
+    ...baseRecord,
     name: "Анаид",
     subtitle: "Зверолюд · Продолжение Дианы",
     description: "▓▒░ Анаид ░▒▓ — девушка-зверолюд, по имени Анаид, хорошо ладит с животными, и очень хорошо может выживать. О ней мало что известно, понятно одно — она продолжение Дианы, и у них синергия, и взаимопонимание. Когда Диана не может — Анаид может. Когда Анаид не знает — Диана знает. Они — две половины одного целого, и вместе они сильнее, чем каждая по отдельности.",
     imageUrl: "/heroes/anaid.png",
     sigil: "🐾",
   };
-  const displayRecord = (record.name === "Диана" && swappedToAnaid) ? anaidRecord : record;
+  const displayRecord = (baseRecord.name === "Диана" && swappedToAnaid) ? anaidRecord : baseRecord;
+
+  // при смене записи (рефетч/другая карточка) — сбрасываем локальные правки
+  useEffect(() => {
+    setLocalPatch(null);
+    setEditMode(false);
+  }, [record.id]);
 
   const isSealed = record.isLocked && !unlockedIds.includes(record.id);
   const isCorrupted = displayRecord.isCorrupted;
@@ -196,6 +232,97 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
   const isCursed = record.name === "Кали";
   const isUnknown = record.name === "Неизвестная" || record.name === "Четвёртый" || record.name === "Мёртвый План";
 
+  // ── Права на редактирование: владелец персонажа или Созидатель (админ) ──
+  const isCharacterRecord = record.recordType === "character";
+  const isDossierOwner = !!user && user.characterId === record.id;
+  const canEditDossier =
+    isCharacterRecord &&
+    !!user &&
+    !isSealed &&
+    (isDossierOwner || user.role === "ADMIN");
+
+  const startEdit = () => {
+    setEditDraft({
+      description: baseRecord.description,
+      title: baseRecord.characterTitle ?? "",
+      status: baseRecord.status ?? "ALIVE",
+    });
+    setSaveError(null);
+    setEditMode(true);
+    sfx.select();
+  };
+
+  const saveEdit = async () => {
+    if (!user) return;
+    const description = editDraft.description.trim();
+    if (description.length < 3) {
+      setSaveError("Архив отказал: описание слишком короткое (минимум 3 символа)");
+      sfx.error();
+      return;
+    }
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const res = await fetch("/api/characters/edit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          requester: user.login,
+          characterId: record.id,
+          patch: {
+            description,
+            title: editDraft.title.trim() || undefined,
+            status: editDraft.status,
+          },
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        const hints: Record<string, string> = {
+          FORBIDDEN: "Только владелец досье или Созидатель может вносить правки",
+          UNKNOWN_CHARACTER: "Запись не найдена в архиве",
+          UNKNOWN_USER: "Страж не опознан — войдите заново",
+          BAD_DESCRIPTION: "Описание отклонено (3..6000 символов)",
+          BAD_TITLE: "Эпитет отклонён (1..120 символов)",
+          BAD_STATUS: "Недопустимый статус",
+          SYSTEM_MISMATCH: "Досье принадлежит другому миру",
+          EMPTY_PATCH: "Нет полей для сохранения",
+        };
+        setSaveError(hints[data.error as string] ?? "Архив отказал в записи");
+        sfx.error();
+        return;
+      }
+      const c = data.character as {
+        name: string;
+        title: string;
+        category: string;
+        race: string;
+        description: string;
+        status: "ALIVE" | "DEAD" | "MISSING";
+      };
+      setLocalPatch({
+        description: c.description,
+        status: c.status,
+        characterTitle: c.title,
+        subtitle: `${c.category} · ${c.race} · ${c.title}`,
+      });
+      setEditMode(false);
+      bumpDataRevision();
+      sfx.unlock();
+      pushToast({
+        kind: "ach",
+        sigil: "✎",
+        title: "ДОСЬЕ ОБНОВЛЕНО",
+        body: `Правки вписаны в архив: ${c.name}. Их увидят все стражи.`,
+      });
+    } catch {
+      setSaveError("Сеть архива недоступна — попробуйте ещё раз");
+      sfx.error();
+    } finally {
+      setSaving(false);
+    }
+  };
+
   // выбор анимации панели: cursed/reflection-досье живут с постоянным
   // глитчем, поэтому им нужны комбинированные классы (глитч + вход/выход)
   const glitchy = isReflection || isCursed;
@@ -299,6 +426,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
               <span className="chip" style={{ color: SYSTEM_COLOR[record.system], borderColor: `color-mix(in srgb, ${SYSTEM_COLOR[record.system]} 40%, transparent)` }}>
                 {SYSTEM_LABEL[record.system]}
               </span>
+              {isDossierOwner && <span className="chip chip-warn" title="Это досье привязано к вам — вы можете его редактировать">✎ ВАШЕ ДОСЬЕ</span>}
               {isSealed && <span className="chip chip-warn">🔒 ОПЕЧАТАНО</span>}
               {isCorrupted && <span className="chip chip-err">⚠ ИСКАЖЕНО</span>}
               {!isSealed && !isCorrupted && <span className="chip chip-ok">✓ ДОСТУПНО</span>}
@@ -370,7 +498,131 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
               </div>
             )}
 
-            {!isSealed ? (
+            {/* ── РЕЖИМ ЗАПИСИ: редактирование досье владельцем/Созидателем ── */}
+            {editMode ? (
+              <div
+                className="panel-inset p-3 space-y-3 fade-in"
+                style={{ borderColor: "var(--amber-dim)", boxShadow: "inset 0 0 18px rgba(232,161,58,0.07)" }}
+              >
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="chip chip-warn text-[10px]">✎ РЕЖИМ ЗАПИСИ</span>
+                  <span className="text-[9px] text-dim tracking-wider">
+                    {"// перо в ваших руках. правки увидят все стражи архива //"}
+                  </span>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="dossier-title-edit"
+                    className="text-[10px] text-dim tracking-widest mb-1 block"
+                  >
+                    {"// ЭПИТЕТ //"}
+                  </label>
+                  <input
+                    id="dossier-title-edit"
+                    value={editDraft.title}
+                    onChange={(e) =>
+                      setEditDraft((d) => ({ ...d, title: e.target.value }))
+                    }
+                    maxLength={120}
+                    placeholder="напр. Капитан гарнизона"
+                    className="w-full bg-black/40 border border-[var(--line)] focus:border-[var(--amber-dim)] outline-none px-2.5 py-1.5 text-[13px] text-[var(--text)] transition-colors"
+                    style={{
+                      clipPath:
+                        "polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)",
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <div className="text-[10px] text-dim tracking-widest mb-1">
+                    {"// СТАТУС //"}
+                  </div>
+                  <div className="flex gap-1.5 flex-wrap">
+                    {(
+                      [
+                        ["ALIVE", "✓ ЖИВ"],
+                        ["DEAD", "💀 ПАЛ"],
+                        ["MISSING", "? ПРОПАЛ"],
+                      ] as const
+                    ).map(([s, label]) => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => setEditDraft((d) => ({ ...d, status: s }))}
+                        className={`chip text-[10px] transition-all cursor-pointer ${
+                          editDraft.status === s
+                            ? "chip-warn"
+                            : "opacity-60 hover:opacity-100"
+                        }`}
+                        aria-pressed={editDraft.status === s}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label
+                      htmlFor="dossier-desc-edit"
+                      className="text-[10px] text-dim tracking-widest"
+                    >
+                      {"// ОПИСАНИЕ //"}
+                    </label>
+                    <span
+                      className={`text-[9px] ${
+                        editDraft.description.length > 5900 ? "glow-red" : "text-dim"
+                      }`}
+                    >
+                      {editDraft.description.length}/6000
+                    </span>
+                  </div>
+                  <textarea
+                    id="dossier-desc-edit"
+                    value={editDraft.description}
+                    onChange={(e) =>
+                      setEditDraft((d) => ({ ...d, description: e.target.value }))
+                    }
+                    maxLength={6000}
+                    rows={12}
+                    spellCheck={false}
+                    className="w-full bg-black/40 border border-[var(--line)] focus:border-[var(--amber-dim)] outline-none px-2.5 py-2 text-[13px] leading-relaxed text-[var(--text)] transition-colors crt-scroll resize-y min-h-[220px]"
+                    placeholder="Впишите историю героя… Пустая строка — новый абзац."
+                  />
+                </div>
+
+                {saveError && (
+                  <div
+                    className="text-[11px] leading-relaxed"
+                    style={{ color: "var(--red)" }}
+                  >
+                    ⚠ {saveError}
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    onClick={saveEdit}
+                    disabled={saving}
+                    className="btn-crt btn-amber clip-hud-sm px-4 py-2 text-xs disabled:opacity-50 disabled:cursor-default"
+                  >
+                    {saving ? "▸ ЗАПИСЬ В АРХИВ…" : "💾 СОХРАНИТЬ ДОСЬЕ"}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditMode(false);
+                      sfx.blip();
+                    }}
+                    disabled={saving}
+                    className="btn-crt clip-hud-sm px-4 py-2 text-xs"
+                  >
+                    ✕ ОТМЕНА
+                  </button>
+                </div>
+              </div>
+            ) : !isSealed ? (
               isUnknown ? (
                 <div className="text-[14px] leading-relaxed space-y-2">
                   {displayRecord.description.split("\n").map((line, i) => {
@@ -384,11 +636,13 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
                 // Досье Кали: «расплавленный» при записи текст (zalgo-метки в
                 // самой БД) оживляется — искажённые слова дрейфуют, руны
                 // проступают и растворяются. Шесть якорей-грехов остаются
-                // читаемыми всегда. Каждое открытие досье — новый узор порчи.
+                // читаемыми всегда и разбирают поток на строки. Порча теперь
+                // разрежена: сквозь неё читается структура повествования.
                 <CorruptedText
-                  text={displayRecord.description}
+                  text={structureKaliText(displayRecord.description)}
                   zalgoAware
-                  ratio={0.3}
+                  ratio={0.12}
+                  zalgoChance={0.45}
                   protect={KALI_ANCHORS}
                   variant="violet"
                   syncLine
@@ -408,7 +662,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
                 />
               ) : (
                 <p
-                  className={`text-[14px] leading-relaxed ${isEntity ? "text-[var(--cyan)]" : "text-[var(--text)]"}`}
+                  className={`text-[14px] leading-relaxed whitespace-pre-line ${isEntity ? "text-[var(--cyan)]" : "text-[var(--text)]"}`}
                 >
                   {displayRecord.description}
                 </p>
@@ -601,6 +855,20 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
                 </button>
               ) : (
                 <button onClick={requestClose} className="btn-crt clip-hud-sm px-4 py-2 text-xs">◂ ЗАКРЫТЬ ДОСЬЕ</button>
+              )}
+              {canEditDossier && !editMode && (
+                <button
+                  onClick={startEdit}
+                  className="btn-crt clip-hud-sm px-4 py-2 text-xs"
+                  style={{
+                    borderColor: "var(--amber-dim)",
+                    color: "var(--amber)",
+                    background: "rgba(232, 161, 58, 0.08)",
+                  }}
+                  title={isDossierOwner ? "Это ваше досье — впишите свою историю" : "Созидатель может править любое досье"}
+                >
+                  ✎ РЕДАКТИРОВАТЬ
+                </button>
               )}
               {!isSealed && record.shardWord && (
                 <button onClick={onCollectShard} disabled={shardCollected} className={`btn-crt clip-hud-sm px-4 py-2 text-xs ${shardCollected ? "opacity-50 cursor-default" : ""}`}>

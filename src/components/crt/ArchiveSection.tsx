@@ -20,6 +20,8 @@ interface ArchiveSectionProps<T> {
   sortByFriendship?: boolean;
   /** Если true — не-живые (DEAD, MISSING, etc.) внизу, живые сверху. */
   sortDeadLast?: boolean;
+  /** Стиль пустого состояния (когда записей нет вообще). */
+  emptyHint?: "secrets";
 }
 
 export function ArchiveSection<T>({
@@ -34,6 +36,7 @@ export function ArchiveSection<T>({
   revealAtMaxGaze,
   sortByFriendship = false,
   sortDeadLast = false,
+  emptyHint,
 }: ArchiveSectionProps<T>) {
   const { data, loading, error } = useArchiveData<T>(type, system);
   const gaze = useArchive((s) => s.gaze);
@@ -119,7 +122,38 @@ export function ArchiveSection<T>({
         </div>
       )}
 
-      {!loading && !error && (
+      {!loading && !error && records.length === 0 && emptyHint === "secrets" && (
+        <div
+          className="panel clip-hud brackets p-8 sm:p-12 text-center fade-in"
+          style={{
+            borderColor: "var(--violet-dim)",
+            boxShadow: "0 0 40px rgba(167, 139, 250, 0.12)",
+          }}
+        >
+          <div className="text-5xl mb-4 pulse-slow">🔓</div>
+          <div className="font-medieval text-xl glow-violet tracking-wider mb-3 glitch" data-text="ХРАНИЛИЩЕ ОТКРЫТО">
+            ХРАНИЛИЩЕ ОТКРЫТО
+          </div>
+          <div className="text-[12px] text-dim leading-relaxed max-w-md mx-auto">
+            {"// печать пяти осколков снята, но страницы этого мира ещё пусты. //"}
+            <br />
+            {"// сокрытое проявится, когда Создатель впишет его в архив. //"}
+          </div>
+          <div className="mt-4 flex justify-center gap-1.5 flex-wrap">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <span
+                key={i}
+                className="chip chip-violet text-[10px]"
+                title="Осколок памяти собран"
+              >
+                🧩 •
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {!loading && !error && !(records.length === 0 && emptyHint === "secrets") && (
         <div
           className={
             columns === 1

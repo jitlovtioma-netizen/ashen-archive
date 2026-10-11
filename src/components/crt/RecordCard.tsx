@@ -31,6 +31,12 @@ export interface CardRecord {
   imageUrl?: string | null;
   status?: "ALIVE" | "DEAD" | "MISSING";
   friendship?: number | null;
+  /** тип записи: досье персонажа можно редактировать владельцу */
+  recordType?: "character" | "lore" | "location";
+  /** исходные поля персонажа (для режима редактирования досье) */
+  characterTitle?: string;
+  characterCategory?: string;
+  characterRace?: string;
 }
 
 interface RecordCardProps {
@@ -273,8 +279,9 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
               isCorrupted ? (
                 <CorruptedText
                   text={corruptPreview}
-                  ratio={isCursed ? 0.3 : 0.42}
+                  ratio={isCursed ? 0.16 : 0.42}
                   zalgoAware={isCursed}
+                  zalgoChance={isCursed ? 0.45 : undefined}
                   protect={isCursed ? KALI_ANCHORS : undefined}
                   variant={isCursed ? "violet" : "red"}
                   live={false}

@@ -11,8 +11,13 @@
 //   folder = "SECONDARY_HEROES" → Второстепенные герои (значимые NPC)
 //   folder = "SECRETS"        → Секреты (открываются при сборе всех осколков)
 //
-// Осколки памяти (shardWord) только у 5 героев DND и у 5 Lore PF2E.
-// totalShardWords = 5 для каждого мира.
+// Осколки памяти (shardWord):
+//   DND  — 5 осколков (луна, свет, мощь, тьма, реальность) в Лоре.
+//   PF2E — 6 осколков: гордыня, кровь, огонь (второстепенные герои)
+//          + контракт (Асмодей), смерть (Фаразма), надежда (Ароден).
+//          Вкладка «Секреты» PF2E открывается с 5 осколков (SECRETS_SHARDS_REQUIRED).
+// На проде осколки Асмодея/Фаразмы/Ародена добавляются скриптом
+// `bun run db:add-pf2e-shards` (идемпотентно, без пересева).
 // ============================================================================
 
 import { db } from '../src/lib/db'
@@ -1733,7 +1738,7 @@ async function main() {
   console.log('▸ Запись лора Голариона (PF2E)...')
   await db.lore.createMany({
     data: [
-      // ─── Основной Лор (folder = null) — 8 записей, 5 с shardWord ───
+      // ─── Основной Лор (folder = null) — 8 записей, 1 с shardWord (Ароден) ───
       {
         title: 'Ароден — Бог Человечества',
         category: 'Бог',
@@ -1743,6 +1748,8 @@ async function main() {
         sigil: '🌟',
         mapX: 490,
         mapY: 270,
+        // Осколок Надежды: даже мёртвый бог человечества оставил миру надежду
+        shardWord: 'надежда',
       },
       {
         title: 'Землепад (Earthfall)',
@@ -1847,6 +1854,8 @@ async function main() {
         imageUrl: img('gods/asmodeus.png'),
         folder: 'PANTHEON',
         sortOrder: 2,
+        // Осколок Контракта: Князь Тьмы хранит его среди мелкого шрифта
+        shardWord: 'контракт',
       },
       {
         title: 'Калистрия',
@@ -1990,6 +1999,8 @@ async function main() {
         imageUrl: img('gods/pharasma.png'),
         folder: 'PANTHEON',
         sortOrder: 13,
+        // Осколок Смерти: Владычица Могил судит даже осколки
+        shardWord: 'смерть',
       },
       {
         title: 'Ровагуг',

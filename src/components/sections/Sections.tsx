@@ -56,6 +56,10 @@ export function CharactersSection({ system }: SectionProps) {
         mapY: r.mapY,
         imageUrl: r.imageUrl,
         status: r.status as "ALIVE" | "DEAD" | "MISSING",
+        recordType: "character",
+        characterTitle: r.title,
+        characterCategory: r.category,
+        characterRace: r.race,
       })}
     />
   );
@@ -116,8 +120,9 @@ export function LoreSecretsSection({ system }: SectionProps) {
       title="Секреты"
       code="СОКРЫТОЕ"
       columns={1}
-      blurb={`// тайны, открытые тем, кто собрал все осколки памяти //`}
+      blurb={`// тайны, открытые тем, кто собрал пять осколков памяти //`}
       filter={(r) => (r as Record<string, unknown>).folder === "SECRETS"}
+      emptyHint="secrets"
       normalize={loreNormalize}
     />
   );

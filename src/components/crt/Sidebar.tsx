@@ -2,6 +2,7 @@
 
 import { useArchive, type Section } from "@/lib/store";
 import { sfx } from "@/lib/audio";
+import { SECRETS_SHARDS_REQUIRED } from "@/lib/types";
 
 interface NavItem {
   key: Section;
@@ -38,11 +39,11 @@ export function Sidebar() {
   const gazeColor =
     gaze >= 90 ? "var(--red)" : gaze >= 60 ? "var(--amber)" : "var(--green)";
 
-  // Вкладка «Секреты» появляется только когда собраны ВСЕ осколки памяти.
-  // DND и PF2E осколки — раздельны (считаются только для текущего мира).
-  const allShardsCollected =
-    totalShardWords > 0 && shards.length >= totalShardWords;
-  const showSecrets = allShardsCollected;
+  // Вкладка «Секреты» появляется, когда собрано SECRETS_SHARDS_REQUIRED
+  // осколков памяти текущего мира (DND — все 5, PF2E — с 5 из 6).
+  const shardProgress = Math.min(shards.length, SECRETS_SHARDS_REQUIRED);
+  const showSecrets =
+    totalShardWords > 0 && shards.length >= SECRETS_SHARDS_REQUIRED;
 
   const fullNav = showSecrets
     ? [
@@ -85,7 +86,13 @@ export function Sidebar() {
 
       <div className="hidden md:flex flex-col gap-2 mt-auto pt-3 border-t border-[var(--line)]">
         <div className="text-[10px] text-dim tracking-widest px-1">
-          {"// ОСКОЛКИ_ПАМЯТИ ["}{shards.length}{"]"}
+          {"// ОСКОЛКИ_ПАМЯТИ ["}
+          <span className={shardProgress >= SECRETS_SHARDS_REQUIRED ? "glow-green" : undefined}>
+            {shardProgress}
+          </span>
+          {"/"}
+          {SECRETS_SHARDS_REQUIRED}
+          {"]"}
         </div>
         <div className="panel-inset p-2 min-h-[60px] max-h-32 overflow-y-auto crt-scroll">
           {shards.length === 0 ? (

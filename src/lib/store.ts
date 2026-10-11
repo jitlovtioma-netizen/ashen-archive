@@ -43,6 +43,11 @@ interface ArchiveState {
   totalShardWords: number;
   setTotalShardWords: (n: number) => void;
 
+  // ревизия архивных данных: бампается после правки досье, чтобы все
+  // секции перезагрузили данные с сервера (правки видны сразу)
+  dataRevision: number;
+  bumpDataRevision: () => void;
+
   // god's gaze meter (0-100) — NOT persisted, resets each session
   gaze: number;
   addGaze: (amount: number) => void;
@@ -322,6 +327,10 @@ export const useArchive = create<ArchiveState>()(
 
       totalShardWords: 0,
       setTotalShardWords: (n) => set({ totalShardWords: n }),
+
+      dataRevision: 0,
+      bumpDataRevision: () =>
+        set((st) => ({ dataRevision: st.dataRevision + 1 })),
 
       gaze: 7,
       addGaze: (amount) =>

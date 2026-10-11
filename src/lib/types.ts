@@ -2,6 +2,11 @@
 
 export type GameSystem = "DND" | "PF2E";
 
+// Сколько осколков памяти открывают вкладку «Секреты».
+// D&D: все 5 осколков Эларии. PF2E: вкладка открывается с 5 осколков
+// Голариона (в мире их 6 — шестой остаётся бонусом).
+export const SECRETS_SHARDS_REQUIRED = 5;
+
 export type UserRole = "USER" | "ADMIN";
 
 export interface User {
