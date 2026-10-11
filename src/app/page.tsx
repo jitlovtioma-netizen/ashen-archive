@@ -29,6 +29,7 @@ import {
 } from "@/components/sections/Sections";
 import { FactionsSection } from "@/components/sections/FactionsSection";
 import { ProfileSection } from "@/components/crt/ProfileSection";
+import { AdminSection } from "@/components/crt/AdminSection";
 
 function SecretsSection({ system }: { system: "DND" | "PF2E" }) {
   return <LoreSecretsSection system={system} />;
@@ -39,6 +40,8 @@ function Viewport({ system }: { system: "DND" | "PF2E" }) {
   switch (section) {
     case "profile":
       return <ProfileSection system={system} />;
+    case "admin":
+      return <AdminSection system={system} />;
     case "characters":
       return <CharactersSection system={system} />;
     case "factions":

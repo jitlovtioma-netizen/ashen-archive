@@ -895,42 +895,25 @@ body.witching::after {
 }
 
 /* ============================================================
-   CHRONICLE TIMELINE — стили для вертикальной летописи
+   THEMED DOSSIER — особые цветовые досье (тема из Мастерской).
+   Сканирующие линии тонируются акцентом темы (--acc).
    ============================================================ */
-.timeline-node {
+.themed-modal {
   position: relative;
 }
-.timeline-node::before {
+.themed-modal::after {
   content: "";
   position: absolute;
-  inset: -3px;
-  border: 1px solid transparent;
-  clip-path: polygon(
-    0 4px, 4px 0,
-    calc(100% - 4px) 0, 100% 4px,
-    100% calc(100% - 4px), calc(100% - 4px) 100%,
-    4px 100%, 0 calc(100% - 4px)
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    color-mix(in srgb, var(--acc, #a78bfa) 4%, transparent) 0,
+    color-mix(in srgb, var(--acc, #a78bfa) 4%, transparent) 1px,
+    transparent 1px,
+    transparent 4px
   );
-  transition: border-color 0.2s;
-}
-.timeline-node:hover::before {
-  border-color: var(--green);
-}
-.timeline-node[data-corrupted="true"]:hover::before {
-  border-color: var(--red);
-}
-
-/* пульсация для sealed хроник — приглашение к действию */
-.timeline-sealed {
-  animation: sealedPulse 2.5s ease-in-out infinite;
-}
-@keyframes sealedPulse {
-  0%, 100% {
-    box-shadow: 0 0 8px rgba(232, 161, 58, 0.2);
-  }
-  50% {
-    box-shadow: 0 0 16px rgba(232, 161, 58, 0.5);
-  }
+  pointer-events: none;
+  animation: cursedScan 3s linear infinite;
 }
 
 /* ============================================================
@@ -1883,6 +1866,43 @@ nav .btn-crt:hover > span:first-child {
     1.5px 0 rgba(167, 139, 250, 0.75),
     -1.5px 0 rgba(255, 36, 36, 0.5),
     0 0 14px rgba(167, 139, 250, 0.6);
+}
+
+/* Кастомная тема досье — цвет порчи под акцент темы (--acc).
+   Синие, зелёные, янтарные… досье получают «свою» порчу. */
+.corrupt-root[data-variant="custom"] .corrupt-word {
+  color: color-mix(in srgb, var(--acc, #ff5050) 62%, #c9c9c9 38%);
+  text-shadow:
+    1px 0 color-mix(in srgb, var(--acc, #ff5050) 45%, transparent),
+    -1px 0 rgba(56, 232, 145, 0.18),
+    0 0 7px color-mix(in srgb, var(--acc, #ff5050) 32%, transparent);
+}
+.corrupt-root[data-variant="custom"] .corrupt-word:hover {
+  color: color-mix(in srgb, var(--acc, #ff5050) 80%, white 20%);
+  text-shadow:
+    1.5px 0 color-mix(in srgb, var(--acc, #ff5050) 75%, transparent),
+    -1.5px 0 rgba(56, 232, 145, 0.35),
+    0 0 14px color-mix(in srgb, var(--acc, #ff5050) 55%, transparent);
+}
+.corrupt-root[data-variant="custom"] .corrupt-sync {
+  border-color: color-mix(in srgb, var(--acc, #ff5050) 25%, transparent);
+  background: color-mix(in srgb, var(--acc, #ff5050) 6%, transparent);
+}
+.corrupt-root[data-variant="custom"] .corrupt-sync-bar {
+  border-color: color-mix(in srgb, var(--acc, #ff5050) 40%, transparent);
+}
+.corrupt-root[data-variant="custom"] .corrupt-sync-bar > span {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--acc, #ff5050) 45%, transparent),
+    color-mix(in srgb, var(--acc, #ff5050) 85%, white 15%)
+  );
+}
+.corrupt-root[data-variant="custom"] .corrupt-sync-label {
+  color: color-mix(in srgb, var(--acc, #ff5050) 65%, #b9b9b9 35%);
+}
+.corrupt-root[data-variant="custom"] .corrupt-sync-pct {
+  color: var(--acc, #ff5050);
 }
 
 /* «Призрак смысла»: настоящее слово на миг проступает сквозь помехи */

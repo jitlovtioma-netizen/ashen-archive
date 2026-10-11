@@ -3,22 +3,40 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { useArchive } from "@/lib/store";
+import { useRiddles, findRiddleFor } from "@/lib/useRiddles";
 import { sfx } from "@/lib/audio";
 
 interface RiddleGateProps {
   recordName: string;
+  /** мир записи — загадки привязаны к своему миру (null — любой) */
+  system?: string;
   onSolved: () => void;
   onCancel: () => void;
 }
 
-const RIDDLES: Record<string, {
-  sigil: string;
-  title: string;
-  subtitle: string;
-  riddle: string[];
-  valid: string[];
-  hint: string;
-}> = {
+// ─────────────────────────────────────────────────────────────────────────────
+// ЗАГАДКИ-ВРАТА.
+// Источники (в порядке приоритета):
+//   1. БД — загадки, созданные в Мастерской (таблица Riddle). Ответы
+//      проверяются НА СЕРВЕРЕ — клиент не знает верных ответов.
+//   2. Фолбэк — встроенные загадки ниже. Они остаются вшитыми в код, чтобы
+//      врата не исчезли, если база ещё не засеяна (прод без db:seed).
+//      Ответы проверяются локально (как раньше).
+// Врата срабатывают по имени записи: если для имени есть загадка — досье
+// откроется только после верного ответа.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const FALLBACK_RIDDLES: Record<
+  string,
+  {
+    sigil: string;
+    title: string;
+    subtitle: string;
+    riddle: string[];
+    valid: string[];
+    hint: string;
+  }
+> = {
   "Разум Бруно": {
     sigil: "🧠",
     title: "РАЗУМ БРУНО",
@@ -32,7 +50,7 @@ const RIDDLES: Record<string, {
     valid: ["обман", "обман.", "обман,"],
     hint: "// разгадай загадку, чтобы открыть локацию //",
   },
-  "Мартин": {
+  Мартин: {
     sigil: "🌑",
     title: "МАРТИН",
     subtitle: "// теневой покровитель //",
@@ -66,7 +84,7 @@ const RIDDLES: Record<string, {
     valid: ["волосы", "волос", "из волос", "волосы.", "волос."],
     hint: "// разгадай загадку, чтобы открыть досье Мёртвого Плана //",
   },
-  "Четвёртый": {
+  Четвёртый: {
     sigil: "😈",
     title: "ЧЕТВЁРТЫЙ",
     subtitle: "// демон · предатель //",
@@ -83,18 +101,15 @@ const RIDDLES: Record<string, {
     valid: ["ехидна", "эхидна", "ехидна.", "эхидна."],
     hint: "// назови имя его жены, чтобы открыть досье Четвёртого //",
   },
-  "Джейтал": {
+  Джейтал: {
     sigil: "🌑",
     title: "ДЖЕЙТАЛ",
     subtitle: "// инквизитор · искажена //",
-    riddle: [
-      "Что это: чем больше его,",
-      "Тем меньше видишь?",
-    ],
+    riddle: ["Что это: чем больше его,", "Тем меньше видишь?"],
     valid: ["тьма", "тьма.", "темнота", "темнота.", "мрак", "мрак."],
     hint: "// разгадай загадку, чтобы открыть досье Джейтал //",
   },
-  "Тартуччио": {
+  Тартуччио: {
     sigil: "🎪",
     title: "ТАРТУЧЧИО",
     subtitle: "// бард · гном · искажён //",
@@ -112,9 +127,7 @@ const RIDDLES: Record<string, {
     sigil: "🌀",
     title: "НЕИЗВЕСТНАЯ ЛИЧНОСТЬ",
     subtitle: "// сущность · загадка · искажена //",
-    riddle: [
-      "Кто погубит мир?",
-    ],
+    riddle: ["Кто погубит мир?"],
     valid: ["сатра", "сатра.", "сатра,"],
     hint: "// назови имя, чтобы открыть досье Неизвестной личности //",
   },
@@ -130,7 +143,7 @@ const RIDDLES: Record<string, {
     valid: ["созидатель", "созидатель.", "созидатель,"],
     hint: "// назови имя того, кто создал и разрушил //",
   },
-  "Микси": {
+  Микси: {
     sigil: "🧚",
     title: "МИКСИ",
     subtitle: "// пикси · наследница фиолетового леса · искажена //",
@@ -143,28 +156,23 @@ const RIDDLES: Record<string, {
     valid: ["любовь", "любовь.", "любовь,"],
     hint: "// разгадай загадку, чтобы открыть досье Микси //",
   },
-  "Безымянная": {
+  Безымянная: {
     sigil: "🌑",
     title: "БЕЗЫМЯННАЯ",
     subtitle: "// ??? · без имени · искажена //",
-    riddle: [
-      "Какая часть человека",
-      "Видна только на свету?",
-    ],
+    riddle: ["Какая часть человека", "Видна только на свету?"],
     valid: ["тень", "тень.", "тень,"],
     hint: "// назови часть, что видна лишь при свете //",
   },
-  "Надежда": {
+  Надежда: {
     sigil: "✨",
     title: "НАДЕЖДА",
     subtitle: "// спасительница · видимая лишь одному //",
-    riddle: [
-      "Что умирает последним?",
-    ],
+    riddle: ["Что умирает последним?"],
     valid: ["надежда", "надежда.", "надежда,"],
     hint: "// назови то, что умирает последним //",
   },
-  "Баал": {
+  Баал: {
     sigil: "😈",
     title: "БААЛ",
     subtitle: "// демон · повелитель · один из девяти //",
@@ -179,8 +187,9 @@ const RIDDLES: Record<string, {
       "О ком я речь веду, пока еще не поздно?",
     ],
     valid: [
-      "чревоугодие", "чревоугодие.", "чревоугодие,",
-      "чревоугодие", "чревоугодие.", "чревоугодие,",
+      "чревоугодие",
+      "чревоугодие.",
+      "чревоугодие,",
     ],
     hint: "// назови грех, что пожирает душу //",
   },
@@ -197,18 +206,58 @@ const RIDDLES: Record<string, {
       "Мне пришлось убить того,",
       "Кого я мечтаю спасти...",
     ],
-    valid: ["ганс", "ганс.", "ганс,", "Ганс", "Ганс.", "Ганс,"],
+    valid: ["ганс", "ганс.", "ганс,"],
     hint: "// назови имя того, кого пришлось убить //",
   },
 };
 
-export function RiddleGate({ recordName, onSolved, onCancel }: RiddleGateProps) {
+/** Разрешённая загадка для отображения в вратах. */
+export interface GateRiddle {
+  sigil: string;
+  title: string;
+  subtitle: string;
+  riddle: string[];
+  hint: string;
+  /** встроенная загадка — ответ проверяется локально */
+  valid?: string[];
+  /** загадка из БД — ответ проверяется на сервере */
+  fromDb?: boolean;
+}
+
+/**
+ * Загадка для записи: сначала БД (Мастерская), затем встроенный фолбэк.
+ * Используется и карточкой (проверка «заперто загадкой»), и вратами.
+ */
+export function resolveRiddle(
+  recordName: string,
+  system: string | undefined,
+  dbRiddles: ReturnType<typeof useRiddles>,
+): GateRiddle | null {
+  const db = findRiddleFor(dbRiddles, recordName, system);
+  if (db) {
+    return {
+      sigil: db.sigil,
+      title: db.title,
+      subtitle: db.subtitle ?? "// загадка //",
+      riddle: Array.isArray(db.riddle) ? db.riddle : [String(db.riddle)],
+      hint: db.hint ?? "// разгадай загадку, чтобы открыть досье //",
+      fromDb: true,
+    };
+  }
+  const fb = FALLBACK_RIDDLES[recordName];
+  if (!fb) return null;
+  return { ...fb };
+}
+
+export function RiddleGate({ recordName, system, onSolved, onCancel }: RiddleGateProps) {
   const { solveRiddle, solvedRiddles, unlockAchievement, pushToast } = useArchive();
+  const dbRiddles = useRiddles();
   const [answer, setAnswer] = useState("");
   const [error, setError] = useState(false);
+  const [checking, setChecking] = useState(false);
   const [echidnaEaster, setEchidnaEaster] = useState(false);
 
-  const riddle = RIDDLES[recordName];
+  const riddle = resolveRiddle(recordName, system, dbRiddles);
   if (!riddle) return null;
 
   // Если уже разгадана — пропускаем
@@ -217,15 +266,29 @@ export function RiddleGate({ recordName, onSolved, onCancel }: RiddleGateProps) 
     return null;
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const acceptAnswer = () => {
+    solveRiddle(recordName);
+    sfx.unlock();
+    pushToast({
+      kind: "secret",
+      sigil: "🎯",
+      title: "ЗАГАДКА РАЗГАДАНА",
+      body: "Доступ открыт.",
+    });
+    onSolved();
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const normalized = answer.trim().toLowerCase();
 
     // Пасхалка: «Ехидна» или «молоко» в любую загадку, КРОМЕ «Четвёртый»
     // (где «Ехидна» — настоящий правильный ответ).
     if (
-      (normalized === "ехидна" || normalized === "ехидна." ||
-       normalized === "молоко" || normalized === "молоко.") &&
+      (normalized === "ехидна" ||
+        normalized === "ехидна." ||
+        normalized === "молоко" ||
+        normalized === "молоко.") &&
       recordName !== "Четвёртый"
     ) {
       sfx.whisper();
@@ -233,16 +296,38 @@ export function RiddleGate({ recordName, onSolved, onCancel }: RiddleGateProps) 
       return;
     }
 
-    if (riddle.valid.includes(normalized)) {
-      solveRiddle(recordName);
-      sfx.unlock();
-      pushToast({
-        kind: "secret",
-        sigil: "🎯",
-        title: "ЗАГАДКА РАЗГАДАНА",
-        body: "Доступ открыт.",
-      });
-      onSolved();
+    if (!normalized) return;
+
+    // Загадка из БД — ответ проверяет сервер (клиент не знает ответов)
+    if (riddle.fromDb) {
+      setChecking(true);
+      try {
+        const res = await fetch("/api/riddles", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ recordName, system, answer: normalized }),
+        });
+        const data = (await res.json()) as { correct?: boolean };
+        if (res.ok && data.correct) {
+          acceptAnswer();
+        } else {
+          setError(true);
+          sfx.error();
+          setTimeout(() => setError(false), 2000);
+        }
+      } catch {
+        setError(true);
+        sfx.error();
+        setTimeout(() => setError(false), 2000);
+      } finally {
+        setChecking(false);
+      }
+      return;
+    }
+
+    // Встроенная загадка — локальная проверка
+    if (riddle.valid && riddle.valid.includes(normalized)) {
+      acceptAnswer();
     } else {
       setError(true);
       sfx.error();
@@ -314,13 +399,13 @@ export function RiddleGate({ recordName, onSolved, onCancel }: RiddleGateProps) 
               value={answer}
               onChange={(e) => setAnswer(e.target.value)}
               autoFocus
+              disabled={checking}
               className={`w-full bg-[var(--bg-deep)] border px-3 py-2 text-sm text-[var(--green)] focus:outline-none transition-all font-mono-crt clip-hud-sm ${
                 error
                   ? "border-[var(--red)] shadow-[0_0_10px_rgba(255,36,36,0.4)] animate-pulse"
                   : "border-[var(--line-bright)] focus:border-[var(--violet)] focus:shadow-[0_0_10px_rgba(167,139,250,0.3)]"
               }`}
-              placeholder="впиши ответ..."
-              disabled={error}
+              placeholder={checking ? "архив сверяет ответ…" : "впиши ответ..."}
             />
           </div>
 
@@ -333,9 +418,10 @@ export function RiddleGate({ recordName, onSolved, onCancel }: RiddleGateProps) 
           <div className="flex gap-2">
             <button
               type="submit"
-              className="btn-crt btn-amber clip-hud-sm flex-1 py-2 text-xs"
+              disabled={checking}
+              className="btn-crt btn-amber clip-hud-sm flex-1 py-2 text-xs disabled:opacity-60"
             >
-              🔑 ОТВЕТИТЬ
+              {checking ? "▸ СВЕРКА…" : "🔑 ОТВЕТИТЬ"}
             </button>
             <button
               type="button"

@@ -6,7 +6,9 @@ import { HoloPortrait } from "./HoloPortrait";
 import { Sigil } from "./Sigil";
 import { MartinSecretModal } from "./MartinSecretModal";
 import { SinsWheel } from "./SinsWheel";
-import { CorruptedText, KALI_ANCHORS } from "./CorruptedText";
+import { CorruptedText, KALI_ANCHORS, hasCorruptMarks } from "./CorruptedText";
+import { CorruptToolbar } from "./CorruptEditorTools";
+import { getDossierTheme, type DossierTheme } from "@/lib/themes";
 import { useArchive } from "@/lib/store";
 import { sfx } from "@/lib/audio";
 import { SYSTEM_LABEL, SYSTEM_COLOR } from "@/lib/types";
@@ -44,6 +46,21 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
   } = useArchive();
   const user = useArchive((s) => s.user);
   const bumpDataRevision = useArchive((s) => s.bumpDataRevision);
+  const setSection = useArchive((s) => s.setSection);
+  const setAdminEditTarget = useArchive((s) => s.setAdminEditTarget);
+
+  // Админ может отправить любую запись в Мастерскую Созидателя на правку
+  const openInWorkshop = () => {
+    if (!record.recordType) return;
+    sfx.select();
+    setAdminEditTarget({
+      kind: record.recordType,
+      id: record.id,
+      system: record.system,
+    });
+    setSection("admin");
+    requestCloseRef.current?.();
+  };
 
   // ── Локальные правки досье (после сохранения владельцем) — накладываются
   // на проп до рефетча секции, чтобы правки были видны мгновенно
@@ -57,6 +74,8 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
   });
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  // textarea описания в режиме правки — нужна тулбару порчи для выделения
+  const descEditRef = useRef<HTMLTextAreaElement | null>(null);
 
   const baseRecord: CardRecord = localPatch
     ? { ...record, ...localPatch }
@@ -96,6 +115,8 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
   const readRef = useRef(false);
   const ritualRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const konamiSeq = useRef<string[]>([]);
+  // requestClose объявлен ниже — держим ссылку для openInWorkshop
+  const requestCloseRef = useRef<() => void>(() => {});
 
   // При открытии «Отражения» — открыть достижение REFLECTION
   useEffect(() => {
@@ -152,6 +173,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
       onClose();
     }, 170);
   }, [onClose]);
+  requestCloseRef.current = requestClose;
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -232,6 +254,14 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
   const isCursed = record.name === "Кали";
   const isUnknown = record.name === "Неизвестная" || record.name === "Четвёртый" || record.name === "Мёртвый План";
 
+  // ── Цветовая тема досье: как фиолетовое у Кали, но для любого героя ──
+  // Задаётся в Мастерской (themeColor). Кали и «Отражение» остаются
+  // фиолетовыми по наследию — даже если поле не заполнено.
+  const dossierTheme: DossierTheme | null =
+    getDossierTheme(displayRecord.themeColor) ??
+    (isCursed || isReflection ? getDossierTheme("violet") : null);
+  const hasMarks = hasCorruptMarks(displayRecord.description);
+
   // ── Права на редактирование: владелец персонажа или Созидатель (админ) ──
   const isCharacterRecord = record.recordType === "character";
   const isDossierOwner = !!user && user.characterId === record.id;
@@ -240,6 +270,9 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
     !!user &&
     !isSealed &&
     (isDossierOwner || user.role === "ADMIN");
+  // Созидатель может открыть в Мастерской любую запись с известным типом
+  const canOpenWorkshop =
+    !!user && user.role === "ADMIN" && !!record.recordType;
 
   const startEdit = () => {
     setEditDraft({
@@ -334,6 +367,19 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
       ? "glitch-in"
       : "modal-anim-in";
 
+  // стили темы досье (фон/рамка/свечение) — применяются к модалке
+  const themedStyle: React.CSSProperties | undefined = dossierTheme
+    ? {
+        "--acc": dossierTheme.accent,
+        background: dossierTheme.bg,
+        border: `1px solid ${dossierTheme.border}`,
+        boxShadow: dossierTheme.glow,
+      } as React.CSSProperties
+    : undefined;
+  const themedBackdrop: React.CSSProperties | undefined = dossierTheme
+    ? { background: dossierTheme.bg, backdropFilter: "blur(4px)" }
+    : undefined;
+
   if (typeof document === "undefined") return null;
 
   return createPortal(
@@ -342,8 +388,11 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
         closing ? "backdrop-out" : "backdrop-in"
       }`}
       style={{
-        background: isReflection || isCursed ? "rgba(20, 0, 30, 0.9)" : "rgba(2, 0, 2, 0.85)",
-        backdropFilter: isReflection || isCursed ? "blur(4px)" : "blur(2px)",
+        background:
+          themedBackdrop?.background ??
+          (isReflection || isCursed ? "rgba(20, 0, 30, 0.9)" : "rgba(2, 0, 2, 0.85)"),
+        backdropFilter: themedBackdrop?.backdropFilter ??
+          (isReflection || isCursed ? "blur(4px)" : "blur(2px)"),
       }}
       onClick={requestClose}
       role="dialog"
@@ -386,14 +435,13 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
         </div>
       )}
       <div
-        className={`panel clip-hud brackets w-full max-w-7xl max-h-[95vh] flex flex-col overflow-hidden ${modalAnimClass} ${isReflection ? "reflection-panel" : ""} ${isEntity ? "entity-modal" : ""} ${isCursed ? "cursed-modal" : ""}`}
-        style={{
-          boxShadow: isReflection || isCursed
-            ? "0 0 60px rgba(167, 139, 250, 0.4), 0 0 120px rgba(40, 0, 60, 0.9)"
-            : "0 0 60px rgba(74, 246, 38, 0.2), 0 0 120px rgba(0, 0, 0, 0.8)",
-          background: isReflection || isCursed ? "rgba(15, 0, 25, 0.95)" : undefined,
-          border: isReflection || isCursed ? "1px solid rgba(167, 139, 250, 0.5)" : undefined,
-        }}
+        className={`panel clip-hud brackets w-full max-w-7xl max-h-[95vh] flex flex-col overflow-hidden ${modalAnimClass} ${isReflection ? "reflection-panel" : ""} ${isEntity ? "entity-modal" : ""} ${isCursed ? "cursed-modal" : ""} ${dossierTheme ? "themed-modal" : ""}`}
+        style={
+          themedStyle ?? {
+            boxShadow:
+              "0 0 60px rgba(74, 246, 38, 0.2), 0 0 120px rgba(0, 0, 0, 0.8)",
+          }
+        }
         onClick={(e) => e.stopPropagation()}
       >
         {/* header */}
@@ -416,7 +464,20 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
           {/* LEFT: text */}
           <div className="md:w-[55%] p-4 sm:p-6 overflow-y-auto crt-scroll border-b md:border-b-0 md:border-r border-[var(--line)]">
             <div className="mb-4">
-              <h2 className={`font-medieval text-2xl sm:text-3xl leading-tight mb-1 ${isCorrupted ? "glow-red glitch" : "glow-green"} ${isEntity ? "entity-title" : ""}`} data-text={displayRecord.name}>
+              <h2
+                className={`font-medieval text-2xl sm:text-3xl leading-tight mb-1 ${isCorrupted || hasMarks ? "glitch" : "glow-green"} ${isEntity ? "entity-title" : ""}`}
+                data-text={displayRecord.name}
+                style={
+                  dossierTheme
+                    ? {
+                        color: dossierTheme.accent,
+                        textShadow: `0 0 14px ${dossierTheme.accentDim}, 0 0 30px ${dossierTheme.accentDim}`,
+                      }
+                    : isCorrupted
+                      ? undefined
+                      : undefined
+                }
+              >
                 {displayRecord.name}
               </h2>
               <div className={`text-sm tracking-wider ${isEntity ? "text-[var(--cyan)] opacity-80" : "text-dim"}`}>{displayRecord.subtitle}</div>
@@ -429,6 +490,19 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
               {isDossierOwner && <span className="chip chip-warn" title="Это досье привязано к вам — вы можете его редактировать">✎ ВАШЕ ДОСЬЕ</span>}
               {isSealed && <span className="chip chip-warn">🔒 ОПЕЧАТАНО</span>}
               {isCorrupted && <span className="chip chip-err">⚠ ИСКАЖЕНО</span>}
+              {dossierTheme && !isCorrupted && (
+                <span
+                  className="chip"
+                  style={{
+                    color: dossierTheme.accent,
+                    borderColor: dossierTheme.border,
+                    background: dossierTheme.btnBg,
+                  }}
+                  title="У этого досье особое цветовое оформление"
+                >
+                  ◆ ОСОБОЕ ДОСЬЕ
+                </span>
+              )}
               {!isSealed && !isCorrupted && <span className="chip chip-ok">✓ ДОСТУПНО</span>}
               {record.status === "DEAD" && <span className="chip chip-err">💀 ПАЛ</span>}
               {record.status === "MISSING" && <span className="chip chip-warn">? ПРОПАЛ</span>}
@@ -581,6 +655,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
                   </div>
                   <textarea
                     id="dossier-desc-edit"
+                    ref={descEditRef}
                     value={editDraft.description}
                     onChange={(e) =>
                       setEditDraft((d) => ({ ...d, description: e.target.value }))
@@ -592,6 +667,17 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
                     placeholder="Впишите историю героя… Пустая строка — новый абзац."
                   />
                 </div>
+
+                {/* порча по выделению: пометьте фрагменты — они станут нечитаемыми */}
+                <CorruptToolbar
+                  textareaRef={descEditRef}
+                  value={editDraft.description}
+                  onChange={(v) =>
+                    setEditDraft((d) => ({ ...d, description: v }))
+                  }
+                  accent={dossierTheme?.accent}
+                  compact
+                />
 
                 {saveError && (
                   <div
@@ -648,13 +734,16 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
                   syncLine
                   paragraphClassName="text-[14px] leading-relaxed text-[var(--text)] mb-2 last:mb-0"
                 />
-              ) : isCorrupted ? (
+              ) : isCorrupted || hasMarks ? (
                 // Искажённые досье: при каждом открытии порча выбирает
                 // случайные слова — прочесть текст до конца невозможно.
+                // Текст с метками ⟦…⟧ (порча по выделению из Мастерской):
+                // искажаются ТОЛЬКО помеченные фрагменты, остальное чисто.
                 <CorruptedText
                   text={displayRecord.description}
-                  ratio={0.42}
-                  variant="red"
+                  ratio={isCorrupted ? 0.42 : 0}
+                  variant={dossierTheme ? undefined : "red"}
+                  accent={dossierTheme?.accent}
                   syncLine
                   paragraphClassName={`text-[14px] leading-relaxed mb-2 last:mb-0 ${
                     isEntity ? "text-[var(--cyan)]" : "text-[var(--text)]"
@@ -868,6 +957,15 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
                   title={isDossierOwner ? "Это ваше досье — впишите свою историю" : "Созидатель может править любое досье"}
                 >
                   ✎ РЕДАКТИРОВАТЬ
+                </button>
+              )}
+              {canOpenWorkshop && !editMode && (
+                <button
+                  onClick={openInWorkshop}
+                  className="btn-crt clip-hud-sm px-4 py-2 text-xs"
+                  title="Открыть запись в Мастерской Созидателя — все поля, осколки, печати и изображение"
+                >
+                  ⚙ В МАСТЕРСКУЮ
                 </button>
               )}
               {!isSealed && record.shardWord && (

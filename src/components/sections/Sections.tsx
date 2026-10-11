@@ -1,12 +1,14 @@
 "use client";
 
 import { ArchiveSection } from "@/components/crt/ArchiveSection";
-import type { CardRecord } from "@/components/crt/RecordCard";
-import type {
-  Character,
-  Lore,
-  Location,
-  GameSystem,
+import type { CardRecord } from "@components/crt/RecordCard";
+import {
+  secretsShardsRequired,
+  shardsWordGenitive,
+  type Character,
+  type Lore,
+  type Location,
+  type GameSystem,
 } from "@/lib/types";
 
 interface SectionProps {
@@ -29,6 +31,8 @@ const loreNormalize = (r: Lore) => ({
   imageUrl: (r as Record<string, unknown>).imageUrl as string | null ?? null,
   status: ((r as Record<string, unknown>).status as "ALIVE" | "DEAD" | "MISSING") ?? "ALIVE",
   friendship: (r as Record<string, unknown>).friendship as number | null ?? null,
+  themeColor: (r as Record<string, unknown>).themeColor as string | null ?? null,
+  recordType: "lore" as const,
 });
 
 export function CharactersSection({ system }: SectionProps) {
@@ -56,6 +60,7 @@ export function CharactersSection({ system }: SectionProps) {
         mapY: r.mapY,
         imageUrl: r.imageUrl,
         status: r.status as "ALIVE" | "DEAD" | "MISSING",
+        themeColor: (r as Record<string, unknown>).themeColor as string | null ?? null,
         recordType: "character",
         characterTitle: r.title,
         characterCategory: r.category,
@@ -120,7 +125,7 @@ export function LoreSecretsSection({ system }: SectionProps) {
       title="Секреты"
       code="СОКРЫТОЕ"
       columns={1}
-      blurb={`// тайны, открытые тем, кто собрал пять осколков памяти //`}
+      blurb={`// тайны, открытые тем, кто собрал ${shardsWordGenitive(secretsShardsRequired(system))} осколков памяти //`}
       filter={(r) => (r as Record<string, unknown>).folder === "SECRETS"}
       emptyHint="secrets"
       normalize={loreNormalize}
@@ -149,6 +154,8 @@ export function LocationsSection({ system }: SectionProps) {
         shardWord: r.shardWord,
         mapX: r.mapX,
         mapY: r.mapY,
+        themeColor: (r as Record<string, unknown>).themeColor as string | null ?? null,
+        recordType: "location" as const,
       })}
     />
   );

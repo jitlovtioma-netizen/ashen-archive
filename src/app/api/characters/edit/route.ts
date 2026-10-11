@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: 'SYSTEM_MISMATCH' }, { status: 400 })
   }
 
-  const data: Record<string, string> = {}
+  const data: Record<string, string | boolean> = {}
 
   if ('description' in patch) {
     if (typeof patch.description !== 'string') {
@@ -99,6 +99,10 @@ export async function POST(request: NextRequest) {
   if (Object.keys(data).length === 0) {
     return NextResponse.json({ ok: false, error: 'EMPTY_PATCH' }, { status: 400 })
   }
+
+  // Досье правил владелец/Созидатель — запись становится «рукотворной»:
+  // merge-seed не перезапишет её при обновлениях архива.
+  data.userModified = true
 
   const updated = await db.character.update({
     where: { id: character.id },

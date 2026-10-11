@@ -5,7 +5,8 @@ import { useArchive, type Section } from "@/lib/store";
 import { sfx } from "@/lib/audio";
 
 // Цифровые клавиши 1-7 → быстрый переход по секциям архива
-// (порядок как в сайдбаре: профиль → … → локации)
+// (порядок как в сайдбаре: профиль → … → локации).
+// 0 → МАСТЕРСКАЯ Созидателя (только для админов).
 const NUM_TO_SECTION: Record<string, Section> = {
   Digit1: "profile",
   Digit2: "characters",
@@ -36,6 +37,24 @@ export function KeyboardShortcutsHandler() {
       if (NUM_TO_SECTION[e.code]) {
         e.preventDefault();
         S.setSection(NUM_TO_SECTION[e.code]);
+        sfx.select();
+        return;
+      }
+
+      // 0 → Мастерская Созидателя — только для Длани (админов)
+      if (e.code === "Digit0") {
+        e.preventDefault();
+        if (!S.user || S.user.role !== "ADMIN") {
+          sfx.error();
+          S.pushToast({
+            kind: "warn",
+            sigil: "🚫",
+            title: "ПУТЬ ЗАПЕЧАТАН",
+            body: "// мастерская открыта только Длани //",
+          });
+          return;
+        }
+        S.setSection("admin");
         sfx.select();
         return;
       }

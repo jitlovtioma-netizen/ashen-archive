@@ -16,7 +16,7 @@ import { Sigil } from "@/components/crt/Sigil";
 import { UserProfileModal } from "@/components/crt/UserProfileModal";
 import { RecordModal } from "@/components/crt/RecordModal";
 import type { CardRecord } from "@/components/crt/RecordCard";
-import { SECRETS_SHARDS_REQUIRED } from "@/lib/types";
+import { secretsShardsRequired } from "@/lib/types";
 
 const SYS_COLOR: Record<GameSystem, string> = {
   DND: "var(--red)",
@@ -362,7 +362,7 @@ export function ProfileSection({ system }: { system: GameSystem }) {
           <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-2 content-start stagger-children">
             <Stat
               label="ОСКОЛКИ ПАМЯТИ"
-              value={`${Math.min(shards.length, SECRETS_SHARDS_REQUIRED)}/${SECRETS_SHARDS_REQUIRED}`}
+              value={`${Math.min(shards.length, secretsShardsRequired(system))}/${secretsShardsRequired(system)}`}
               color="green"
             />
             <Stat

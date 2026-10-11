@@ -28,6 +28,7 @@ function loreToCard(r: Lore): CardRecord {
     mapY: r.mapY,
     imageUrl: r.imageUrl ?? null,
     status: (r.status as "ALIVE" | "DEAD" | "MISSING") ?? "ALIVE",
+    recordType: "lore",
   };
 }
 

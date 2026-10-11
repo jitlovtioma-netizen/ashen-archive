@@ -11,11 +11,17 @@ import { useEffect, useRef, useState } from "react";
 // перетекают в новые символы. А изредка сквозь помехи на миг проступает
 // НАСТОЯЩЕЕ слово — «призрак смысла» — и тут же растворяется обратно.
 //
+// ПОРЧА ПО ВЫДЕЛЕНИЮ (Мастерская): фрагмент текста, обёрнутый в метки
+// ⟦ … ⟧, искажается ЦЕЛИКОМ — именно помеченные слова становятся
+// нечитаемыми, остальной текст остаётся чистым. Метки ставятся кнопкой
+// «ПОМЕТИТЬ ПОРЧЕЙ» в редакторе описания (выделите текст и нажмите).
+//
 // Особые режимы:
 //   zalgoAware — слова, содержащие zalgo-диакритику (текст, «расплавленный»
 //                ещё при записи в архив), всегда считаются искажёнными.
 //   protect    — слова, которые искажение не смеет тронуть (якоря смысла).
 //   live=false — статичные глифы без мутации (для превью в карточках).
+//   accent     — кастомный цвет порчи под тему досье (blue/green/amber…).
 // ============================================================================
 
 const GLYPHS = "█▓▒░▚▞▐▌◢◣◤◥▀▄╳╱╲";
@@ -24,6 +30,47 @@ const ZALGO_RE = /[\u0300-\u036F]/;
 // глобальные версии: срезаем ВСЕ метки/блоки, а не только первую
 const ZALGO_RE_G = /[\u0300-\u036F]/g;
 const NOISE_RE_G = /[█▓▒░▚▞▐▌◢◣◤◥▀▄╳╱╲]/g;
+
+// ── Метки порчи по выделению ────────────────────────────────────────────────
+export const CORRUPT_OPEN = "⟦";
+export const CORRUPT_CLOSE = "⟧";
+
+/** В тексте есть вручную помеченные порчей фрагменты. */
+export function hasCorruptMarks(text: string): boolean {
+  return text.includes(CORRUPT_OPEN) || text.includes(CORRUPT_CLOSE);
+}
+
+/** Убирает метки порчи (для превью «как читается текст»). */
+export function stripCorruptMarks(text: string): string {
+  return text.split(CORRUPT_OPEN).join("").split(CORRUPT_CLOSE).join("");
+}
+
+/** Разбор текста на прогоны: обычный текст и «порченый» (в метках). */
+type Run = { text: string; corrupt: boolean };
+function parseRuns(text: string): Run[] {
+  const runs: Run[] = [];
+  let plain = "";
+  let i = 0;
+  while (i < text.length) {
+    const o = text.indexOf(CORRUPT_OPEN, i);
+    if (o === -1) {
+      plain += text.slice(i);
+      break;
+    }
+    plain += text.slice(i, o);
+    const c = text.indexOf(CORRUPT_CLOSE, o + 1);
+    const end = c === -1 ? text.length : c;
+    if (plain) {
+      runs.push({ text: plain, corrupt: false });
+      plain = "";
+    }
+    // незакрытая метка — весь остаток считается порченым
+    runs.push({ text: text.slice(o + 1, end), corrupt: true });
+    i = c === -1 ? text.length : c + 1;
+  }
+  if (plain) runs.push({ text: plain, corrupt: false });
+  return runs;
+}
 
 function randomGlyph(): string {
   // 65% — помехи сигнала, 35% — руническая примесь
@@ -37,7 +84,7 @@ function toGlyphs(len: number): string {
   return out;
 }
 
-// Хвостую пунктуацию оставляем читаемой — структура фразы должна
+// Хвостаю пунктуацию оставляем читаемой — структура фразы должна
 // проступать сквозь искажение (читаются запятые, но не слова).
 function splitPunct(w: string): { core: string; tail: string } {
   const m = w.match(/^(.*?)([.,!?;:…»]+)$/);
@@ -70,45 +117,53 @@ function buildLines(
   protect: Set<string>,
   zalgoChance = 1,
 ): Line[] {
-  return text.split("\n").map((lineText) => {
-    const line: Line = [];
-    for (const token of lineText.split(/(\s+)/)) {
-      if (!token) continue;
-      if (/^\s+$/.test(token)) {
-        line.push({ t: "space", s: token });
-        continue;
+  const lines: Line[] = [[]];
+  const pushLine = () => lines.push([]);
+
+  for (const run of parseRuns(text)) {
+    const chunks = run.text.split("\n");
+    chunks.forEach((chunk, ci) => {
+      if (ci > 0) pushLine();
+      for (const token of chunk.split(/(\s+)/)) {
+        if (!token) continue;
+        if (/^\s+$/.test(token)) {
+          lines[lines.length - 1].push({ t: "space", s: token });
+          continue;
+        }
+        // в zalgo-режиме срезаем диакритику и блочный шум — остаётся
+        // чистое слово (для глифов той же длины и для скринридеров)
+        const stripped = zalgoAware
+          ? token.replace(ZALGO_RE_G, "").replace(NOISE_RE_G, "")
+          : token;
+        if (!stripped) {
+          lines[lines.length - 1].push({ t: "space", s: token });
+          continue;
+        }
+        const { core, tail } = splitPunct(stripped);
+        if (!core) {
+          lines[lines.length - 1].push({ t: "word", w: token });
+          continue;
+        }
+        const isZalgo = zalgoAware && ZALGO_RE.test(token);
+        const isProtected = !run.corrupt && (protect.has(core) || protect.has(token));
+        // Помеченный вручную фрагмент (⟦…⟧) портится ВСЕГДА — это воля
+        // Созидателя. «Расплавленные» (zalgo) слова портятся с шансом
+        // zalgoChance, остальные — с шансом ratio.
+        const doCorrupt =
+          run.corrupt ||
+          (!isProtected &&
+            (isZalgo
+              ? Math.random() < zalgoChance
+              : Math.random() < ratio));
+        lines[lines.length - 1].push(
+          doCorrupt
+            ? { t: "corrupt", core, tail, glyphs: toGlyphs(core.length) }
+            : { t: "word", w: core + tail },
+        );
       }
-      // в zalgo-режиме срезаем диакритику и блочный шум — остаётся
-      // чистое слово (для глифов той же длины и для скринридеров)
-      const stripped = zalgoAware
-        ? token.replace(ZALGO_RE_G, "").replace(NOISE_RE_G, "")
-        : token;
-      if (!stripped) {
-        line.push({ t: "space", s: token });
-        continue;
-      }
-      const { core, tail } = splitPunct(stripped);
-      if (!core) {
-        line.push({ t: "word", w: token });
-        continue;
-      }
-      const isZalgo = zalgoAware && ZALGO_RE.test(token);
-      const isProtected = protect.has(core) || protect.has(token);
-      // «расплавленные» (zalgo) слова портятся с шансом zalgoChance —
-      // остальные проступают читаемыми: сквозь помехи видна структура
-      const doCorrupt =
-        !isProtected &&
-        (isZalgo
-          ? Math.random() < zalgoChance
-          : Math.random() < ratio);
-      line.push(
-        doCorrupt
-          ? { t: "corrupt", core, tail, glyphs: toGlyphs(core.length) }
-          : { t: "word", w: core + tail },
-      );
-    }
-    return line;
-  });
+    });
+  }
+  return lines;
 }
 
 export interface CorruptedTextProps {
@@ -123,6 +178,8 @@ export interface CorruptedTextProps {
   protect?: string[];
   /** цветовая тема: красная (обычные искажения) или фиолетовая (проклятые) */
   variant?: "red" | "violet";
+  /** кастомный акцентный цвет порчи (тема досье: синяя, зелёная и т.д.) */
+  accent?: string;
   /** живая мутация глифов (для досье); false — статичные (для карточек) */
   live?: boolean;
   /** маленькая строка «СИНХРОНИЗАЦИЯ… NN%» над текстом */
@@ -138,6 +195,7 @@ export function CorruptedText({
   zalgoChance = 1,
   protect = [],
   variant = "red",
+  accent,
   live = true,
   syncLine = false,
   paragraphClassName = "",
@@ -240,8 +298,15 @@ export function CorruptedText({
   const wordClass =
     variant === "violet" ? "corrupt-word corrupt-word--violet" : "corrupt-word";
 
+  // кастомная тема досье: акцентный цвет через CSS-переменную --acc
+  const rootStyle = accent ? ({ "--acc": accent } as React.CSSProperties) : undefined;
+
   return (
-    <div className="corrupt-root" data-variant={variant}>
+    <div
+      className="corrupt-root"
+      data-variant={accent ? "custom" : variant}
+      style={rootStyle}
+    >
       {syncLine && (
         <div className="corrupt-sync" aria-hidden="true">
           <span className="corrupt-sync-bar">

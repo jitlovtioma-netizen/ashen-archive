@@ -4,7 +4,12 @@ import type { CSSProperties } from "react";
 import { useArchiveData } from "@/lib/useArchiveData";
 import { RecordCard, type CardRecord } from "./RecordCard";
 import { useArchive } from "@/lib/store";
-import type { ArchiveType, GameSystem } from "@/lib/types";
+import {
+  secretsShardsRequired,
+  shardsWordGenitive,
+  type ArchiveType,
+  type GameSystem,
+} from "@/lib/types";
 
 interface ArchiveSectionProps<T> {
   type: ArchiveType;
@@ -135,12 +140,12 @@ export function ArchiveSection<T>({
             ХРАНИЛИЩЕ ОТКРЫТО
           </div>
           <div className="text-[12px] text-dim leading-relaxed max-w-md mx-auto">
-            {"// печать пяти осколков снята, но страницы этого мира ещё пусты. //"}
+            {`// печать ${shardsWordGenitive(secretsShardsRequired(system))} осколков снята, но страницы этого мира ещё пусты. //`}
             <br />
             {"// сокрытое проявится, когда Создатель впишет его в архив. //"}
           </div>
           <div className="mt-4 flex justify-center gap-1.5 flex-wrap">
-            {Array.from({ length: 5 }).map((_, i) => (
+            {Array.from({ length: secretsShardsRequired(system) }).map((_, i) => (
               <span
                 key={i}
                 className="chip chip-violet text-[10px]"

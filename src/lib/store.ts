@@ -6,6 +6,7 @@ import type { ProgressData, User } from "@/lib/types";
 
 export type Section =
   | "profile"
+  | "admin"
   | "characters"
   | "factions"
   | "lore"
@@ -13,6 +14,14 @@ export type Section =
   | "lore_npcs"
   | "locations"
   | "secrets";
+
+// Куда перейти в Мастерской Созидателя после клика «Править в мастерской»
+// из досье (recordType + id + система записи).
+export type AdminEditTarget = {
+  kind: "character" | "lore" | "location" | "faction";
+  id: string;
+  system: "DND" | "PF2E";
+} | null;
 
 export interface Toast {
   id: string;
@@ -47,6 +56,10 @@ interface ArchiveState {
   // секции перезагрузили данные с сервера (правки видны сразу)
   dataRevision: number;
   bumpDataRevision: () => void;
+
+  // цель редактирования в Мастерской (переход из досье по кнопке админа)
+  adminEditTarget: AdminEditTarget;
+  setAdminEditTarget: (t: AdminEditTarget) => void;
 
   // god's gaze meter (0-100) — NOT persisted, resets each session
   gaze: number;
@@ -331,6 +344,9 @@ export const useArchive = create<ArchiveState>()(
       dataRevision: 0,
       bumpDataRevision: () =>
         set((st) => ({ dataRevision: st.dataRevision + 1 })),
+
+      adminEditTarget: null,
+      setAdminEditTarget: (t) => set({ adminEditTarget: t }),
 
       gaze: 7,
       addGaze: (amount) =>

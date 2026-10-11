@@ -2,10 +2,17 @@
 
 export type GameSystem = "DND" | "PF2E";
 
-// Сколько осколков памяти открывают вкладку «Секреты».
-// D&D: все 5 осколков Эларии. PF2E: вкладка открывается с 5 осколков
-// Голариона (в мире их 6 — шестой остаётся бонусом).
-export const SECRETS_SHARDS_REQUIRED = 5;
+// Сколько осколков памяти открывают вкладку «Секреты» — зависит от мира:
+//   D&D  (Элария)   — все 5 осколков;
+//   PF2E (Голарион) — все 6 осколков (гордыня/кровь/огонь/контракт/смерть/надежда).
+export function secretsShardsRequired(system: GameSystem): number {
+  return system === "PF2E" ? 6 : 5;
+}
+
+// Числительное для надписей: «печать пяти осколков».
+export function shardsWordGenitive(n: number): string {
+  return n === 6 ? "шести" : n === 5 ? "пяти" : String(n);
+}
 
 export type UserRole = "USER" | "ADMIN";
 
@@ -73,6 +80,8 @@ export interface BaseRecord {
   isCorrupted: boolean;
   secretFragment: string | null;
   shardWord: string | null;
+  /** цвет досье (violet/blue/green/amber/red/cyan/pink); null — стандартное */
+  themeColor?: string | null;
   createdAt: string;
 }
 
@@ -113,19 +122,16 @@ export interface Location extends BaseRecord {
   type: string;
 }
 
-// Chronicle — запись о сессии партии (хроника)
-export interface Chronicle {
-  id: string;
-  sessionNumber: number;
+// Загадка-врата (публичная часть, без списка ответов — они проверяются
+// на сервере). Привязывается к записи по имени.
+export interface RiddlePublic {
+  recordName: string;
+  sigil: string;
   title: string;
-  summary: string;
-  date: string; // ISO-дата строкой, напр. "2024-03-15"
-  system: GameSystem;
-  isLocked: boolean;
-  isCorrupted: boolean;
-  secretFragment: string | null;
-  shardWord: string | null;
-  createdAt: string;
+  subtitle: string | null;
+  riddle: string[];
+  hint: string | null;
+  system: string | null;
 }
 
 export interface Achievement {

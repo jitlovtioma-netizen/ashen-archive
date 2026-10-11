@@ -5,12 +5,14 @@ import { createPortal } from "react-dom";
 import { Sigil } from "./Sigil";
 import { HoloPortrait } from "./HoloPortrait";
 import { BrunoMiniGame } from "./BrunoMiniGame";
-import { RiddleGate } from "./RiddleGate";
+import { RiddleGate, resolveRiddle } from "./RiddleGate";
 import { SozidatelReveal } from "./SozidatelReveal";
 import { HopeVideo } from "./HopeVideo";
 import { RemiTransformSelector } from "./RemiTransformSelector";
 import { RecordModal } from "./RecordModal";
-import { CorruptedText, KALI_ANCHORS } from "./CorruptedText";
+import { CorruptedText, KALI_ANCHORS, hasCorruptMarks } from "./CorruptedText";
+import { getDossierTheme } from "@/lib/themes";
+import { useRiddles } from "@/lib/useRiddles";
 import { useArchive } from "@/lib/store";
 import { sfx } from "@/lib/audio";
 import { SYSTEM_LABEL, SYSTEM_COLOR, type GameSystem } from "@/lib/types";
@@ -31,6 +33,8 @@ export interface CardRecord {
   imageUrl?: string | null;
   status?: "ALIVE" | "DEAD" | "MISSING";
   friendship?: number | null;
+  /** цвет досье (violet/blue/green/amber/red/cyan/pink) */
+  themeColor?: string | null;
   /** тип записи: досье персонажа можно редактировать владельцу */
   recordType?: "character" | "lore" | "location";
   /** исходные поля персонажа (для режима редактирования досье) */
@@ -57,6 +61,8 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
     pushToast,
     solvedRiddles,
   } = useArchive();
+  // загадки-врата: БД (Мастерская) + встроенный фолбэк
+  const dbRiddles = useRiddles();
 
   const isSealed = record.isLocked && !unlockedIds.includes(record.id);
   const isCorrupted = record.isCorrupted;
@@ -70,11 +76,16 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
     ? shards.includes(record.shardWord)
     : false;
   const secretRevealed = revealedSecrets.includes(record.id);
-  const riddleLocked =
-    (record.name === "Мартин" || record.name === "Мёртвый План" || record.name === "Четвёртый" || record.name === "Разум Бруно" || record.name === "Джейтал" || record.name === "Тартуччио" || record.name === "Неизвестная личность" || record.name === "Безымянная" || record.name === "Надежда" || record.name === "Баал" || record.name === "Божественный осколок") &&
-    !solvedRiddles.includes(record.name);
+  const gateRiddle = resolveRiddle(record.name, record.system, dbRiddles);
+  const riddleLocked = !!gateRiddle && !solvedRiddles.includes(record.name);
   // Для «Надежда» — после решения загадки и видео, досье открывается без ритуала
   const hopeAutoUnlock = record.name === "Надежда";
+
+  // тема досье (цвет) — подсветка карточки и превью порчи
+  const dossierTheme =
+    getDossierTheme(record.themeColor) ??
+    (isCursed || record.name === "Отражение" ? getDossierTheme("violet") : null);
+  const hasMarks = hasCorruptMarks(record.description);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [ritualCharge, setRitualCharge] = useState(0);
@@ -212,6 +223,16 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
         className={`panel clip-hud brackets relative p-4 transition-all duration-200 cursor-pointer hover:border-[var(--green-dim)] hover:shadow-[0_0_16px_rgba(74,246,38,0.15)] hover:-translate-y-[2px] ${
           isSealed ? "opacity-90" : ""
         } ${record.name === "???" ? "entity-card" : ""}`}
+        style={
+          dossierTheme
+            ? {
+                borderColor: dossierTheme.border,
+                boxShadow: `0 0 18px ${dossierTheme.accentDim.replace(
+                  /,[\s\d.]+\)$/, ", 0.14)",
+                )}`,
+              }
+            : undefined
+        }
         onClick={onOpen}
       >
         <div className="flex items-center gap-1.5 mb-3 flex-wrap">
@@ -227,6 +248,19 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
           {isSealed && <span className="chip chip-warn">🔒 ОПЕЧАТАНО</span>}
           {isCursed && <span className="chip chip-violet">🔒 ЗАПЕЧАТАНА</span>}
           {isCorrupted && <span className={`chip ${isEntity ? "chip-cyan" : "chip-err"}`}>⚠ ИСКАЖЕНО</span>}
+          {dossierTheme && !isCorrupted && !isCursed && (
+            <span
+              className="chip"
+              style={{
+                color: dossierTheme.accent,
+                borderColor: dossierTheme.border,
+                background: dossierTheme.btnBg,
+              }}
+              title="Особое цветовое досье"
+            >
+              ◆
+            </span>
+          )}
           {!isSealed && !isCorrupted && !isCursed && <span className="chip chip-ok">✓ ДОСТУПНО</span>}
           {record.status === "DEAD" && <span className="chip chip-err">💀 ПАЛ</span>}
           {record.status === "MISSING" && <span className="chip chip-warn">? ПРОПАЛ</span>}
@@ -276,14 +310,15 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
                 </div>
               </div>
             ) : !isSealed ? (
-              isCorrupted ? (
+              isCorrupted || hasMarks ? (
                 <CorruptedText
                   text={corruptPreview}
-                  ratio={isCursed ? 0.16 : 0.42}
+                  ratio={isCursed ? 0.16 : isCorrupted ? 0.42 : 0}
                   zalgoAware={isCursed}
                   zalgoChance={isCursed ? 0.45 : undefined}
                   protect={isCursed ? KALI_ANCHORS : undefined}
-                  variant={isCursed ? "violet" : "red"}
+                  variant={dossierTheme ? undefined : isCursed ? "violet" : "red"}
+                  accent={dossierTheme?.accent}
                   live={false}
                   paragraphClassName={`text-[13px] leading-relaxed line-clamp-2 ${
                     isEntity ? "text-[var(--cyan)]" : isCursed ? "text-[var(--text)]" : "text-[var(--red-dim)]"
@@ -324,6 +359,7 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
       {riddleOpen && typeof document !== "undefined" && createPortal(
         <RiddleGate
           recordName={record.name}
+          system={record.system}
           onSolved={() => {
             setRiddleOpen(false);
             // Для «Неизвестный персонаж» — спецэффект (тьма → глюки → арт → досье)

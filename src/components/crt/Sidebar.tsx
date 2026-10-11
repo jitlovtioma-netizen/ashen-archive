@@ -2,7 +2,7 @@
 
 import { useArchive, type Section } from "@/lib/store";
 import { sfx } from "@/lib/audio";
-import { SECRETS_SHARDS_REQUIRED } from "@/lib/types";
+import { secretsShardsRequired } from "@/lib/types";
 
 interface NavItem {
   key: Section;
@@ -20,6 +20,14 @@ const NAV: NavItem[] = [
   { key: "lore_npcs", label: "Второстеп. герои", code: "ЛОР_НПС", sigil: "🎭" },
   { key: "locations", label: "Локации", code: "РЕЕСТР_МЕСТ", sigil: "🗺" },
 ];
+
+// Мастерская Созидателя — только для админов (CRUD всех записей архива)
+const NAV_ADMIN: NavItem = {
+  key: "admin",
+  label: "Мастерская",
+  code: "ПЕРО_СОЗИДАТЕЛЯ",
+  sigil: "✎",
+};
 
 export function Sidebar() {
   const section = useArchive((s) => s.section);
@@ -39,15 +47,23 @@ export function Sidebar() {
   const gazeColor =
     gaze >= 90 ? "var(--red)" : gaze >= 60 ? "var(--amber)" : "var(--green)";
 
-  // Вкладка «Секреты» появляется, когда собрано SECRETS_SHARDS_REQUIRED
-  // осколков памяти текущего мира (DND — все 5, PF2E — с 5 из 6).
-  const shardProgress = Math.min(shards.length, SECRETS_SHARDS_REQUIRED);
+  // Порог вкладки «Секреты» зависит от мира: Элария — 5 осколков,
+  // Голарион — все 6 (гордыня/кровь/огонь/контракт/смерть/надежда).
+  const system = user?.system ?? "DND";
+  const shardsRequired = secretsShardsRequired(system);
+  const shardProgress = Math.min(shards.length, shardsRequired);
   const showSecrets =
-    totalShardWords > 0 && shards.length >= SECRETS_SHARDS_REQUIRED;
+    totalShardWords > 0 && shards.length >= shardsRequired;
+
+  // Мастерская — сразу после профиля, только для Созидателя
+  const isAdmin = user?.role === "ADMIN";
+  const navWithAdmin: NavItem[] = isAdmin
+    ? [...NAV.slice(0, 1), NAV_ADMIN, ...NAV.slice(1)]
+    : NAV;
 
   const fullNav = showSecrets
     ? [
-        ...NAV,
+        ...navWithAdmin,
         {
           key: "secrets" as Section,
           label: "Секреты",
@@ -55,7 +71,7 @@ export function Sidebar() {
           sigil: "🔓",
         },
       ]
-    : NAV;
+    : navWithAdmin;
 
   return (
     <nav
@@ -87,11 +103,11 @@ export function Sidebar() {
       <div className="hidden md:flex flex-col gap-2 mt-auto pt-3 border-t border-[var(--line)]">
         <div className="text-[10px] text-dim tracking-widest px-1">
           {"// ОСКОЛКИ_ПАМЯТИ ["}
-          <span className={shardProgress >= SECRETS_SHARDS_REQUIRED ? "glow-green" : undefined}>
+          <span className={shardProgress >= shardsRequired ? "glow-green" : undefined}>
             {shardProgress}
           </span>
           {"/"}
-          {SECRETS_SHARDS_REQUIRED}
+          {shardsRequired}
           {"]"}
         </div>
         <div className="panel-inset p-2 min-h-[60px] max-h-32 overflow-y-auto crt-scroll">
