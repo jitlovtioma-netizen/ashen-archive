@@ -21,6 +21,7 @@ import { useArchive } from "@/lib/store";
 import { sfx } from "@/lib/audio";
 import { SYSTEM_LABEL, SYSTEM_COLOR, type GameSystem } from "@/lib/types";
 import { DOSSIER_THEMES, DOSSIER_THEME_KEYS, IRIS_PALETTES, IRIS_PALETTE_KEYS } from "@/lib/themes";
+import { getWatchdogStats, runWatchdogScanNow } from "./OverlayWatchdog";
 import { CorruptToolbar } from "./CorruptEditorTools";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -657,6 +658,14 @@ export function AdminSection({ system: userSystem }: { system: GameSystem }) {
   const [restoring, setRestoring] = useState(false);
   const [restoreError, setRestoreError] = useState<string | null>(null);
   const restoreFileRef = useRef<HTMLInputElement | null>(null);
+  // v5.7.3 — «диагностика архива»: пульс сторожа оверлеев + здоровье вкладки
+  const [diag, setDiag] = useState<{
+    neutralized: number;
+    scans: number;
+    lastScanAgoMs: number;
+    centerHijacked: boolean;
+    domNodes: number;
+  } | null>(null);
   // v5.7.1 — seed.zip: весь проект одним файлом (исходники + база + доки)
   // для развёртывания вручную. В песочнице архив фантомно исчезает при
   // снапшот-ресторах — потому кнопка в тулбаре проверяет наличие (HEAD
@@ -739,6 +748,59 @@ export function AdminSection({ system: userSystem }: { system: GameSystem }) {
       .catch(() => {});
   }, [user, data]);
 
+  // v5.7.3 — диагностика: пульс сторожа + клик-просвет центра экрана.
+  // Обновляем пачкой каждые 5с, пока вкладка жива (не только на рендере).
+  const refreshDiag = useCallback(() => {
+    const st = getWatchdogStats();
+    // клик-просвет: что лежит в центре экрана по хит-тесту. Если сверху
+    // невидимый fixed-элемент — центр «угнан». (Сторож его уже обезвредил
+    // или обезредит — здесь мы только показываем состояние.)
+    const el = document.elementFromPoint(
+      Math.round(window.innerWidth / 2),
+      Math.round(window.innerHeight / 2),
+    );
+    let centerHijacked = false;
+    if (el instanceof HTMLElement) {
+      const cs = getComputedStyle(el);
+      const z = Number.parseFloat(cs.zIndex);
+      centerHijacked =
+        cs.position === "fixed" &&
+        Number.isFinite(z) &&
+        z >= 5000 &&
+        Number.parseFloat(cs.opacity) < 0.03;
+    }
+    setDiag({
+      neutralized: st.neutralized,
+      scans: st.scans,
+      lastScanAgoMs: st.lastScanAgoMs,
+      centerHijacked,
+      domNodes: document.querySelectorAll("*").length,
+    });
+  }, []);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (!document.hidden) refreshDiag();
+    }, 5000);
+    return () => clearInterval(id);
+  }, [refreshDiag]);
+
+  // внеплановый осмотр: кнопка в сводке — прогон сторожа + отчёт
+  const runDiagnostics = useCallback(() => {
+    sfx.beep();
+    const killed = runWatchdogScanNow();
+    refreshDiag();
+    pushToast({
+      kind: killed > 0 ? "warn" : "info",
+      sigil: killed > 0 ? "⌁" : "✔",
+      title: killed > 0 ? "ОБНАРУЖЕНЫ ПРИЗРАКИ" : "ОСМОТР ЧИСТ",
+      body:
+        killed > 0
+          ? `Сторож обезвредил ${killed} невидимых блокировщиков кликов.`
+          : "Невидимых блокировщиков кликов не найдено.",
+    });
+  }, [pushToast, refreshDiag]);
+
   // список изображений для подсказок в поле «путь к изображению»
   useEffect(() => {
     fetch("/api/admin/media")
@@ -771,6 +833,30 @@ export function AdminSection({ system: userSystem }: { system: GameSystem }) {
   useEffect(() => {
     checkSeedZip();
   }, [checkSeedZip]);
+
+  // v5.7.4 — пульс статуса архива (30с): если seed.zip пересобрали извне
+  // (ssh, ensure-seed при старте dev, другой страж), кнопка «⇩» сама
+  // подтянет свежий размер. Спит в скрытой вкладке; «checking» не
+  // выставляем — лейбл не мигает; во время своей пересборки лейбл всё
+  // равно занят «⟳ СОБИРАЮ…» (seedBusy), а статус-чтение read-only
+  useEffect(() => {
+    if (!user) return;
+    const id = setInterval(() => {
+      if (document.hidden) return;
+      fetch(`/api/admin/make-seed?requester=${encodeURIComponent(user.login)}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+          if (d && d.ok && d.exists) {
+            if (typeof d.size === "number" && d.size > 0) setSeedSize(d.size);
+            setSeedState("ready");
+          } else if (d && d.ok) {
+            setSeedState("missing");
+          }
+        })
+        .catch(() => {});
+    }, 30_000);
+    return () => clearInterval(id);
+  }, [user]);
 
   // v5.7.1 — скачивание: подписанная ссылка (только админам, 15 минут),
   // файл приходит аттачментом через blob — без ухода со страницы
@@ -1046,13 +1132,15 @@ export function AdminSection({ system: userSystem }: { system: GameSystem }) {
 
   const lenAudit = useMemo(() => {
     if (!data) return [];
-    const items: { kind: RecKind; rec: AnyRow; name: string; len: number }[] = [];
+    // id обязателен: key={`${it.kind}-${it.id}`} в рендере — без него все
+    // ключи схлопывались в kind-undefined и React ругался на дубликаты
+    const items: { kind: RecKind; rec: AnyRow; id: string; name: string; len: number }[] = [];
     for (const c of data.characters)
-      items.push({ kind: "character", rec: c, name: c.name, len: c.description.length });
+      items.push({ kind: "character", rec: c, id: c.id, name: c.name, len: c.description.length });
     for (const l of data.lore)
-      items.push({ kind: "lore", rec: l, name: l.title, len: l.description.length });
+      items.push({ kind: "lore", rec: l, id: l.id, name: l.title, len: l.description.length });
     for (const loc of data.locations)
-      items.push({ kind: "location", rec: loc, name: loc.name, len: loc.description.length });
+      items.push({ kind: "location", rec: loc, id: loc.id, name: loc.name, len: loc.description.length });
     return items.sort((a, b) => b.len - a.len).slice(0, 5);
   }, [data]);
 
@@ -1842,6 +1930,71 @@ export function AdminSection({ system: userSystem }: { system: GameSystem }) {
               )}
             </div>
           )}
+
+          {/* v5.7.3 — диагностика архива: пульс сторожа оверлеев.
+              Показывает, что защита от «невидимых блокировщиков кликов»
+              (баг «архив зависает», v5.7.2) жива и работает. */}
+          <div className="mt-3">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <span className="text-[10px] text-dim tracking-widest">
+                {"// ⌁ ДИАГНОСТИКА АРХИВА · СТОРОЖ ОВЕРЛЕЕВ //"}
+              </span>
+              <button
+                onClick={runDiagnostics}
+                onMouseEnter={() => sfx.hover()}
+                className="btn-crt clip-hud-sm px-2.5 py-1 text-[10px]"
+                title="Внеплановый осмотр: прогнать сторожа невидимых блокировщиков кликов и доложить результат"
+              >
+                ⌁ ОСМОТРЕТЬ СЕЙЧАС
+              </button>
+            </div>
+            <div className="mt-1 grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {([
+                [
+                  "ПРИЗРАКОВ ОБЕЗВРЕЖЕНО",
+                  diag?.neutralized ?? 0,
+                  (diag?.neutralized ?? 0) > 0 ? "err" : "ok",
+                  "Сколько невидимых полноэкранных блокировщиков кликов сторож нейтрализовал за жизнь вкладки (после v5.7.2 их появление — редкость; само число больше нуля лишь сообщает, что страховка сработала)",
+                ],
+                [
+                  "ОСМОТРОВ",
+                  diag?.scans ?? 0,
+                  "",
+                  "Сторож сканирует экран каждые 4 секунды: 5 нативных хит-тестов по точкам экрана",
+                ],
+                [
+                  "ПОСЛЕДНИЙ ОСМОТР",
+                  diag && diag.lastScanAgoMs >= 0 ? Math.max(0, Math.round(diag.lastScanAgoMs / 1000)) + " с" : "—",
+                  "",
+                  "Сколько секунд назад сторож проходил по экрану (в скрытой вкладке не сканирует)",
+                ],
+                [
+                  "ЦЕНТР ЭКРАНА",
+                  diag ? (diag.centerHijacked ? "ПЕРЕХВАЧЕН" : "ЧИСТ") : "—",
+                  diag?.centerHijacked ? "err" : "ok",
+                  "Клик-просвет: что стоит на пути клика в центре экрана. «ЧИСТ» — клики свободны",
+                ],
+              ] as [string, string | number, string, string][]).map(([label, value, tone, hint]) => (
+                <div
+                  key={label}
+                  className="panel-inset px-2.5 py-2 flex flex-col gap-0.5 transition-all hover:border-[var(--green-dim)] hover:-translate-y-[1px]"
+                  title={hint}
+                >
+                  <span className="text-[9px] text-dim tracking-wider">{label}</span>
+                  <span
+                    className={`font-vt323 text-lg leading-none ${
+                      tone === "err" ? "glow-red" : tone === "ok" ? "glow-green" : "glow-amber"
+                    }`}
+                  >
+                    {value}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div className="mt-1 text-[9px] text-dim tracking-wider">
+              {`// узлов DOM: ${diag?.domNodes ?? "···"} // сторож спит в скрытой вкладке //`}
+            </div>
+          </div>
         </details>
       )}
 
@@ -2091,6 +2244,12 @@ export function AdminSection({ system: userSystem }: { system: GameSystem }) {
               вручную и страховки. Ссылка на скачивание подписана и живёт 15
               минут; если архив потерялся — кнопка «⟳» пересоберёт его прямо
               из браузера.
+            </li>
+            <li>
+              <span className="glow-amber">⌁ Диагностика</span> (в сводке) —
+              пульс сторожа оверлеев: защита от «невидимых блокировщиков
+              кликов» (баг «архив зависает», v5.7.2). Кнопка «ОСМОТРЕТЬ
+              СЕЙЧАС» прогоняет внеплановый осмотр и докладывает тостом.
             </li>
             <li>
               <span className="glow-amber">⧉ Дублирование</span> — копия записи

@@ -1655,6 +1655,47 @@ body.cursed-screen .glow-green {
   animation: cardIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
   animation-delay: calc(var(--card-i, 0) * 45ms);
 }
+
+/* ── 2a. v5.7.3 — КЛАВИАТУРНЫЙ ФОКУС И ЦВЕТНЫЕ КАРТОЧКИ ─────────
+   Карточка досье — кнопка: TAB останавливается на ней, Enter/Space
+   открывают. Фокус рисуем фосфорной рамкой со свечением (только
+   focus-visible — мышь не будит). Цветные досье (card-themed с --acc)
+   при наведении светятся СВОИМ акцентом, а не общим зелёным. */
+article[data-record-id]:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+  box-shadow:
+    0 0 0 4px rgba(74, 246, 38, 0.12),
+    0 0 18px rgba(74, 246, 38, 0.2);
+  border-color: var(--green) !important;
+}
+.card-themed:hover,
+.card-themed:focus-visible {
+  border-color: color-mix(in srgb, var(--acc, #a78bfa) 65%, transparent) !important;
+  box-shadow:
+    0 0 20px color-mix(in srgb, var(--acc, #a78bfa) 18%, transparent),
+    inset 0 0 24px color-mix(in srgb, var(--acc, #a78bfa) 5%, transparent) !important;
+}
+.card-themed:focus-visible {
+  outline: 2px solid var(--acc, #a78bfa);
+  outline-offset: 2px;
+}
+/* кнопки архива: клавиатурный фокус — тонкая фосфорная нить */
+.btn-crt:focus-visible,
+.cmdk-item:focus-visible,
+.cmdk-input:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  article[data-record-id]:focus-visible,
+  .card-themed:hover,
+  .card-themed:focus-visible {
+    transition: none;
+  }
+}
+
 @keyframes cardIn {
   0% {
     opacity: 0;

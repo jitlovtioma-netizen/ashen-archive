@@ -53,19 +53,20 @@ interface RecordCardProps {
 }
 
 export function RecordCard({ record, horizontal = false }: RecordCardProps) {
-  const {
-    unlockedIds,
-    unlockRecord,
-    shards,
-    addShard,
-    revealedSecrets,
-    revealRecordSecret,
-    addGaze,
-    unlockAchievement,
-    pushToast,
-    solvedRiddles,
-    irisOpens,
-  } = useArchive();
+  // v5.7.2 — точечные селекторы вместо всего стора: раньше useArchive()
+  // без селектора перерисовывал КАЖДУЮ карточку на любое изменение стора
+  // (тосты, взгляд, навигация) — лишняя работа и нестабильные пропсы модалок.
+  const unlockedIds = useArchive((s) => s.unlockedIds);
+  const unlockRecord = useArchive((s) => s.unlockRecord);
+  const shards = useArchive((s) => s.shards);
+  const addShard = useArchive((s) => s.addShard);
+  const revealedSecrets = useArchive((s) => s.revealedSecrets);
+  const revealRecordSecret = useArchive((s) => s.revealRecordSecret);
+  const addGaze = useArchive((s) => s.addGaze);
+  const unlockAchievement = useArchive((s) => s.unlockAchievement);
+  const pushToast = useArchive((s) => s.pushToast);
+  const solvedRiddles = useArchive((s) => s.solvedRiddles);
+  const irisOpens = useArchive((s) => s.irisOpens);
   // загадки-врата: БД (Мастерская) + встроенный фолбэк
   const dbRiddles = useRiddles();
 
@@ -114,6 +115,11 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
   const [remiSelectorOpen, setRemiSelectorOpen] = useState(false);
   const readRef = useRef(false);
   const ritualRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // v5.7.2 — стабильный onClose: инлайн-стрелка на каждом рендере меняла
+  // идентичность пропса — из-за этого модалка досье могла зависнуть при
+  // закрытии (см. комментарий в RecordModal). Теперь идентичность постоянна.
+  const closeModal = useCallback(() => setModalOpen(false), [setModalOpen]);
 
   // v5.7 — ирис-эхо: наведение на ирис-досье в списке — оно отвечает
   // из-под страницы (тихая полы-мысль). Анти-шквал в IrisWhispers сам
@@ -248,13 +254,24 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
     <>
       <article
         data-record-id={record.id}
+        // v5.7.3 — фокус с клавиатуры: карточка — кнопка, TAB/Enter работают
+        tabIndex={0}
+        role="button"
+        aria-label={`Досье: ${record.name}${isSealed ? " (опечатано)" : ""}`}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onOpen();
+          }
+        }}
         className={`panel clip-hud brackets relative p-4 transition-all duration-200 cursor-pointer hover:border-[var(--green-dim)] hover:shadow-[0_0_16px_rgba(74,246,38,0.15)] hover:-translate-y-[2px] ${
           isSealed ? "opacity-90" : ""
-        } ${record.name === "???" ? "entity-card" : ""}`}
+        } ${record.name === "???" ? "entity-card" : ""}${dossierTheme ? " card-themed" : ""}`}
         style={
           dossierTheme
             ? {
                 borderColor: dossierTheme.border,
+                ["--acc" as string]: dossierTheme.accent,
                 boxShadow: `0 0 18px ${dossierTheme.accentDim.replace(
                   /,[\s\d.]+\)$/, ", 0.14)",
                 )}`,
@@ -399,7 +416,7 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
       </article>
 
       {modalOpen && typeof document !== "undefined" && createPortal(
-        <RecordModal record={record} onClose={() => setModalOpen(false)} />,
+        <RecordModal record={record} onClose={closeModal} />,
         document.body
       )}
 

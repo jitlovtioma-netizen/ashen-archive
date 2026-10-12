@@ -491,12 +491,24 @@ export const useArchive = create<ArchiveState>()(
         const id = Math.random().toString(36).slice(2);
         set((st) => ({ toasts: [...st.toasts, { ...t, id }] }));
         // auto dismiss after 5s
+        // v5.7.2 — no-op защита: если тост уже снят вручную, НЕ трогаем стейт.
+        // Прежний вариант всегда создавал новый массив → zustand уведомлял
+        // всех подписчиков → все карточки ре-рендерились вхолостую (а в 170мс-
+        // окне закрытия досье это ещё и убивало таймер onClose — «архив завис»).
         setTimeout(() => {
-          set((st) => ({ toasts: st.toasts.filter((x) => x.id !== id) }));
+          set((st) =>
+            st.toasts.some((x) => x.id === id)
+              ? { toasts: st.toasts.filter((x) => x.id !== id) }
+              : st,
+          );
         }, 5500);
       },
       dismissToast: (id) =>
-        set((st) => ({ toasts: st.toasts.filter((x) => x.id !== id) })),
+        set((st) =>
+          st.toasts.some((x) => x.id === id)
+            ? { toasts: st.toasts.filter((x) => x.id !== id) }
+            : st,
+        ),
 
       _hasHydrated: false,
       setHydrated: () => set({ _hasHydrated: true }),

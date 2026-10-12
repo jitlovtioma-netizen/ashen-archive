@@ -87,7 +87,7 @@ export function TitleBar() {
             className="hidden sm:inline font-mono-crt text-xs ml-2"
             style={{ color: sysColor }}
           >
-            {" // "}{SYSTEM_SHORT[system]}{" v5.7.1"}
+            {" // "}{SYSTEM_SHORT[system]}{" v5.7.3"}
           </span>
         </h1>
       </div>

@@ -17,6 +17,7 @@ import { KonamiModal } from "@/components/crt/KonamiModal";
 import { AchievementWatcher } from "@/components/crt/AchievementWatcher";
 import { AchievementToaster } from "@/components/crt/AchievementToaster";
 import { SecretBanner } from "@/components/crt/SecretBanner";
+import { OverlayWatchdog } from "@/components/crt/OverlayWatchdog";
 import { CommandPalette } from "@/components/crt/CommandPalette";
 import { KeyboardShortcuts } from "@/components/crt/KeyboardShortcuts";
 import { KeyboardShortcutsHandler } from "@/components/crt/KeyboardShortcutsHandler";
@@ -184,6 +185,10 @@ export default function Home() {
       <KeyboardShortcuts />
       <KeyboardShortcutsHandler />
       <AchievementWatcher />
+
+      {/* v5.7.2 — сторож против «невидимых блокировщиков кликов»
+          (страховка класса бага «архив зависает, но часы идут») */}
+      <OverlayWatchdog />
 
       <AchievementToaster />
       <SecretBanner />

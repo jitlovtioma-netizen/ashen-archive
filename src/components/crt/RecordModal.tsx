@@ -122,6 +122,17 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
   const konamiSeq = useRef<string[]>([]);
   // requestClose объявлен ниже — держим ссылку для openInWorkshop
   const requestCloseRef = useRef<() => void>(() => {});
+  // v5.7.2 — фикс «архив завис»: стабильные ссылки на onClose и имя записи.
+  // Раньше эффект монтирования зависел от нестабильных onClose/requestClose
+  // (родитель-карточка ре-рендерится на КАЖДОЕ изменение стора — тосты,
+  // взгляд, навигация) и в 170мс-окне закрытия убивал таймер onClose.
+  // Модалка оставалась смонтированной с завершённой анимацией backdrop-out
+  // (opacity:0, pointer-events:auto) — невидимый полноэкранный блокировщик
+  // кликов: часы идут, звук играет, нажать ничего нельзя.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+  const recordNameRef = useRef(record.name);
+  recordNameRef.current = record.name;
 
   // При открытии «Отражения» — открыть достижение REFLECTION
   useEffect(() => {
@@ -336,15 +347,15 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         sfx.blip();
-        requestClose();
+        requestCloseRef.current();
       }
     };
     window.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
 
     // Проклятие Кали: при открытии досье — весь экран искажается
-    const isCursedRecord = record.name === "Кали";
-    if (isCursedRecord) {
+    // (имя — через ref: эффект живёт только на маунт)
+    if (recordNameRef.current === "Кали") {
       document.body.classList.add("cursed-screen");
     }
 
@@ -352,9 +363,25 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
       document.body.classList.remove("cursed-screen");
-      if (closeTimer.current) clearTimeout(closeTimer.current);
+      // v5.7.2 — ВАЖНО: НЕ отменяем closeTimer. Если закрытие уже началось,
+      // onClose обязан выстрелить даже после размонтирования — иначе модалка
+      // зависнет невидимой ловушкой для кликов. setState на размонтированном
+      // родителе безвреден (no-op), а вот невыстреливший onClose — тот самый баг.
     };
-  }, [onClose, record.name, requestClose]);
+    // эффект живёт только на маунт: колбэки читаются через ref
+  }, []);
+
+  // v5.7.2 — страховка «архив не зависает»: как только закрытие началось,
+  // родитель получит onClose не позднее чем через 450мс — даже если основной
+  // таймер кто-то убил по какой-то причине. Повторный onClose безвреден
+  // (родитель просто повторно выставит false).
+  useEffect(() => {
+    if (!closing) return;
+    const id = setTimeout(() => {
+      onCloseRef.current();
+    }, 450);
+    return () => clearTimeout(id);
+  }, [closing]);
 
   const completeRitual = useCallback(() => {
     setRitualActive(false);

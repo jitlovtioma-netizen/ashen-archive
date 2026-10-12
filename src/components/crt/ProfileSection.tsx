@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useArchive } from "@/lib/store";
 import { usePresence, sendBroadcast, kickUser, presenceEnabled } from "@/lib/presence";
@@ -61,6 +61,8 @@ export function ProfileSection({ system }: { system: GameSystem }) {
   const [irisTotal, setIrisTotal] = useState<number | null>(null);
   // досье своего персонажа, открытое прямо из профиля (с правом редактирования)
   const [myDossierOpen, setMyDossierOpen] = useState(false);
+  // v5.7.2 — стабильный колбэк закрытия досье (фикс «архив завис»)
+  const closeMyDossier = useCallback(() => setMyDossierOpen(false), [setMyDossierOpen]);
   // ревизия данных: после правки досье перечитываем каталог персонажей
   const dataRevision = useArchive((s) => s.dataRevision);
 
@@ -865,12 +867,14 @@ export function ProfileSection({ system }: { system: GameSystem }) {
       )}
 
       {/* модалка досье своего персонажа — с правом редактирования */}
+      {/* v5.7.2 — стабильный onClose (useCallback): инлайн-стрелка + ре-рендеры
+          секции могли оставить модалку в невидимом backdrop-out (баг «архив завис») */}
       {myDossierOpen && myCharacterCard &&
         typeof document !== "undefined" &&
         createPortal(
           <RecordModal
             record={myCharacterCard}
-            onClose={() => setMyDossierOpen(false)}
+            onClose={closeMyDossier}
           />,
           document.body
         )}
