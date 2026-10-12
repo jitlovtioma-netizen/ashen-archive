@@ -46,6 +46,12 @@ model Progress {
   konamiUnlocked  Boolean  @default(false)
   secretRevealed  Boolean  @default(false)
   gaze            Int      @default(7)
+  // v5.5 — id досье с ⟪…⟫ (полное искажение), которые страж открыл;
+  // для коллекционной ачивки IRIS_COLLECTOR («Собиратель Забвения»)
+  irisReadIds     String   @default("[]")
+  // v5.6 — сколько раз страж открывал каждое ирис-досье (id → счётчик):
+  // «ирис поглощает» — читаемость падает с каждым повторным открытием
+  irisOpens       String   @default("{}")
   updatedAt       DateTime @updatedAt
   createdAt       DateTime @default(now())
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -83,12 +89,17 @@ model Character {
   secretFragment String?
   shardWord      String?
   kind           String   @default("HERO")
+  // Порядок в списке (drag-n-drop в Мастерской); равные → по имени
+  sortOrder      Int      @default(0)
   factionId      String?
   faction        Faction? @relation(fields: [factionId], references: [id])
   imageUrl       String?
   status         String   @default("ALIVE")
   // Цвет досье (violet/blue/green/amber/red/cyan/pink); null — стандартное
   themeColor     String?
+  // v5.5 — палитра ириса (полного искажения ⟪…⟫): spectrum/emerald/blood/
+  // gold/night/amethyst; null — авто (спектр подстраивается под цвет досье)
+  irisColor      String?
   // Запись правилась в Мастерской/владельцем — seed её больше не трогает
   userModified   Boolean  @default(false)
   createdAt      DateTime @default(now())
@@ -113,6 +124,9 @@ model Lore {
   status         String   @default("ALIVE")
   friendship     Int?
   themeColor     String?
+  // v5.5 — палитра ириса (⟪…⟫): spectrum/emerald/blood/gold/night/amethyst;
+  // null — авто (спектр подстраивается под цвет досье)
+  irisColor      String?
   userModified   Boolean  @default(false)
   createdAt      DateTime @default(now())
 }
@@ -130,7 +144,12 @@ model Location {
   isCorrupted    Boolean  @default(false)
   secretFragment String?
   shardWord      String?
+  // Порядок в списке (drag-n-drop в Мастерской); равные → по имени
+  sortOrder      Int      @default(0)
   themeColor     String?
+  // v5.5 — палитра ириса (⟪…⟫): spectrum/emerald/blood/gold/night/amethyst;
+  // null — авто (спектр подстраивается под цвет досье)
+  irisColor      String?
   userModified   Boolean  @default(false)
   createdAt      DateTime @default(now())
 }
@@ -139,17 +158,19 @@ model Location {
 // Если для имени записи есть загадка — досье откроется только после верного
 // ответа. Ответы проверяются на сервере (клиент не видит список valid).
 model Riddle {
-  id           String   @id @default(cuid())
-  recordName   String
-  sigil        String   @default("🌑")
-  title        String
-  subtitle     String?
-  riddle       String
-  valid        String   @default("[]")
-  hint         String?
-  system       String?
-  userModified Boolean  @default(false)
-  createdAt    DateTime @default(now())
+  id              String   @id @default(cuid())
+  recordName      String
+  sigil           String   @default("🌑")
+  title           String
+  subtitle        String?
+  riddle          String
+  valid           String   @default("[]")
+  hint            String?
+  system          String?
+  // код достижения-награды: решивший загадку получает ачивку (если есть)
+  achievementCode String?
+  userModified    Boolean  @default(false)
+  createdAt       DateTime @default(now())
 }
 
 model Achievement {

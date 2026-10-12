@@ -17,6 +17,28 @@ function clampArr(v: unknown): string[] {
   return v.map(String).filter((s) => s.length > 0).slice(0, 500)
 }
 
+// v5.6 — карта «id досье → счётчик открытий» (ирис поглощает):
+// валидируем значения (0..99) и размер (≤500 ключей)
+function clampOpens(v: unknown): Record<string, number> {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return {}
+  const out: Record<string, number> = {}
+  for (const [k, raw] of Object.entries(v as Record<string, unknown>)) {
+    if (!k || Object.keys(out).length >= 500) continue
+    const n = Math.round(Number(raw))
+    if (Number.isFinite(n) && n >= 0 && n <= 99) out[k] = n
+  }
+  return out
+}
+
+function parseOpens(raw: string): Record<string, number> {
+  try {
+    const v = JSON.parse(raw)
+    return clampOpens(v)
+  } catch {
+    return {}
+  }
+}
+
 // GET /api/progress?login=X&requester=Y&system=DND
 // Свой прогресс — всегда; чужой — только если requester имеет роль ADMIN.
 export async function GET(request: NextRequest) {
@@ -55,6 +77,8 @@ export async function GET(request: NextRequest) {
           achievements: parseArr(p.achievements),
           shards: parseArr(p.shards),
           unlockedIds: parseArr(p.unlockedIds),
+          irisReadIds: parseArr(p.irisReadIds),
+          irisOpens: parseOpens(p.irisOpens),
           revealedSecrets: parseArr(p.revealedSecrets),
           solvedRiddles: parseArr(p.solvedRiddles),
           konamiUnlocked: p.konamiUnlocked,
@@ -101,7 +125,8 @@ export async function DELETE(request: NextRequest) {
 
 // POST /api/progress
 // Body: { login, system, achievements[], shards[], unlockedIds[],
-//         revealedSecrets[], solvedRiddles[], konamiUnlocked, secretRevealed, gaze }
+//         revealedSecrets[], solvedRiddles[], konamiUnlocked, secretRevealed,
+//         irisReadIds[], irisOpens{}, gaze }
 // Сохраняет (upsert) прогресс стража для указанного мира.
 export async function POST(request: NextRequest) {
   let body: Record<string, unknown> = {}
@@ -130,6 +155,8 @@ export async function POST(request: NextRequest) {
     achievements: JSON.stringify(clampArr(body.achievements)),
     shards: JSON.stringify(clampArr(body.shards)),
     unlockedIds: JSON.stringify(clampArr(body.unlockedIds)),
+    irisReadIds: JSON.stringify(clampArr(body.irisReadIds)),
+    irisOpens: JSON.stringify(clampOpens(body.irisOpens)),
     revealedSecrets: JSON.stringify(clampArr(body.revealedSecrets)),
     solvedRiddles: JSON.stringify(clampArr(body.solvedRiddles)),
     konamiUnlocked: body.konamiUnlocked === true,

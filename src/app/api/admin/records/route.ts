@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { DOSSIER_THEME_KEYS } from '@/lib/themes'
+import { DOSSIER_THEME_KEYS, IRIS_PALETTE_KEYS } from '@/lib/themes'
 
 export const dynamic = 'force-dynamic'
 
@@ -37,6 +37,7 @@ const MAX_ANSWER = 120
 const MAX_ANSWERS = 24
 const MAX_SUBTITLE = 120
 const MAX_HINT = 300
+const MAX_ACH_CODE = 60
 
 const VALID_SYSTEMS = ['DND', 'PF2E'] as const
 type System = (typeof VALID_SYSTEMS)[number]
@@ -144,6 +145,30 @@ function optThemeColor(v: unknown): string | null | undefined {
   return s
 }
 
+/** Палитра ириса (полное искажение ⟪…⟫): ключ палитры или null (авто). */
+function optIrisColor(v: unknown): string | null | undefined {
+  if (v === undefined) return undefined
+  if (v === null) return null
+  const s = String(v).trim()
+  if (!s) return null
+  if (!IRIS_PALETTE_KEYS.includes(s)) {
+    throw new ApiError('BAD_IRIS_COLOR', `irisColor: ${IRIS_PALETTE_KEYS.join(', ')} или пусто`)
+  }
+  return s
+}
+
+/** Код награды за загадку: латиница/цифры/_ или null (без награды). */
+function optAchievementCode(v: unknown): string | null | undefined {
+  if (v === undefined) return undefined
+  if (v === null) return null
+  const s = String(v).trim()
+  if (!s) return null
+  if (!/^[A-Za-z0-9_]+$/.test(s)) {
+    throw new ApiError('BAD_ACH_CODE', 'код награды: латиница, цифры и _ (напр. RIDDLE_MASTER)')
+  }
+  return s.toUpperCase()
+}
+
 // ── Сборка data для Prisma по типу записи ───────────────────────────────────
 
 function buildCharacter(raw: Record<string, unknown>, isCreate: boolean) {
@@ -162,12 +187,14 @@ function buildCharacter(raw: Record<string, unknown>, isCreate: boolean) {
   if (isCreate || 'status' in raw) data.status = parseStatus(raw.status)
   if (isCreate || 'imageUrl' in raw) data.imageUrl = optStr(raw.imageUrl, MAX_IMAGE)
   if (isCreate || 'themeColor' in raw) data.themeColor = optThemeColor(raw.themeColor)
+  if (isCreate || 'irisColor' in raw) data.irisColor = optIrisColor(raw.irisColor)
   if (isCreate || 'shardWord' in raw) data.shardWord = optStr(raw.shardWord, MAX_SHARD)
   if (isCreate || 'secretFragment' in raw) data.secretFragment = optStr(raw.secretFragment, MAX_FRAGMENT)
   if (isCreate || 'isLocked' in raw) data.isLocked = optBool(raw.isLocked)
   if (isCreate || 'isCorrupted' in raw) data.isCorrupted = optBool(raw.isCorrupted)
   if (isCreate || 'mapX' in raw) data.mapX = optInt(raw.mapX, 0, -10000, 10000)
   if (isCreate || 'mapY' in raw) data.mapY = optInt(raw.mapY, 0, -10000, 10000)
+  if (isCreate || 'sortOrder' in raw) data.sortOrder = optInt(raw.sortOrder, 0, -9999, 9999)
   if (isCreate || 'factionId' in raw) {
     const fid = optStr(raw.factionId, 64)
     if (fid === undefined && isCreate) data.factionId = null
@@ -196,6 +223,7 @@ function buildLore(raw: Record<string, unknown>, isCreate: boolean) {
   }
   if (isCreate || 'imageUrl' in raw) data.imageUrl = optStr(raw.imageUrl, MAX_IMAGE)
   if (isCreate || 'themeColor' in raw) data.themeColor = optThemeColor(raw.themeColor)
+  if (isCreate || 'irisColor' in raw) data.irisColor = optIrisColor(raw.irisColor)
   if (isCreate || 'sortOrder' in raw) data.sortOrder = optInt(raw.sortOrder, 0, -9999, 9999)
   if (isCreate || 'status' in raw) data.status = parseStatus(raw.status)
   if (isCreate || 'friendship' in raw) {
@@ -220,12 +248,14 @@ function buildLocation(raw: Record<string, unknown>, isCreate: boolean) {
   if (isCreate || 'sigil' in raw) data.sigil = strOr(raw.sigil, '🗺', MAX_SIGIL)
   if (isCreate) data.system = parseSystem(raw.system)
   if (isCreate || 'themeColor' in raw) data.themeColor = optThemeColor(raw.themeColor)
+  if (isCreate || 'irisColor' in raw) data.irisColor = optIrisColor(raw.irisColor)
   if (isCreate || 'shardWord' in raw) data.shardWord = optStr(raw.shardWord, MAX_SHARD)
   if (isCreate || 'secretFragment' in raw) data.secretFragment = optStr(raw.secretFragment, MAX_FRAGMENT)
   if (isCreate || 'isLocked' in raw) data.isLocked = optBool(raw.isLocked)
   if (isCreate || 'isCorrupted' in raw) data.isCorrupted = optBool(raw.isCorrupted)
   if (isCreate || 'mapX' in raw) data.mapX = optInt(raw.mapX, 0, -10000, 10000)
   if (isCreate || 'mapY' in raw) data.mapY = optInt(raw.mapY, 0, -10000, 10000)
+  if (isCreate || 'sortOrder' in raw) data.sortOrder = optInt(raw.sortOrder, 0, -9999, 9999)
   return data
 }
 
@@ -275,6 +305,9 @@ function buildRiddle(raw: Record<string, unknown>, isCreate: boolean) {
   }
   if (isCreate || 'hint' in raw) data.hint = optStr(raw.hint, MAX_HINT)
   if (isCreate || 'system' in raw) data.system = optSystem(raw.system)
+  if (isCreate || 'achievementCode' in raw) {
+    data.achievementCode = optAchievementCode(raw.achievementCode)
+  }
   return data
 }
 
@@ -317,10 +350,23 @@ export async function GET(request: NextRequest) {
 
     const [characters, lore, locations, factions, riddles, achievements, bindings] =
       await Promise.all([
-        db.character.findMany({ where: { system }, orderBy: { name: 'asc' } }),
-        db.lore.findMany({ where: { system }, orderBy: { title: 'asc' } }),
-        db.location.findMany({ where: { system }, orderBy: { name: 'asc' } }),
-        db.faction.findMany({ where: { system }, orderBy: { sortOrder: 'asc' } }),
+        // порядок — как в архиве: sortOrder (drag-n-drop), затем алфавит
+        db.character.findMany({
+          where: { system },
+          orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+        }),
+        db.lore.findMany({
+          where: { system },
+          orderBy: [{ sortOrder: 'asc' }, { title: 'asc' }],
+        }),
+        db.location.findMany({
+          where: { system },
+          orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+        }),
+        db.faction.findMany({
+          where: { system },
+          orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+        }),
         // загадки текущего мира + «любого мира»
         db.riddle.findMany({
           where: { OR: [{ system }, { system: null }] },

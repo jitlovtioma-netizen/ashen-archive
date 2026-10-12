@@ -3,7 +3,7 @@
   "version": "0.2.1",
   "private": true,
   "scripts": {
-    "dev": "(node scripts/check-deps.mjs --quiet || bun scripts/check-deps.mjs --quiet) && bun scripts/sync-db-provider.mjs --quiet --generate && next dev -p 3000 2>&1 | tee dev.log",
+    "dev": "(node scripts/check-deps.mjs --quiet || bun scripts/check-deps.mjs --quiet) && (node scripts/ensure-seed.mjs || bun scripts/ensure-seed.mjs || true) && bun scripts/sync-db-provider.mjs --quiet --generate && next dev -p 3000 2>&1 | tee dev.log",
     "build": "(node scripts/check-deps.mjs --quiet || bun scripts/check-deps.mjs --quiet) && (node scripts/sync-db-provider.mjs --quiet || bun scripts/sync-db-provider.mjs --quiet) && next build",
     "build:standalone": "(node scripts/check-deps.mjs --quiet || bun scripts/check-deps.mjs --quiet) && (node scripts/sync-db-provider.mjs --quiet || bun scripts/sync-db-provider.mjs --quiet) && next build && (node scripts/copy-standalone.mjs || bun scripts/copy-standalone.mjs)",
     "start": "NODE_ENV=production bun .next/standalone/server.js 2>&1 | tee server.log",
@@ -20,7 +20,8 @@
     "db:use-postgres": "bun run scripts/sync-db-provider.mjs postgres",
     "db:use-sqlite": "bun run scripts/sync-db-provider.mjs sqlite",
     "upload-images": "bun run scripts/upload-images.ts",
-    "setup:supabase": "bun run db:generate && bun run db:push && bun run upload-images && bun run db:seed"
+    "setup:supabase": "bun run db:generate && bun run db:push && bun run upload-images && bun run db:seed",
+    "make-seed": "node scripts/make-seed-zip.mjs || bun scripts/make-seed-zip.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

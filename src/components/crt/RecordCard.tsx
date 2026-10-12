@@ -10,7 +10,8 @@ import { SozidatelReveal } from "./SozidatelReveal";
 import { HopeVideo } from "./HopeVideo";
 import { RemiTransformSelector } from "./RemiTransformSelector";
 import { RecordModal } from "./RecordModal";
-import { CorruptedText, KALI_ANCHORS, hasCorruptMarks } from "./CorruptedText";
+import { CorruptedText, IRIS_MAX_STAGE, IRIS_SPREAD_BY_STAGE, KALI_ANCHORS, hasAnyMarks, hasOblivionMarks } from "./CorruptedText";
+import { dispatchIrisWhisper } from "./IrisWhispers";
 import { getDossierTheme } from "@/lib/themes";
 import { useRiddles } from "@/lib/useRiddles";
 import { useArchive } from "@/lib/store";
@@ -35,6 +36,9 @@ export interface CardRecord {
   friendship?: number | null;
   /** цвет досье (violet/blue/green/amber/red/cyan/pink) */
   themeColor?: string | null;
+  /** v5.5 — палитра ириса для ⟪…⟫ (spectrum/emerald/blood/gold/night/amethyst);
+   *  null — авто (спектр подстраивается под цвет досье) */
+  irisColor?: string | null;
   /** тип записи: досье персонажа можно редактировать владельцу */
   recordType?: "character" | "lore" | "location";
   /** исходные поля персонажа (для режима редактирования досье) */
@@ -60,6 +64,7 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
     unlockAchievement,
     pushToast,
     solvedRiddles,
+    irisOpens,
   } = useArchive();
   // загадки-врата: БД (Мастерская) + встроенный фолбэк
   const dbRiddles = useRiddles();
@@ -85,7 +90,17 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
   const dossierTheme =
     getDossierTheme(record.themeColor) ??
     (isCursed || record.name === "Отражение" ? getDossierTheme("violet") : null);
-  const hasMarks = hasCorruptMarks(record.description);
+  const hasMarks = hasAnyMarks(record.description);
+  // v5.6 — «ирис поглощает»: карточка ирис-досье показывает стадию потери.
+  // Со 2-й стадии — чип-предупреждение, на 5-й — «растворено».
+  // v5.7 — стадии 5..6 «ирис не отпускает»: растворяется и ПРЕВЬЮ карточки,
+  // чип меняет надпись — ирис держит запись даже в списке.
+  const isIrisRecord = hasOblivionMarks(record.description);
+  const irisOpenCount = irisOpens[record.id] ?? 0;
+  const irisStage = Math.max(0, Math.min(IRIS_MAX_STAGE, irisOpenCount - 1));
+  const irisBeyond = isIrisRecord && irisStage >= 5;
+  const irisSpread = isIrisRecord ? IRIS_SPREAD_BY_STAGE[irisStage] : 0;
+  const showIrisConsumeChip = isIrisRecord && irisOpenCount >= 2;
 
   const [modalOpen, setModalOpen] = useState(false);
   const [ritualCharge, setRitualCharge] = useState(0);
@@ -99,6 +114,19 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
   const [remiSelectorOpen, setRemiSelectorOpen] = useState(false);
   const readRef = useRef(false);
   const ritualRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // v5.7 — ирис-эхо: наведение на ирис-досье в списке — оно отвечает
+  // из-под страницы (тихая полы-мысль). Анти-шквал в IrisWhispers сам
+  // держит паузу 2.5с; тач-устройства молчат — у них нет «наведения».
+  const irisEchoHover = useCallback(
+    (e: React.PointerEvent) => {
+      if (e.pointerType === "touch") return;
+      if (isIrisRecord && !modalOpen && !riddleLocked && !isSealed) {
+        dispatchIrisWhisper({ phase: "echo" });
+      }
+    },
+    [isIrisRecord, modalOpen, riddleLocked, isSealed],
+  );
 
   const completeRitual = useCallback(() => {
     setRitualActive(false);
@@ -234,6 +262,7 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
             : undefined
         }
         onClick={onOpen}
+        onPointerEnter={irisEchoHover}
       >
         <div className="flex items-center gap-1.5 mb-3 flex-wrap">
           <span
@@ -262,6 +291,25 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
             </span>
           )}
           {!isSealed && !isCorrupted && !isCursed && <span className="chip chip-ok">✓ ДОСТУПНО</span>}
+          {showIrisConsumeChip && (
+            <span
+              className="chip iris-consume-chip"
+              data-stage={irisStage}
+              title={`Ирис поглощает это досье: открытий — ${irisOpenCount}. ${
+                irisBeyond
+                  ? "Ирис не отпускает его — даже из списка."
+                  : irisStage >= 4
+                    ? "Дальше — только ирис."
+                    : "Читаемость падает с каждым возвращением."
+              }`}
+            >
+              {irisBeyond
+                ? "ꙮ ИРИС НЕ ОТПУСКАЕТ"
+                : irisStage >= 4
+                  ? "ꙮ РАСТВОРЕНО"
+                  : `ꙮ ПОГЛОЩЕНИЕ ${Math.min(irisOpenCount, 5)}/5`}
+            </span>
+          )}
           {record.status === "DEAD" && <span className="chip chip-err">💀 ПАЛ</span>}
           {record.status === "MISSING" && <span className="chip chip-warn">? ПРОПАЛ</span>}
         </div>
@@ -319,6 +367,10 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
                   protect={isCursed ? KALI_ANCHORS : undefined}
                   variant={dossierTheme ? undefined : isCursed ? "violet" : "red"}
                   accent={dossierTheme?.accent}
+                  irisPalette={record.irisColor ?? undefined}
+                  // v5.7 — ирис ест и превью в списке: карточка худеет вместе
+                  // с досье. Статично (live=false) — сетка не должна мерцать.
+                  irisSpread={irisSpread}
                   live={false}
                   paragraphClassName={`text-[13px] leading-relaxed line-clamp-2 ${
                     isEntity ? "text-[var(--cyan)]" : isCursed ? "text-[var(--text)]" : "text-[var(--red-dim)]"

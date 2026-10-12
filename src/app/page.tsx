@@ -10,6 +10,8 @@ import { TitleBar } from "@/components/crt/TitleBar";
 import { Sidebar } from "@/components/crt/Sidebar";
 import { StatusBar } from "@/components/crt/StatusBar";
 import { GazeController } from "@/components/crt/GazeController";
+import { GazeWhispers } from "@/components/crt/GazeWhispers";
+import { IrisWhispers } from "@/components/crt/IrisWhispers";
 import { KonamiHandler } from "@/components/crt/KonamiHandler";
 import { KonamiModal } from "@/components/crt/KonamiModal";
 import { AchievementWatcher } from "@/components/crt/AchievementWatcher";
@@ -173,6 +175,9 @@ export default function Home() {
       <CRTOverlays />
 
       <GazeController />
+      <GazeWhispers />
+      {/* v5.5: ирис-шёпот — отвечает, когда открывают досье с ⟪…⟫ */}
+      <IrisWhispers />
       <KonamiHandler />
       <KonamiModal />
       <CommandPalette />

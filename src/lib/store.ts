@@ -95,6 +95,19 @@ interface ArchiveState {
   unlockedIds: string[];
   unlockRecord: (id: string) => boolean; // returns true if newly unlocked
 
+  // v5.5 — открытые досье с полным искажением ⟪…⟫ (persisted);
+  // для коллекционной ачивки IRIS_COLLECTOR («Собиратель Забвения»)
+  irisReadIds: string[];
+  addIrisRead: (id: string) => boolean; // returns true if newly added
+
+  // v5.6 — «ирис поглощает»: сколько раз страж открывал каждое
+  // ирис-досье (persisted). С каждым открытием читаемость падает —
+  // ирис забирает текст себе. Возвращает счётчик ПОСЛЕ инкремента.
+  irisOpens: Record<string, number>;
+  openIrisRecord: (id: string) => number;
+  // стадия поглощения досье (0..4) по счётчику открытий
+  irisStageOf: (id: string) => number;
+
   // revealed secret fragments (persisted) — hidden text in records
   revealedSecrets: string[];
   revealRecordSecret: (id: string) => boolean;
@@ -145,6 +158,8 @@ function saveProgressNow() {
     solvedRiddles: s.solvedRiddles,
     konamiUnlocked: s.konamiUnlocked,
     secretRevealed: s.secretRevealed,
+    irisReadIds: s.irisReadIds,
+    irisOpens: s.irisOpens,
     gaze: s.gaze,
   });
   fetch("/api/progress", {
@@ -173,6 +188,20 @@ export function flushProgressSave() {
   saveProgressNow();
 }
 
+// объединение счётчиков открытий: берём максимум по каждому досье
+// (гонки безопасны — счётчик только растёт)
+function mergeOpens(
+  a: Record<string, number>,
+  b: Record<string, number>,
+): Record<string, number> {
+  const out: Record<string, number> = { ...a };
+  for (const [k, v] of Object.entries(b ?? {})) {
+    const n = Number(v) || 0;
+    out[k] = Math.max(out[k] ?? 0, n);
+  }
+  return out;
+}
+
 // Загрузить прогресс с сервера и объединить с локальным (union — безопасно
 // при гонках: ничего не теряется, сервер остаётся источником правды при входе).
 // Экспортируется для вызова при восстановлении сессии из localStorage.
@@ -193,6 +222,8 @@ export async function hydrateProgressFromServer(login: string, system: string) {
       achievements: unionArr(cur.achievements, p.achievements ?? []),
       shards: unionArr(cur.shards, p.shards ?? []),
       unlockedIds: unionArr(cur.unlockedIds, p.unlockedIds ?? []),
+      irisReadIds: unionArr(cur.irisReadIds, p.irisReadIds ?? []),
+      irisOpens: mergeOpens(cur.irisOpens ?? {}, p.irisOpens ?? {}),
       revealedSecrets: unionArr(cur.revealedSecrets, p.revealedSecrets ?? []),
       solvedRiddles: unionArr(cur.solvedRiddles, p.solvedRiddles ?? []),
       konamiUnlocked: cur.konamiUnlocked || !!p.konamiUnlocked,
@@ -229,6 +260,8 @@ export const useArchive = create<ArchiveState>()(
               konamiUnlocked: false,
               konamiModalDismissed: false,
               unlockedIds: [],
+              irisReadIds: [],
+              irisOpens: {},
               revealedSecrets: [],
               solvedRiddles: [],
               toasts: [],
@@ -288,6 +321,8 @@ export const useArchive = create<ArchiveState>()(
           konamiUnlocked: false,
           konamiModalDismissed: false,
           unlockedIds: [],
+          irisReadIds: [],
+          irisOpens: {},
           revealedSecrets: [],
           solvedRiddles: [],
           toasts: [],
@@ -317,6 +352,8 @@ export const useArchive = create<ArchiveState>()(
           konamiUnlocked: false,
           konamiModalDismissed: false,
           unlockedIds: [],
+          irisReadIds: [],
+          irisOpens: {},
           revealedSecrets: [],
           solvedRiddles: [],
           secretRevealed: false,
@@ -410,6 +447,29 @@ export const useArchive = create<ArchiveState>()(
         set({ unlockedIds: [...cur, id] });
         queueSave();
         return true;
+      },
+
+      irisReadIds: [],
+      addIrisRead: (id) => {
+        const cur = get().irisReadIds;
+        if (cur.includes(id)) return false;
+        set({ irisReadIds: [...cur, id] });
+        queueSave();
+        return true;
+      },
+
+      irisOpens: {},
+      openIrisRecord: (id) => {
+        const cur = get().irisOpens;
+        const next = (cur[id] ?? 0) + 1;
+        set({ irisOpens: { ...cur, [id]: next } });
+        queueSave();
+        return next;
+      },
+      irisStageOf: (id) => {
+        const opens = get().irisOpens[id] ?? 0;
+        // v5.7 — стадии 0..6: 0..4 «поглощение», 5..6 «ирис не отпускает»
+        return Math.max(0, Math.min(6, opens - 1));
       },
 
       revealedSecrets: [],

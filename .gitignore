@@ -57,7 +57,10 @@ server.log
 mini-services/presence-service/lastseen.json
 
 # delivery artifact (regenerable, contains seeds with passwords)
+# v5.7.1: moved out of public/ — Next.js dev static-watcher kept wiping it
+# (the infamous «seed.zip phantom»); served via /api/seed?t=<token> now
 public/seed.zip
+seed-archive/
 
 # agent tool artifacts
 tool-results/

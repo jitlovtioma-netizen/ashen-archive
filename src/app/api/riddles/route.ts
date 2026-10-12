@@ -46,6 +46,7 @@ export async function GET() {
         riddle: r.riddle.split('\n').filter((l) => l.trim().length > 0),
         hint: r.hint,
         system: r.system,
+        achievementCode: r.achievementCode,
       })),
     )
   } catch (e) {

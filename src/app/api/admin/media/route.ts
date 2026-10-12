@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic'
 // Если файловая система недоступна (serverless) — просто пустой список.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const DIRS = ['heroes', 'gods', 'videos']
+const DIRS = ['heroes', 'gods', 'videos', 'uploads']
 
 export async function GET() {
   const images: string[] = []

@@ -45,6 +45,8 @@ export function ProfileSection({ system }: { system: GameSystem }) {
   const konamiUnlocked = useArchive((s) => s.konamiUnlocked);
   const gaze = useArchive((s) => s.gaze);
   const totalShardWords = useArchive((s) => s.totalShardWords);
+  // v5.5 — коллекция ириса: сколько досье с ⟪…⟫ прочитано
+  const irisReadIds = useArchive((s) => s.irisReadIds);
   const pushToast = useArchive((s) => s.pushToast);
   const resetMyProgress = useArchive((s) => s.resetMyProgress);
 
@@ -55,6 +57,8 @@ export function ProfileSection({ system }: { system: GameSystem }) {
   const [achCatalog, setAchCatalog] = useState<Achievement[] | null>(null);
   const [characters, setCharacters] = useState<Character[] | null>(null);
   const [viewUser, setViewUser] = useState<UserSummary | null>(null);
+  // v5.5 — реестр ирис-досье текущего мира (для счётчика коллекции)
+  const [irisTotal, setIrisTotal] = useState<number | null>(null);
   // досье своего персонажа, открытое прямо из профиля (с правом редактирования)
   const [myDossierOpen, setMyDossierOpen] = useState(false);
   // ревизия данных: после правки досье перечитываем каталог персонажей
@@ -90,6 +94,22 @@ export function ProfileSection({ system }: { system: GameSystem }) {
       .then((d) => setAchCatalog(d ?? []))
       .catch(() => {});
   }, []);
+
+  // v5.5 — сколько в мире досье с полным искажением (⟪…⟫);
+  // обновляем при изменении данных архива (Мастерская могла добавить ирис)
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/archive?type=iris&system=${system}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { total?: number } | null) => {
+        if (cancelled || !d || typeof d.total !== "number") return;
+        setIrisTotal(d.total);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [system, dataRevision]);
 
   // каталог персонажей ОБЕИХ миров — своя привязка, имена персонажей
   // в карточках стражей и админ-привязки (перечитывается после правок досье)
@@ -391,6 +411,19 @@ export function ProfileSection({ system }: { system: GameSystem }) {
               color="green"
               valueColor={gazeColor}
             />
+            {/* v5.5 — коллекция ириса: показываем только когда в мире есть ⟪…⟫.
+                v5.6 — мини-бар: сколько досье ирис уже забрал себе. */}
+            {irisTotal !== null && irisTotal > 0 && (
+              <Stat
+                label="ИРИС ПРОЧИТАН"
+                value={`${Math.min(irisReadIds.length, irisTotal)}/${irisTotal}`}
+                color="violet"
+                bar={{
+                  pct: Math.min(100, Math.round((irisReadIds.length / irisTotal) * 100)),
+                  kind: "iris",
+                }}
+              />
+            )}
             <Stat label="ДНЕЙ В АРХИВЕ" value={`${myDays}`} color="amber" />
           </div>
         </div>
@@ -1062,11 +1095,14 @@ function Stat({
   value,
   color,
   valueColor,
+  bar,
 }: {
   label: string;
   value: string;
   color: "amber" | "green" | "violet";
   valueColor?: string;
+  /** v5.6 — мини-бар под значением: pct (0..100) + стиль заливки */
+  bar?: { pct: number; kind: "amber" | "green" | "iris" };
 }) {
   const cls =
     color === "amber"
@@ -1080,6 +1116,27 @@ function Stat({
         {value}
       </div>
       <div className="text-[9px] text-dim tracking-widest mt-0.5">{label}</div>
+      {bar && (
+        <div
+          className="stat-mini-bar mt-1.5"
+          role="img"
+          aria-label={`Прогресс: ${bar.pct}%`}
+        >
+          <span
+            className={bar.kind === "iris" ? "iris-bar-fill" : undefined}
+            style={{
+              width: `${bar.pct}%`,
+              ...(bar.kind === "iris"
+                ? null
+                : {
+                    background:
+                      bar.kind === "amber" ? "var(--amber)" : "var(--green)",
+                    boxShadow: `0 0 6px ${bar.kind === "amber" ? "var(--amber-dim)" : "rgba(74,246,38,.4)"}`,
+                  }),
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }

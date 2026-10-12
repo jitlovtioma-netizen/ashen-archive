@@ -6,8 +6,9 @@ import { HoloPortrait } from "./HoloPortrait";
 import { Sigil } from "./Sigil";
 import { MartinSecretModal } from "./MartinSecretModal";
 import { SinsWheel } from "./SinsWheel";
-import { CorruptedText, KALI_ANCHORS, hasCorruptMarks } from "./CorruptedText";
+import { CorruptedText, IRIS_MAX_STAGE, IRIS_SPREAD_BY_STAGE, KALI_ANCHORS, hasAnyMarks, hasOblivionMarks } from "./CorruptedText";
 import { CorruptToolbar } from "./CorruptEditorTools";
+import { dispatchIrisWhisper } from "./IrisWhispers";
 import { getDossierTheme, type DossierTheme } from "@/lib/themes";
 import { useArchive } from "@/lib/store";
 import { sfx } from "@/lib/audio";
@@ -43,6 +44,10 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
     pushToast,
     solvedRiddles,
     solveRiddle,
+    irisReadIds,
+    addIrisRead,
+    irisOpens,
+    openIrisRecord,
   } = useArchive();
   const user = useArchive((s) => s.user);
   const bumpDataRevision = useArchive((s) => s.bumpDataRevision);
@@ -164,15 +169,167 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
     }
   }, [isSealed, addGaze, record.id]);
 
+  // ── «Взгляд в Бездну»: досье с полным искажением (⟪…⟫), прочитанное
+  // не отрываясь ~15 секунд, отвечает взаимностью. Таймер живёт только
+  // пока досье открыто: закрыл/сменил — взгляд разорван. ──
+  useEffect(() => {
+    if (isSealed || !hasOblivionMarks(displayRecord.description)) return;
+    const t = setTimeout(() => {
+      const isNew = unlockAchievement("IRIS_READER");
+      if (isNew) {
+        sfx.achievement();
+        pushToast({
+          kind: "ach",
+          sigil: "ꙮ",
+          title: "ДОСТИЖЕНИЕ: ВЗГЛЯД В БЕЗДНУ",
+          body: "Ты смотрел на ирис, пока ирис не посмотрел на тебя.",
+        });
+      }
+    }, 15000);
+    return () => clearTimeout(t);
+  }, [displayRecord.description, isSealed, record.id, unlockAchievement, pushToast]);
+
+  // ── v5.5 «ИРИС-ШЁПОТ + СОБИРАТЕЛЬ ЗАБВЕНИЯ»: при открытии досье с ⟪…⟫
+  // ирис узнаёт читателя (шёпот у краёв экрана), а досье попадает в
+  // коллекцию прочитанного ириса. Когда прочитаны ВСЕ ирис-досье мира —
+  // коллекционная ачивка IRIS_COLLECTOR. ──
+  useEffect(() => {
+    if (isSealed || !hasOblivionMarks(displayRecord.description)) return;
+    // ирис отвечает немедленно — не через 15 секунд.
+    // v5.7: если досье уже на стадии 5+ (до этого открытия его открывали
+    // 5+ раз) — ирис не здоровается, а напоминает, кто здесь текст.
+    // irisOpens читаем из замыкания БЕЗ deps: на момент монтажа это
+    // «прошлое» досье число открытий — именно то, что решает тон встречи.
+    const knownOpens = irisOpens[record.id] ?? 0;
+    dispatchIrisWhisper({ phase: knownOpens >= 5 ? "devour" : "greet" });
+  }, [isSealed, displayRecord.description, record.id]);
+
+  // ── v5.6 «ИРИС ПОГЛОЩАЕТ»: каждый повторный взгляд кормит ирис.
+  // Первое открытие бесплатно; со второго чистые слова начинают
+  // растворяться — стадия 0..4, доля поглощения растёт нелинейно.
+  // v5.7 — стадии 5..6 «ИРИС НЕ ОТПУСКАЕТ»: поглощение выходит за
+  // прежний предел, растворяется даже заголовок досье. ──
+  const isIrisRecord = hasOblivionMarks(displayRecord.description);
+  const irisOpenCount = irisOpens[record.id] ?? 0;
+  const irisStage = Math.max(0, Math.min(IRIS_MAX_STAGE, irisOpenCount - 1));
+  const irisSpread = isIrisRecord ? IRIS_SPREAD_BY_STAGE[irisStage] : 0;
+  const IRIS_STAGE_HINTS = [
+    "ирис только смотрит",
+    "ирис тянется к словам",
+    "ирис забирает фразы",
+    "половина досье — уже ирис",
+    "досье почти растворено",
+    "ирис не отпускает",
+    "ирис дочитывает за тебя",
+  ] as const;
+  const IRIS_STAGE_LABELS = [
+    "ПОГЛОЩЕНИЕ",
+    "ПОГЛОЩЕНИЕ",
+    "ПОГЛОЩЕНИЕ",
+    "ПОГЛОЩЕНИЕ",
+    "ПОГЛОЩЕНИЕ",
+    "ИРИС НЕ ОТПУСКАЕТ",
+    "ИРИС НЕ ОТПУСКАЕТ",
+  ] as const;
+  const irisBeyond = isIrisRecord && irisStage >= 5;
+  const openedIrisOnceRef = useRef(false);
+  const newlyIrisReadRef = useRef(false);
+
+  useEffect(() => {
+    if (isSealed || !hasOblivionMarks(displayRecord.description)) return;
+    if (openedIrisOnceRef.current) return;
+    openedIrisOnceRef.current = true;
+    // считаем открытие — ирис растёт с каждым визитом
+    const opens = openIrisRecord(record.id);
+    newlyIrisReadRef.current = addIrisRead(record.id);
+    if (opens >= 5) {
+      const isNew = unlockAchievement("IRIS_DEVOTED");
+      if (isNew) {
+        sfx.achievement();
+        pushToast({
+          kind: "ach",
+          sigil: "ꙮ",
+          title: "ДОСТИЖЕНИЕ: ГЛАЗАМИ ИРИСА",
+          body: "Ты открывал это досье, пока было что открывать. Ирис учёл каждое твоё возвращение.",
+        });
+      }
+    }
+    // v5.7 — восьмое открытие: ирис дочитывает за стража. Это уже не
+    // любопытство — это привычка, и ирис её культивирует.
+    if (opens >= 8) {
+      const isNew = unlockAchievement("IRIS_BOUND");
+      if (isNew) {
+        sfx.achievement();
+        pushToast({
+          kind: "ach",
+          sigil: "ꙮ",
+          title: "ДОСТИЖЕНИЕ: ОН НЕ ОТПУСКАЕТ",
+          body: "Восьмое открытие. Ирис дочитывает это досье за тебя — ты просто держишь страницу.",
+        });
+      }
+    }
+  }, [isSealed, displayRecord.description, record.id, openIrisRecord, addIrisRead, unlockAchievement, pushToast]);
+
+  // проверка коллекции: реестр ирис-досье мира vs прочитанные
+  useEffect(() => {
+    if (irisReadIds.length === 0) return;
+    if (useArchive.getState().achievements.includes("IRIS_COLLECTOR")) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await fetch(`/api/archive?type=iris&system=${record.system}`);
+        if (!r.ok) return;
+        const d = (await r.json()) as { total: number; items: { id: string }[] };
+        if (cancelled || !d.items?.length) return;
+        const allRead = d.items.every((it) => irisReadIds.includes(it.id));
+        // v5.6 — прогресс коллекции в тосте: «ирис прочитан X из Y»
+        const readCount = d.items.filter((it) => irisReadIds.includes(it.id)).length;
+        if (
+          newlyIrisReadRef.current &&
+          !allRead &&
+          d.items.length > 1
+        ) {
+          newlyIrisReadRef.current = false;
+          pushToast({
+            kind: "info",
+            sigil: "ꙮ",
+            title: "ИРИС ПРОЧИТАН",
+            body: `${readCount} из ${d.items.length} досье, тронутых ирисом. Он это учитывает.`,
+          });
+        }
+        if (!allRead) return;
+        const isNew = unlockAchievement("IRIS_COLLECTOR");
+        if (isNew) {
+          sfx.achievement();
+          pushToast({
+            kind: "ach",
+            sigil: "ꙮ",
+            title: "ДОСТИЖЕНИЕ: СОБИРАТЕЛЬ ЗАБВЕНИЯ",
+            body: "Все досье, тронутые ирисом, прочитаны. Он это учёл.",
+          });
+        }
+      } catch {
+        /* сеть недоступна — проверим при следующем открытии */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [irisReadIds, record.system, unlockAchievement, pushToast]);
+
   // Плавное закрытие: 170мс на анимацию выхода, затем настоящий onClose.
+  // v5.6 — ирис-досье на прощание отвечает шёпотом (низ экрана).
   const requestClose = useCallback(() => {
     if (closeTimer.current) return; // уже закрываемся
+    if (!isSealed && hasOblivionMarks(displayRecord.description)) {
+      dispatchIrisWhisper({ phase: "farewell" });
+    }
     setClosing(true);
     closeTimer.current = setTimeout(() => {
       closeTimer.current = null;
       onClose();
     }, 170);
-  }, [onClose]);
+  }, [onClose, isSealed, displayRecord.description]);
   requestCloseRef.current = requestClose;
 
   useEffect(() => {
@@ -260,7 +417,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
   const dossierTheme: DossierTheme | null =
     getDossierTheme(displayRecord.themeColor) ??
     (isCursed || isReflection ? getDossierTheme("violet") : null);
-  const hasMarks = hasCorruptMarks(displayRecord.description);
+  const hasMarks = hasAnyMarks(displayRecord.description);
 
   // ── Права на редактирование: владелец персонажа или Созидатель (админ) ──
   const isCharacterRecord = record.recordType === "character";
@@ -435,7 +592,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
         </div>
       )}
       <div
-        className={`panel clip-hud brackets w-full max-w-7xl max-h-[95vh] flex flex-col overflow-hidden ${modalAnimClass} ${isReflection ? "reflection-panel" : ""} ${isEntity ? "entity-modal" : ""} ${isCursed ? "cursed-modal" : ""} ${dossierTheme ? "themed-modal" : ""}`}
+        className={`panel clip-hud brackets w-full max-w-7xl max-h-[95vh] flex flex-col overflow-hidden ${modalAnimClass} ${isReflection ? "reflection-panel" : ""} ${isEntity ? "entity-modal" : ""} ${isCursed ? "cursed-modal" : ""} ${dossierTheme ? "themed-modal" : ""} ${isIrisRecord && irisStage >= 2 ? "iris-consumed" : ""} ${isIrisRecord && irisStage >= 5 ? "iris-devoured" : ""}`}
         style={
           themedStyle ?? {
             boxShadow:
@@ -465,10 +622,14 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
           <div className="md:w-[55%] p-4 sm:p-6 overflow-y-auto crt-scroll border-b md:border-b-0 md:border-r border-[var(--line)]">
             <div className="mb-4">
               <h2
-                className={`font-medieval text-2xl sm:text-3xl leading-tight mb-1 ${isCorrupted || hasMarks ? "glitch" : "glow-green"} ${isEntity ? "entity-title" : ""}`}
+                className={`font-medieval text-2xl sm:text-3xl leading-tight mb-1 ${
+                  irisBeyond ? "iris-name-devoured" : (isCorrupted || hasMarks ? "glitch" : "glow-green")
+                } ${isEntity ? "entity-title" : ""}`}
                 data-text={displayRecord.name}
                 style={
-                  dossierTheme
+                  irisBeyond
+                    ? undefined
+                    : dossierTheme
                     ? {
                         color: dossierTheme.accent,
                         textShadow: `0 0 14px ${dossierTheme.accentDim}, 0 0 30px ${dossierTheme.accentDim}`,
@@ -509,6 +670,36 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
             </div>
 
             <div className="divider-glow mb-3" />
+
+            {/* v5.6 — шкала поглощения: ирис ест досье с каждым открытием.
+                Метаприбор архива фиксирует потерю — страж видит цену любопытства.
+                v5.7 — стадии 5..6: прибор за пределом шкалы, «ИРИС НЕ
+                ОТПУСКАЕТ», счётчик уходит в бесконечность. */}
+            {isIrisRecord && !isSealed && !editMode && (
+              <div
+                className="iris-consume-meter mb-4"
+                data-stage={irisStage}
+                title={`Открытий: ${irisOpenCount}. ${IRIS_STAGE_HINTS[irisStage]}${irisStage >= 6 ? ". Ирис дочитывает за тебя." : irisStage >= 5 ? ". Дальше — только ирис." : ""}`}
+              >
+                <span className="iris-consume-glyph" aria-hidden="true">ꙮ</span>
+                <span className="iris-consume-label">
+                  {IRIS_STAGE_LABELS[irisStage]}
+                  <span className="iris-consume-hint">{"// "}{IRIS_STAGE_HINTS[irisStage]}{" //"}</span>
+                </span>
+                <span
+                  className="iris-consume-segs"
+                  role="img"
+                  aria-label={`Стадия поглощения ${irisBeyond ? "за пределом шкалы" : `${Math.min(irisOpenCount, 5)} из 5`}: ${IRIS_STAGE_HINTS[irisStage]}`}
+                >
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <span key={n} className={n <= Math.min(irisOpenCount, 5) ? "on" : ""} />
+                  ))}
+                </span>
+                <span className={`iris-consume-count${irisBeyond ? " iris-count-beyond" : ""}`}>
+                  {irisBeyond ? "∞" : `${Math.min(irisOpenCount, 5)}/5`}
+                </span>
+              </div>
+            )}
 
             {/* Большая шкала дружбы в досье */}
             {typeof record.friendship === "number" && record.friendship > 0 && (
@@ -739,11 +930,15 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
                 // случайные слова — прочесть текст до конца невозможно.
                 // Текст с метками ⟦…⟧ (порча по выделению из Мастерской):
                 // искажаются ТОЛЬКО помеченные фрагменты, остальное чисто.
+                // v5.6: irisSpread — ирис ПОГЛОЩАЕТ чистые слова досье с
+                // каждым повторным открытием (стадия растёт, текст тает).
                 <CorruptedText
                   text={displayRecord.description}
                   ratio={isCorrupted ? 0.42 : 0}
                   variant={dossierTheme ? undefined : "red"}
                   accent={dossierTheme?.accent}
+                  irisPalette={displayRecord.irisColor ?? undefined}
+                  irisSpread={irisSpread}
                   syncLine
                   paragraphClassName={`text-[14px] leading-relaxed mb-2 last:mb-0 ${
                     isEntity ? "text-[var(--cyan)]" : "text-[var(--text)]"

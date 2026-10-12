@@ -5,21 +5,30 @@ import {
   CorruptedText,
   CORRUPT_OPEN,
   CORRUPT_CLOSE,
+  OBLIVION_OPEN,
+  OBLIVION_CLOSE,
+  hasAnyMarks,
   hasCorruptMarks,
-  stripCorruptMarks,
+  hasOblivionMarks,
+  stripAllMarks,
 } from "./CorruptedText";
 import { sfx } from "@/lib/audio";
 
 // ============================================================================
-// ТУЛБАР ПОРЧИ — «выделите текст и пометьте его искажением».
+// ТУЛБАР ИСКАЖЕНИЙ — «выделите текст и пометьте его».
 // Ставится рядом с textarea описания в Мастерской и в режиме правки досье.
 //
-//   ⟦ ПОМЕТИТЬ ПОРЧЕЙ ⟧ — оборачивает текущее выделение метками ⟦…⟧;
-//                          если выделение уже помечено — снимает метки.
-//   ✕ СНЯТЬ ВСЮ ПОРЧУ   — убирает все метки из текста.
+//   ⟦ ПОМЕТИТЬ ПОРЧЕЙ ⟧     — оборачивает выделение в ⟦…⟧: слова станут
+//                              нечитаемыми глифами с багровым свечением;
+//                              иногда сквозь помехи проступает призрак слова.
+//   ⟪ ПОЛНОЕ ИСКАЖЕНИЕ ⟫    — оборачивает выделение в ⟪…⟫: фрагмент
+//                              растворяется БЕЗВОЗВРАТНО. Не светится —
+//                              переливается ирисом (бирюза→аметист→роза→
+//                              золото). Никаких призраков: смысл утрачен.
+//   ✕ СНЯТЬ ВСЕ МЕТКИ       — убирает обе разновидности меток из текста.
 //
 // Под тулбаром — живой предпросмотр: помеченные фрагменты рисуются
-// глифами порчи так же, как их увидят стражи в досье.
+// так же, как их увидят стражи в досье.
 // ============================================================================
 
 interface CorruptToolbarProps {
@@ -29,6 +38,8 @@ interface CorruptToolbarProps {
   onChange: (v: string) => void;
   /** акцентный цвет превью (тема досье) */
   accent?: string;
+  /** v5.5 — палитра ириса для превью (ключ из IRIS_PALETTES) */
+  irisPalette?: string | null;
   /** компактный режим (для правки досье) */
   compact?: boolean;
 }
@@ -38,6 +49,7 @@ export function CorruptToolbar({
   value,
   onChange,
   accent,
+  irisPalette,
   compact = false,
 }: CorruptToolbarProps) {
   const [hint, setHint] = useState<string | null>(null);
@@ -49,7 +61,8 @@ export function CorruptToolbar({
     hintTimer.current = setTimeout(() => setHint(null), 2600);
   };
 
-  const toggleSelection = () => {
+  /** Оборачивает/разворачивает выделение в метки заданного вида (toggle). */
+  const wrapSelection = (open: string, close: string, sfxOn: () => void) => {
     const ta = textareaRef.current;
     if (!ta) return;
     const s = ta.selectionStart;
@@ -63,25 +76,32 @@ export function CorruptToolbar({
     const sel = value.slice(s, e);
     const after = value.slice(e);
     // выделение уже обёрнуто в метки — снимаем их (toggle)
-    if (before.endsWith(CORRUPT_OPEN) && after.startsWith(CORRUPT_CLOSE)) {
-      onChange(before.slice(0, -1) + sel + after.slice(1));
+    if (before.endsWith(open) && after.startsWith(close)) {
+      onChange(before.slice(0, -open.length) + sel + after.slice(close.length));
       sfx.blip();
       return;
     }
-    onChange(before + CORRUPT_OPEN + sel + CORRUPT_CLOSE + after);
-    sfx.whisper();
+    onChange(before + open + sel + close + after);
+    sfxOn();
   };
 
+  const toggleCorrupt = () =>
+    wrapSelection(CORRUPT_OPEN, CORRUPT_CLOSE, () => sfx.whisper());
+
+  const toggleOblivion = () =>
+    wrapSelection(OBLIVION_OPEN, OBLIVION_CLOSE, () => sfx.whisper());
+
   const clearAll = () => {
-    if (!hasCorruptMarks(value)) {
-      flashHint("в тексте нет порчи");
+    if (!hasAnyMarks(value)) {
+      flashHint("в тексте нет искажений");
       return;
     }
-    onChange(stripCorruptMarks(value));
+    onChange(stripAllMarks(value));
     sfx.blip();
   };
 
-  const marksCount = (value.match(new RegExp(CORRUPT_OPEN, "g")) ?? []).length;
+  const corruptCount = (value.split(CORRUPT_OPEN).length - 1);
+  const oblivionCount = (value.split(OBLIVION_OPEN).length - 1);
 
   return (
     <div className="space-y-2">
@@ -89,7 +109,7 @@ export function CorruptToolbar({
       <div className="flex items-center gap-1.5 flex-wrap">
         <button
           type="button"
-          onClick={toggleSelection}
+          onClick={toggleCorrupt}
           onMouseEnter={() => sfx.hover()}
           className="btn-crt clip-hud-sm px-2.5 py-1 text-[10px]"
           style={{
@@ -97,23 +117,37 @@ export function CorruptToolbar({
             color: "#ff7a7a",
             background: "rgba(255,36,36,0.07)",
           }}
-          title="Выделите текст в описании и нажмите — он станет нечитаемым. Повторное нажатие снимет порчу."
+          title="Выделите текст в описании и нажмите — он станет нечитаемым, но будет дышать красным и иногда показывать призрак слова. Повторное нажатие снимет порчу."
         >
           ⟦ ПОМЕТИТЬ ПОРЧЕЙ ⟧
+        </button>
+        <button
+          type="button"
+          onClick={toggleOblivion}
+          onMouseEnter={() => sfx.hover()}
+          className="btn-crt clip-hud-sm px-2.5 py-1 text-[10px]"
+          style={{
+            borderColor: "rgba(196,165,255,0.4)",
+            color: "#c9a8ff",
+            background: "rgba(150,100,255,0.06)",
+          }}
+          title="Выделите текст и нажмите — он растворится БЕЗВОЗВРАТНО: переливающиеся глифы вместо слов, без свечения и без призраков смысла. Полное искажение. Повторное нажатие вернёт текст."
+        >
+          ⟪ ПОЛНОЕ ИСКАЖЕНИЕ ⟫
         </button>
         <button
           type="button"
           onClick={clearAll}
           onMouseEnter={() => sfx.hover()}
           className="btn-crt clip-hud-sm px-2.5 py-1 text-[10px] opacity-80"
-          title="Убрать все метки порчи из текста"
+          title="Убрать все метки искажений (порчу и полное искажение) из текста"
         >
-          ✕ СНЯТЬ ВСЮ ПОРЧУ
+          ✕ СНЯТЬ ВСЕ МЕТКИ
         </button>
         <span className="text-[9px] text-dim tracking-wider">
-          {marksCount > 0
-            ? `// фрагментов порчи: ${marksCount} //`
-            : "// выделите текст — он станет искажённым //"}
+          {corruptCount > 0 || oblivionCount > 0
+            ? `// порча: ${corruptCount} · ирис: ${oblivionCount} //`
+            : "// выделите текст: ⟦ порча ⟧ или ⟪ ирис ⟫ //"}
         </span>
         {hint && (
           <span
@@ -126,10 +160,14 @@ export function CorruptToolbar({
       </div>
 
       {/* живой предпросмотр */}
-      {hasCorruptMarks(value) && (
+      {hasAnyMarks(value) && (
         <div
           className="panel-inset p-2.5 fade-in"
-          style={{ borderColor: "rgba(255,64,64,0.28)" }}
+          style={{
+            borderColor: hasOblivionMarks(value)
+              ? "rgba(196,165,255,0.28)"
+              : "rgba(255,64,64,0.28)",
+          }}
         >
           <div className="text-[9px] text-dim tracking-widest mb-1.5">
             {"// ПРЕДПРОСМОТР: ТАК ЭТО УВИДЯТ СТРАЖИ //"}
@@ -139,10 +177,16 @@ export function CorruptToolbar({
             ratio={0}
             live
             accent={accent}
+            irisPalette={irisPalette ?? undefined}
             paragraphClassName={`leading-relaxed ${
               compact ? "text-[12px]" : "text-[13px]"
             } text-[var(--text)] mb-1.5 last:mb-0`}
           />
+          {hasOblivionMarks(value) && !hasCorruptMarks(value) && (
+            <div className="oblivion-word text-[9px] tracking-widest mt-1.5">
+              {"// СМЫСЛ УТРАЧЕН БЕЗВОЗВРАТНО — ИРИС НЕ ВОЗВРАЩАЕТ ДОЛГОВ //"}
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -20,6 +20,8 @@ export function TitleBar() {
   const witching = useArchive((s) => s.witching);
   const user = useArchive((s) => s.user);
   const logout = useArchive((s) => s.logout);
+  const unlockAchievement = useArchive((s) => s.unlockAchievement);
+  const pushToast = useArchive((s) => s.pushToast);
 
   const clickTimes = useRef<number[]>([]);
   const lastDivineAt = useRef(0);
@@ -46,6 +48,17 @@ export function TitleBar() {
       clickTimes.current = [];
       setDivineCount(recent.length);
       setDivineOpen(true);
+      // ачивка за пасхалку: Создатель разбужен — страж это заслужил
+      const isNew = unlockAchievement("DIVINE_WRATH");
+      if (isNew) {
+        sfx.achievement();
+        pushToast({
+          kind: "ach",
+          sigil: "⚡",
+          title: "ДОСТИЖЕНИЕ: ГНЕВ СОЗДАТЕЛЯ",
+          body: "Ты дёрнул Создателя за нервы. Он это запомнит.",
+        });
+      }
     }
   };
 
@@ -74,7 +87,7 @@ export function TitleBar() {
             className="hidden sm:inline font-mono-crt text-xs ml-2"
             style={{ color: sysColor }}
           >
-            {" // "}{SYSTEM_SHORT[system]}{" v5.0"}
+            {" // "}{SYSTEM_SHORT[system]}{" v5.7.1"}
           </span>
         </h1>
       </div>
@@ -93,12 +106,12 @@ export function TitleBar() {
           {SYSTEM_WORLD[system]}
         </span>
         {witching && (
-          <span className="chip chip-violet hidden sm:inline-flex">
+          <span className="chip chip-violet max-sm:hidden!">
             🌙 ЧАС ВЕДЬМЫ
           </span>
         )}
         <span
-          className="chip hidden md:inline-flex"
+          className="chip max-md:hidden!"
           style={{ color: sysColor, borderColor: `color-mix(in srgb, ${sysColor} 40%, transparent)` }}
           title={SYSTEM_WORLD[system]}
         >
@@ -112,7 +125,11 @@ export function TitleBar() {
         >
           ЗВУК:{soundOn ? "ВКЛ" : "ВЫКЛ"}
         </button>
-        <span className={`chip ${gaze >= 90 ? "chip-err" : gaze >= 60 ? "chip-warn" : "chip-ok"}`}>
+        {/* взгляд Создателя: на узких экранах скрыт — есть в сайдбаре,
+            чтобы ЗВУК и ВЫХОД всегда помещались в шапку */}
+        <span
+          className={`chip max-sm:hidden! ${gaze >= 90 ? "chip-err" : gaze >= 60 ? "chip-warn" : "chip-ok"}`}
+        >
           СОЗИДАТЕЛЬ <span className={gazeColor}>{gaze}%</span>
         </span>
         <button

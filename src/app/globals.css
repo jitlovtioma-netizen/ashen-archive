@@ -669,6 +669,22 @@ body.witching::after {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* Мастерская: «● ИЗМЕНЕНО» — деликатный пульс, привлекающий глаз
+   к несохранённой правке (chip-warn в sticky-панели редактора) */
+.dirty-pulse {
+  animation: dirtyPulse 2.4s ease-in-out infinite;
+}
+@keyframes dirtyPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+/* Мастерская: ручка порядка ⠿ при захвате — янтарное свечение */
+.drag-handle-active {
+  color: var(--amber) !important;
+  text-shadow: 0 0 8px rgba(232, 161, 58, 0.8);
+}
 @keyframes modalIn {
   from {
     opacity: 0;
@@ -1969,6 +1985,739 @@ nav .btn-crt:hover > span:first-child {
 }
 
 /* ============================================================
+   v5.4 — ПОЛНОЕ ИСКАЖЕНИЕ (⟪…⟫): ирис вместо свечения.
+   Фрагмент растворяется в переливающихся глифах: многоцветный
+   градиент ТЕЧЁТ сквозь символы, как плёнка нефти на воде.
+   Принципиальное отличие от порчи: никакого text-shadow —
+   ирис не светится, а ПЕРЕЛИВАЕТСЯ. Порча дышит красным,
+   полное искажение переливается всем спектром.
+
+   v5.4.1 — два слоя: .oblivion-word (внешний) держит фильтр наведения,
+   .oblivion-glyphs (внутренний) — градиент и анимации. Фильтры
+   перемножаются: наведение уплотняет ирис, анимация не мешает.
+   Тема досье сдвигает палитру: --iris-shift поворачивает спектр
+   так, что перелив НАЧИНАЕТСЯ с акцентного тона досье.
+
+   v5.5 — фиксированные палитры ириса (Мастерская, irisColor):
+   data-iris закрепляет спектр (изумруд/кровь/золото/ночь/аметист),
+   автосдвиг темы гасится, перелив живёт в своей палитре.
+   ============================================================ */
+.oblivion-word {
+  font-family: var(--font-mono);
+  letter-spacing: 0.12em;
+  user-select: none;
+  cursor: default;
+  filter: saturate(1) brightness(1);
+  transition: filter 0.3s ease;
+}
+
+/* Наведение — ирис уплотняется и светлеет (внутренний течёт быстрее) */
+.oblivion-word:hover {
+  filter: saturate(1.6) brightness(1.18);
+}
+
+.oblivion-glyphs {
+  /* ирис: бирюза → небо → аметист → роза → золото → снова бирюза */
+  background: linear-gradient(
+    100deg,
+    #9ff5e0 0%,
+    #8fd3ff 16%,
+    #c4a5ff 33%,
+    #ff9fd0 50%,
+    #ffd28f 66%,
+    #9ff5e0 83%,
+    #8fd3ff 100%
+  );
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  /* два слоя перелива: течение градиента + медленный дрейф оттенка.
+     150% при размере 300% — бесшовный цикл (ровно одна ширина узора) */
+  animation:
+    oblivionFlow 6.5s linear infinite,
+    oblivionHue 11s ease-in-out infinite;
+}
+
+/* Наведение — течение ускоряется */
+.oblivion-word:hover .oblivion-glyphs {
+  animation-duration: 1.6s, 3.5s;
+}
+
+/* Тема досье: спектр ириса начинается с акцентного тона.
+   --iris-shift вычисляется в JS (accentHue − 166°). */
+.corrupt-root[data-variant="custom"] .oblivion-glyphs {
+  animation-name: oblivionFlow, oblivionHueCustom;
+}
+
+/* ============================================================
+   v5.5 — ФИКСИРОВАННЫЕ ПАЛИТРЫ ИРИСА (Мастерская, поле irisColor).
+   data-iris на .corrupt-root закрепляет спектр досье НАВСЕГДА —
+   автосдвиг под цвет досье отключается, перелив живёт в своей
+   палитре. !important по --iris-shift — обычай победы над инлайновой
+   переменной темы досье (палитра в БД новее и конкретнее).
+   ============================================================ */
+/* спектр: полный, как в базе — сбрасываем любой сдвиг темы */
+.corrupt-root[data-iris="spectrum"] {
+  --iris-shift: 0deg !important;
+}
+.corrupt-root[data-iris="emerald"] {
+  --iris-shift: -38deg !important;
+}
+.corrupt-root[data-iris="blood"] {
+  --iris-shift: 24deg !important;
+}
+.corrupt-root[data-iris="gold"] {
+  --iris-shift: -14deg !important;
+}
+.corrupt-root[data-iris="night"] {
+  --iris-shift: 18deg !important;
+}
+.corrupt-root[data-iris="amethyst"] {
+  --iris-shift: 8deg !important;
+}
+/* фиксированная палитра — свой градиент и hue-дрейф внутри палитры
+   (oblivionHueCustom читает --iris-shift выше, тема досье не мешает) */
+.corrupt-root[data-iris] .oblivion-glyphs {
+  animation-name: oblivionFlow, oblivionHueCustom;
+}
+.corrupt-root[data-iris="emerald"] .oblivion-glyphs {
+  background: linear-gradient(
+    100deg,
+    #7dffb0 0%, #2fe88f 16%, #baffd2 33%, #0fbf6f 50%,
+    #59ffa8 66%, #7dffb0 83%, #2fe88f 100%
+  );
+}
+.corrupt-root[data-iris="blood"] .oblivion-glyphs {
+  background: linear-gradient(
+    100deg,
+    #ff9d9d 0%, #ff5c5c 16%, #ffb3a0 33%, #c21f2e 50%,
+    #ff7d6e 66%, #ff9d9d 83%, #ff5c5c 100%
+  );
+}
+.corrupt-root[data-iris="gold"] .oblivion-glyphs {
+  background: linear-gradient(
+    100deg,
+    #ffe9a0 0%, #ffcf4d 16%, #fff3c4 33%, #e8a13a 50%,
+    #ffd97a 66%, #ffe9a0 83%, #ffcf4d 100%
+  );
+}
+.corrupt-root[data-iris="night"] .oblivion-glyphs {
+  background: linear-gradient(
+    100deg,
+    #a8c6ff 0%, #5b7fd4 16%, #c3d4ff 33%, #2c3e8f 50%,
+    #7d95e8 66%, #a8c6ff 83%, #5b7fd4 100%
+  );
+}
+.corrupt-root[data-iris="amethyst"] .oblivion-glyphs {
+  background: linear-gradient(
+    100deg,
+    #d9b8ff 0%, #a06ee8 16%, #eccbff 33%, #7b2fd1 50%,
+    #b98af2 66%, #d9b8ff 83%, #a06ee8 100%
+  );
+}
+/* spectrum использует базовый градиент — только сброс сдвига выше */
+
+@keyframes oblivionFlow {
+  from { background-position: 0% 50%; }
+  to { background-position: 150% 50%; }
+}
+@keyframes oblivionHue {
+  0%, 100% { filter: hue-rotate(0deg); }
+  50% { filter: hue-rotate(38deg); }
+}
+@keyframes oblivionHueCustom {
+  0%, 100% { filter: hue-rotate(var(--iris-shift, 0deg)); }
+  50% { filter: hue-rotate(calc(var(--iris-shift, 0deg) + 38deg)); }
+}
+
+/* ============================================================
+   v5.4 — ШЁПОТ СОЗИДАТЕЛЯ (взгляд ≥ 80%).
+   Когда взгляд Созидателя почти полон, со страниц архива к
+   стражу доносятся обрывки: плашки-фразы всплывают, плывут и
+   растворяются. Это не диалог и не интерфейс — это сам архив
+   начинает говорить. При 90%+ шёпот становится настойчивее.
+   ============================================================ */
+.gaze-whispers-root {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.gaze-whisper {
+  position: absolute;
+  max-width: min(72vw, 420px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.22em;
+  white-space: nowrap;
+  text-transform: lowercase;
+  color: rgba(232, 226, 255, 0.82);
+  user-select: none;
+  animation: whisperLife var(--dur, 5s) ease-out forwards;
+  will-change: transform, opacity, filter;
+}
+
+/* стиль 0 — голая строка, переливающаяся ирисом */
+.gaze-whisper[data-style="0"] {
+  background: linear-gradient(100deg, #d9f7ff, #ffc9e8 45%, #e8d9ff 75%, #d9f7ff);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation:
+    whisperLife var(--dur, 5s) ease-out forwards,
+    whisperIris 6s linear infinite;
+}
+
+/* стиль 1 — плашка-чип с рамкой и срезанными углами */
+.gaze-whisper[data-style="1"] {
+  padding: 0.35rem 0.7rem;
+  border: 1px solid rgba(216, 160, 255, 0.32);
+  background: rgba(30, 12, 44, 0.58);
+  backdrop-filter: blur(3px);
+  clip-path: polygon(
+    7px 0, 100% 0, 100% calc(100% - 7px),
+    calc(100% - 7px) 100%, 0 100%, 0 7px
+  );
+  color: #e6dbff;
+  letter-spacing: 0.18em;
+}
+
+/* стиль 2 — строка с руной-глазом */
+.gaze-whisper[data-style="2"] {
+  color: rgba(255, 210, 210, 0.9);
+  letter-spacing: 0.3em;
+  text-transform: none;
+}
+.gaze-whisper[data-style="2"] .gaze-whisper-rune {
+  margin-right: 0.55em;
+  color: #ffb3d9;
+}
+
+/* при 90%+ шёпот крупнее и настойчивее */
+.gaze-whisper--extreme {
+  font-size: 14px;
+  letter-spacing: 0.26em;
+}
+
+@keyframes whisperLife {
+  0% {
+    opacity: 0;
+    transform: translate(0, 10px) scale(0.94);
+    filter: blur(3px);
+  }
+  10% { opacity: 1; filter: blur(0); }
+  72% { opacity: 0.9; }
+  100% {
+    opacity: 0;
+    transform: translate(var(--drift, 12px), -30px) scale(1.04);
+    filter: blur(2.5px);
+  }
+}
+@keyframes whisperIris {
+  from { background-position: 0% 50%; }
+  to { background-position: 250% 50%; }
+}
+
+/* Мобильные экраны: шёпот тише и компактнее — не перекрывает досье */
+@media (max-width: 640px) {
+  .gaze-whisper {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    max-width: 56vw;
+  }
+  .gaze-whisper--extreme {
+    font-size: 12px;
+    letter-spacing: 0.18em;
+  }
+  .gaze-whisper[data-style="1"] {
+    padding: 0.25rem 0.5rem;
+  }
+}
+
+/* ============================================================
+   v5.5 — ИРИС-ШЁПОТ ДОСЬЕ.
+   Когда страж открывает досье с полным искажением (⟪…⟫), ирис
+   отвечает: у модалки всплывает ОДНА переливающаяся строка и
+   тает. Это не шёпот Созидателя (тот требует взгляда ≥80%) —
+   это сам текст узнаёт читателя. Живёт по законам шёпота
+   (pointer-events none, aria-hidden), но всегда ирисовый.
+   ============================================================ */
+.iris-whispers-root {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.iris-whisper {
+  position: absolute;
+  max-width: min(72vw, 460px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  white-space: nowrap;
+  text-transform: lowercase;
+  user-select: none;
+  /* ирис досье: прозрачный текст + текущий градиент; СВЕЧЕНИЯ НЕТ —
+     только течение (принцип v5.4: переливается, не светится) */
+  background: linear-gradient(
+    100deg,
+    #d9f7ff 0%, #ffc9e8 45%, #e8d9ff 75%, #d9f7ff 100%
+  );
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation:
+    whisperLife var(--dur, 5s) ease-out forwards,
+    whisperIris 6s linear infinite;
+  will-change: transform, opacity, filter;
+}
+
+/* ирис-шёпот с руной: глаз глифа чуть ярче, но без свечения */
+.iris-whisper .iris-whisper-rune {
+  margin-right: 0.5em;
+  color: rgba(226, 200, 255, 0.9);
+}
+
+/* v5.5: мобильные — ирис-шёпот компактнее (после базовых правил:
+   порядок важен, иначе базовый 12px перебьёт мобильные 10px) */
+@media (max-width: 640px) {
+  .iris-whisper {
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    max-width: 60vw;
+  }
+}
+
+/* ============================================================
+   v5.6 — «ИРИС ПОГЛОЩАЕТ»: шкала поглощения в досье.
+   Ирис ест текст с каждым повторным открытием. Метаприбор
+   архива — пять сегментов, заливающихся ирис-градиентом;
+   рамка досье на высоких стадиях дышит переливом (без
+   свечения — только течение цвета, по заветам v5.4).
+   ============================================================ */
+.iris-consume-meter {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid rgba(196, 165, 255, 0.22);
+  background: rgba(18, 10, 26, 0.45);
+  clip-path: polygon(
+    7px 0, 100% 0, 100% calc(100% - 7px),
+    calc(100% - 7px) 100%, 0 100%, 0 7px
+  );
+  font-family: var(--font-mono);
+  user-select: none;
+}
+
+.iris-consume-glyph {
+  font-size: 15px;
+  line-height: 1;
+  /* многоглазый глиф медленно перетекает оттенком — живой индикатор */
+  background: linear-gradient(100deg, #d9f7ff, #ffc9e8 45%, #e8d9ff 75%, #d9f7ff);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: whisperIris 7s linear infinite;
+}
+
+.iris-consume-label {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-size: 9px;
+  letter-spacing: 0.24em;
+  color: rgba(226, 214, 255, 0.75);
+  line-height: 1.25;
+}
+
+.iris-consume-hint {
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  color: rgba(226, 214, 255, 0.42);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 34vw;
+}
+
+.iris-consume-segs {
+  display: flex;
+  gap: 3px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.iris-consume-segs > span {
+  width: 16px;
+  height: 7px;
+  background: rgba(120, 100, 160, 0.16);
+  border: 1px solid rgba(160, 130, 210, 0.2);
+  transform: skewX(-14deg);
+  transition: background 0.45s ease, box-shadow 0.45s ease;
+}
+
+/* заполненный сегмент — ирис течёт сквозь него */
+.iris-consume-segs > span.on {
+  background: linear-gradient(
+    100deg,
+    #9ff5e0 0%, #8fd3ff 25%, #c4a5ff 50%, #ff9fd0 75%, #ffd28f 100%
+  );
+  background-size: 300% 100%;
+  border-color: rgba(196, 165, 255, 0.42);
+  animation: oblivionFlow 6.5s linear infinite;
+}
+
+.iris-consume-count {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: rgba(230, 219, 255, 0.85);
+  flex-shrink: 0;
+}
+
+/* высокая стадия — прибор тревожнее: рамка и пульс глифа */
+.iris-consume-meter[data-stage="3"],
+.iris-consume-meter[data-stage="4"] {
+  border-color: rgba(255, 159, 208, 0.34);
+  background: rgba(30, 8, 30, 0.5);
+}
+.iris-consume-meter[data-stage="4"] .iris-consume-label {
+  color: rgba(255, 214, 240, 0.82);
+}
+
+/* досье на стадии 2+: внутренняя рамка модалки дышит ирисом.
+   Живёт на ::after — не конфликтует с анимацией входа/выхода
+   модалки (modalInV2/modalOut владеют animation панели). */
+.iris-consumed {
+  position: relative;
+}
+.iris-consumed::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  animation: irisConsumeRing 9s linear infinite;
+}
+@keyframes irisConsumeRing {
+  0%, 100% {
+    box-shadow:
+      inset 0 0 0 1px rgba(159, 245, 224, 0.22),
+      inset 0 0 34px rgba(159, 245, 224, 0.07);
+  }
+  25% {
+    box-shadow:
+      inset 0 0 0 1px rgba(143, 211, 255, 0.26),
+      inset 0 0 38px rgba(196, 165, 255, 0.08);
+  }
+  50% {
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 159, 208, 0.25),
+      inset 0 0 36px rgba(255, 159, 208, 0.07);
+  }
+  75% {
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 210, 143, 0.22),
+      inset 0 0 34px rgba(255, 210, 143, 0.07);
+  }
+}
+
+/* чип поглощения в карточке — переливающаяся рамка угрозы */
+.iris-consume-chip {
+  border-color: rgba(196, 165, 255, 0.38) !important;
+  background: rgba(24, 12, 34, 0.5) !important;
+  background-image: linear-gradient(
+    100deg,
+    rgba(159, 245, 224, 0.08) 0%,
+    rgba(255, 159, 208, 0.1) 45%,
+    rgba(196, 165, 255, 0.08) 75%,
+    rgba(159, 245, 224, 0.08) 100%
+  ) !important;
+  background-size: 260% 100% !important;
+  color: rgba(232, 222, 255, 0.82) !important;
+  animation: irisChipFlow 5.5s linear infinite;
+}
+.iris-consume-chip[data-stage="4"] {
+  border-color: rgba(255, 159, 208, 0.5) !important;
+  color: rgba(255, 224, 242, 0.9) !important;
+}
+@keyframes irisChipFlow {
+  from { background-position: 0% 50%; }
+  to { background-position: 260% 50%; }
+}
+
+/* v5.6 — мини-бар прогресса в статистике профиля (Stat) */
+.stat-mini-bar {
+  height: 5px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(120, 130, 120, 0.25);
+  overflow: hidden;
+}
+.stat-mini-bar > span {
+  display: block;
+  height: 100%;
+  transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+/* ирис-заливка: тот же перелив, что и глифы досье — коллекция течёт */
+.stat-mini-bar .iris-bar-fill {
+  background: linear-gradient(
+    100deg,
+    #9ff5e0 0%, #8fd3ff 20%, #c4a5ff 40%, #ff9fd0 60%, #ffd28f 80%, #9ff5e0 100%
+  );
+  background-size: 300% 100%;
+  animation: oblivionFlow 6.5s linear infinite;
+}
+
+/* мобильные: прибор компактнее, сегменты короче */
+@media (max-width: 640px) {
+  .iris-consume-meter {
+    gap: 0.45rem;
+    padding: 0.35rem 0.55rem;
+  }
+  .iris-consume-label {
+    font-size: 8px;
+    letter-spacing: 0.16em;
+  }
+  .iris-consume-hint {
+    font-size: 7px;
+    max-width: 30vw;
+  }
+  .iris-consume-segs > span {
+    width: 11px;
+    height: 6px;
+  }
+  .iris-consume-glyph {
+    font-size: 13px;
+  }
+}
+
+/* ============================================================
+   v5.7 — «ИРИС НЕ ОТПУСКАЕТ»: стадии 5..6.
+   Поглощение выходит за прежний предел: прибор переименован,
+   счётчик уходит в бесконечность, рамка модалки дышит чаще и
+   глубже, а заголовок досье сам растворяется в ирис — ирис
+   дочитывает текст за стража. Переливается, не светится.
+   ============================================================ */
+
+/* прибор на стадиях 5..6: тон выше розового — в фиолетово-розовый,
+   глиф пульсирует чаще, счётчик «∞» дрожит через flow */
+.iris-consume-meter[data-stage="5"],
+.iris-consume-meter[data-stage="6"] {
+  border-color: rgba(196, 165, 255, 0.5);
+  background: rgba(26, 8, 36, 0.62);
+}
+.iris-consume-meter[data-stage="5"] .iris-consume-label,
+.iris-consume-meter[data-stage="6"] .iris-consume-label {
+  color: rgba(240, 224, 255, 0.92);
+}
+.iris-consume-meter[data-stage="5"] .iris-consume-hint,
+.iris-consume-meter[data-stage="6"] .iris-consume-hint {
+  color: rgba(255, 205, 240, 0.75);
+}
+.iris-consume-meter[data-stage="5"] .iris-consume-glyph,
+.iris-consume-meter[data-stage="6"] .iris-consume-glyph {
+  animation: irisGlyphBreath 2.6s ease-in-out infinite;
+}
+.iris-consume-meter[data-stage="6"] .iris-consume-glyph {
+  animation-duration: 1.9s;
+}
+.iris-consume-count.iris-count-beyond {
+  font-size: 14px;
+  line-height: 1;
+  color: rgba(255, 219, 246, 0.95);
+  animation: irisGlyphBreath 3.2s ease-in-out infinite;
+}
+@keyframes irisGlyphBreath {
+  0%, 100% { opacity: 0.72; filter: blur(0.2px); }
+  50% { opacity: 1; filter: blur(0); }
+}
+
+/* модалка стадии 5+: кольцо чаще и с двойным контуром + лёгкая
+   ирис-виньетка по краям панели (ирис «затягивает» рамку внутрь) */
+.iris-devoured {
+  position: relative;
+}
+.iris-devoured::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  animation: irisDevourRing 5.2s linear infinite;
+}
+@keyframes irisDevourRing {
+  0%, 100% {
+    box-shadow:
+      inset 0 0 0 2px rgba(159, 245, 224, 0.24),
+      inset 0 0 46px rgba(196, 165, 255, 0.09),
+      inset 0 0 120px rgba(255, 159, 208, 0.05);
+  }
+  33% {
+    box-shadow:
+      inset 0 0 0 2px rgba(196, 165, 255, 0.3),
+      inset 0 0 52px rgba(143, 211, 255, 0.1),
+      inset 0 0 130px rgba(196, 165, 255, 0.06);
+  }
+  66% {
+    box-shadow:
+      inset 0 0 0 2px rgba(255, 159, 208, 0.28),
+      inset 0 0 48px rgba(255, 159, 208, 0.09),
+      inset 0 0 120px rgba(255, 210, 143, 0.05);
+  }
+}
+
+/* заголовок досье на стадиях 5+: буквы тонут в ирисе.
+   Заменяет glitch: псевдоэлементы глича конфликтуют с clip-text,
+   поэтому на этих стадиях досье «не глючит» — оно УТАЕТ. */
+.iris-name-devoured {
+  background: linear-gradient(
+    100deg,
+    #9ff5e0 0%, #8fd3ff 22%, #c4a5ff 48%, #ff9fd0 72%, #ffd28f 92%, #9ff5e0 100%
+  );
+  background-size: 280% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: irisTitleFlow 6.5s linear infinite;
+  filter: blur(0.3px) contrast(1.05);
+}
+@keyframes irisTitleFlow {
+  from { background-position: 0% 50%; }
+  to { background-position: 280% 50%; }
+}
+/* стадия 6: имя почти не держит форму — лёгкая дыхательная расфокусировка */
+.iris-devoured .iris-name-devoured {
+  animation:
+    irisTitleFlow 6.5s linear infinite,
+    irisNameBreathe 4.4s ease-in-out infinite;
+}
+@keyframes irisNameBreathe {
+  0%, 100% { filter: blur(0.3px); opacity: 0.97; }
+  50% { filter: blur(1.1px); opacity: 0.8; }
+}
+
+/* чип стадии 5..6 в карточке: ирис держит запись даже в списке —
+   рамка «течёт» быстрее, текст розовее */
+.iris-consume-chip[data-stage="5"],
+.iris-consume-chip[data-stage="6"] {
+  border-color: rgba(196, 165, 255, 0.58) !important;
+  background-image: linear-gradient(
+    100deg,
+    rgba(196, 165, 255, 0.12) 0%,
+    rgba(255, 159, 208, 0.16) 40%,
+    rgba(255, 210, 143, 0.1) 65%,
+    rgba(196, 165, 255, 0.12) 100%
+  ) !important;
+  color: rgba(245, 228, 255, 0.95) !important;
+  animation: irisChipFlow 3.4s linear infinite;
+}
+.iris-consume-chip[data-stage="6"] {
+  animation:
+    irisChipFlow 3.4s linear infinite,
+    irisNameBreathe 4.8s ease-in-out infinite;
+}
+
+/* ── эхо и «поглощение» в шёпоте: интонации одного ириса ──
+   Эхо (hover по карточке) — вполголоса: мельче, прозрачнее,
+   тише интервал — это мысль между строк, не обращение. */
+.iris-whisper--echo {
+  font-size: 10px;
+  letter-spacing: 0.26em;
+  opacity: 0.62;
+  filter: blur(0.2px);
+}
+/* «devour» (встреча стадии 5+) — наоборот, весомее: крупнее,
+   медленнее тает, тон холоднее — ирис не спрашивает, он ставит
+   факт. */
+.iris-whisper--devour {
+  font-size: 14px;
+  letter-spacing: 0.3em;
+  background: linear-gradient(
+    100deg,
+    #ffc9e8 0%, #c4a5ff 45%, #9ff5e0 100%
+  );
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.iris-whisper--devour .iris-whisper-rune {
+  color: rgba(255, 205, 240, 0.95);
+}
+
+@media (max-width: 640px) {
+  .iris-whisper--echo {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+  }
+  .iris-whisper--devour {
+    font-size: 12px;
+    letter-spacing: 0.24em;
+  }
+}
+
+/* доступность: всё течение замирает, остаются статичные оттенки */
+@media (prefers-reduced-motion: reduce) {
+  .iris-devoured::after,
+  .iris-name-devoured,
+  .iris-devoured .iris-name-devoured,
+  .iris-consume-chip[data-stage="5"],
+  .iris-consume-chip[data-stage="6"],
+  .iris-consume-meter[data-stage="5"] .iris-consume-glyph,
+  .iris-consume-meter[data-stage="6"] .iris-consume-glyph,
+  .iris-count-beyond {
+    animation: none !important;
+  }
+}
+
+/* ── Мастерская · «ирис в цифрах»: плитки и строки агрегации ──
+   Числа «съеденного» переливаются тем же ирисом, что и досье —
+   статистика архива говорит на языке явления. */
+.iris-stat-num {
+  background: linear-gradient(
+    100deg,
+    #9ff5e0 0%, #8fd3ff 25%, #c4a5ff 55%, #ff9fd0 85%, #9ff5e0 100%
+  );
+  background-size: 260% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: oblivionFlow 7s linear infinite;
+}
+.iris-stage-cell {
+  display: block;
+  background: rgba(120, 100, 160, 0.18);
+  transition: background 0.3s ease;
+}
+.iris-stage-cell.on {
+  background: linear-gradient(
+    100deg,
+    #9ff5e0 0%, #c4a5ff 50%, #ff9fd0 100%
+  );
+  background-size: 200% 100%;
+  animation: oblivionFlow 6s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .iris-stat-num,
+  .iris-stage-cell.on {
+    animation: none !important;
+  }
+}
+
+
+/* ============================================================
    v4.5 — ПАСКАЛКА: ПРЕДУПРЕЖДЕНИЕ СОЗИДАТЕЛЯ
    Всплывает, если страж слишком часто щёлкает ЗВУК: ВКЛ/ВЫКЛ.
    ============================================================ */
@@ -2072,5 +2821,97 @@ nav .btn-crt:hover > span:first-child {
   }
   .corrupt-sync-bar > span {
     transition-duration: 0.01s !important;
+  }
+  /* v5.4: ирис полного искажения — статичный градиент; шёпоты —
+     мгновенное появление/исчезание без дрейфа */
+  .oblivion-word,
+  .oblivion-word:hover,
+  .oblivion-glyphs,
+  .oblivion-word:hover .oblivion-glyphs {
+    animation-duration: 0.01s, 0.01s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01s !important;
+  }
+  .gaze-whisper,
+  .gaze-whisper[data-style="0"] {
+    animation: whisperLife 0.4s ease-out forwards !important;
+    --drift: 0px;
+  }
+  /* v5.5: ирис-шёпот досье — та же тишина */
+  .iris-whisper {
+    animation: whisperLife 0.4s ease-out forwards !important;
+    --drift: 0px;
+  }
+  /* v5.6: прибор поглощения — сегменты и рамка замирают
+     (градиент остаётся статичным, без течения) */
+  .iris-consume-glyph,
+  .iris-consume-segs > span.on,
+  .iris-consumed::after,
+  .iris-consume-chip,
+  .stat-mini-bar .iris-bar-fill {
+    animation-duration: 0.01s !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* ═══ v5.7.1 — seed.zip в Мастерской: кнопка «⇩ АРХИВ» ═════════════════════
+   Готовый архив подсвечен янтарём (это «ценный груз»: исходники + база +
+   доки одним файлом); потерянный — мягко пульсирует, зазывая пересобрать.
+   Живёт поверх .btn-crt, не заменяя его базовую механику. */
+.seed-zip-btn {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.seed-zip-btn[data-state="ready"] {
+  border-color: var(--amber-dim);
+  color: var(--amber);
+  text-shadow: 0 0 6px rgba(232, 161, 58, 0.4);
+  background: linear-gradient(180deg, rgba(232, 161, 58, 0.05), var(--panel-2));
+}
+
+.seed-zip-btn[data-state="ready"]:hover {
+  background: rgba(232, 161, 58, 0.1);
+  border-color: var(--amber);
+  color: var(--amber);
+  text-shadow: 0 0 8px rgba(232, 161, 58, 0.65);
+  box-shadow: 0 0 14px rgba(232, 161, 58, 0.28),
+    inset 0 0 10px rgba(232, 161, 58, 0.08);
+}
+
+/* фантом добрался до архива — кнопка «дышит», пока страж не пересоберёт */
+.seed-zip-btn[data-state="missing"]:not(:disabled) {
+  animation: seedMissingPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes seedMissingPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 rgba(232, 161, 58, 0);
+    border-color: var(--line-bright);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(232, 161, 58, 0.35);
+    border-color: var(--amber-dim);
+  }
+}
+
+/* пересборка идёт — глиф «⟳» крутится */
+.seed-zip-busy-glyph {
+  display: inline-block;
+  animation: seedSpin 1.1s linear infinite;
+}
+
+@keyframes seedSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .seed-zip-btn[data-state="missing"]:not(:disabled),
+  .seed-zip-busy-glyph {
+    animation: none !important;
   }
 }

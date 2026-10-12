@@ -32,6 +32,7 @@ const loreNormalize = (r: Lore) => ({
   status: ((r as Record<string, unknown>).status as "ALIVE" | "DEAD" | "MISSING") ?? "ALIVE",
   friendship: (r as Record<string, unknown>).friendship as number | null ?? null,
   themeColor: (r as Record<string, unknown>).themeColor as string | null ?? null,
+  irisColor: (r as Record<string, unknown>).irisColor as string | null ?? null,
   recordType: "lore" as const,
 });
 
@@ -61,6 +62,7 @@ export function CharactersSection({ system }: SectionProps) {
         imageUrl: r.imageUrl,
         status: r.status as "ALIVE" | "DEAD" | "MISSING",
         themeColor: (r as Record<string, unknown>).themeColor as string | null ?? null,
+  irisColor: (r as Record<string, unknown>).irisColor as string | null ?? null,
         recordType: "character",
         characterTitle: r.title,
         characterCategory: r.category,
@@ -155,6 +157,7 @@ export function LocationsSection({ system }: SectionProps) {
         mapX: r.mapX,
         mapY: r.mapY,
         themeColor: (r as Record<string, unknown>).themeColor as string | null ?? null,
+  irisColor: (r as Record<string, unknown>).irisColor as string | null ?? null,
         recordType: "location" as const,
       })}
     />

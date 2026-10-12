@@ -33,6 +33,10 @@ export interface ProgressData {
   solvedRiddles: string[];
   konamiUnlocked: boolean;
   secretRevealed: boolean;
+  /** v5.5 — открытые досье с полным искажением ⟪…⟫ */
+  irisReadIds: string[];
+  /** v5.6 — сколько раз открывалось каждое ирис-досье (id → счётчик) */
+  irisOpens?: Record<string, number>;
   gaze: number;
   updatedAt?: string;
 }
@@ -82,6 +86,8 @@ export interface BaseRecord {
   shardWord: string | null;
   /** цвет досье (violet/blue/green/amber/red/cyan/pink); null — стандартное */
   themeColor?: string | null;
+  /** v5.5 — палитра ириса для ⟪…⟫; null — авто (под цвет досье) */
+  irisColor?: string | null;
   createdAt: string;
 }
 
@@ -132,6 +138,8 @@ export interface RiddlePublic {
   riddle: string[];
   hint: string | null;
   system: string | null;
+  /** код достижения-награды за разгадку (если задан) */
+  achievementCode: string | null;
 }
 
 export interface Achievement {
