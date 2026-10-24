@@ -64,3 +64,12 @@ seed-archive/
 
 # agent tool artifacts
 tool-results/
+
+# local SQLite databases (never commit — contain user data)
+db/*.db
+db/*.db-journal
+prisma/*.db
+# sandbox runtime leftovers
+.zscripts/
+*.pid
+public/uploads/

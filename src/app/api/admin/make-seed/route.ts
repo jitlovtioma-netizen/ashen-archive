@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { requireAdmin } from '@/lib/auth'
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
 import { statSync, existsSync } from 'node:fs'
@@ -13,10 +13,10 @@ const execFileAsync = promisify(execFile)
 // ─────────────────────────────────────────────────────────────────────────────
 // /api/admin/make-seed — жизнь архива проекта seed.zip из Мастерской.
 //
-//   GET  ?requester=X            → { ok, exists, size } — статус архива
-//   GET  ?requester=X&issue=1    → { ok, url, exp } — подписанная ссылка
+//   GET              → { ok, exists, size } — статус архива
+//   GET  ?issue=1    → { ok, url, exp } — подписанная ссылка
 //                                   на скачивание (живёт 15 минут)
-//   POST { requester }           → { ok, size, files } — пересборка архива
+//   POST {}           → { ok, size, files } — пересборка архива
 //
 // Зачем: seed.zip (полный архив проекта: исходники, база, доки — для
 // развёртывания вручную) в песочнице фантомно исчезал: dev-вотчер Next.js
@@ -32,24 +32,15 @@ const execFileAsync = promisify(execFile)
 
 const SEED_PATH = () => join(process.cwd(), 'seed-archive', 'seed.zip')
 
-async function requireAdmin(requester: string) {
-  if (!requester) return 'NO_LOGIN'
-  const admin = await db.user.findUnique({ where: { login: requester } })
-  if (!admin || admin.role !== 'ADMIN') return 'FORBIDDEN'
-  return null
-}
 
 export async function GET(request: NextRequest) {
-  const requester = request.nextUrl.searchParams.get('requester')?.trim() ?? ''
   const issue = request.nextUrl.searchParams.get('issue') === '1'
 
-  const denied = await requireAdmin(requester)
-  if (denied) {
-    return NextResponse.json({ ok: false, error: denied }, { status: denied === 'NO_LOGIN' ? 400 : 403 })
-  }
+  const auth = await requireAdmin(request)
+  if (auth.error) return auth.error
 
   if (issue) {
-    const { url, exp } = issueSeedToken(requester)
+    const { url, exp } = issueSeedToken(auth.user.login)
     return NextResponse.json({ ok: true, url, exp })
   }
 
@@ -75,11 +66,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: 'BAD_JSON' }, { status: 400 })
   }
 
-  const requester = typeof body.requester === 'string' ? body.requester.trim() : ''
-  const denied = await requireAdmin(requester)
-  if (denied) {
-    return NextResponse.json({ ok: false, error: denied }, { status: denied === 'NO_LOGIN' ? 400 : 403 })
-  }
+  const auth = await requireAdmin(request)
+  if (auth.error) return auth.error
 
   // scripts/make-seed-zip.mjs от корня проекта; в standalone-сборке его нет
   const cwd = process.cwd()

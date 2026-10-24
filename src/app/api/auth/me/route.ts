@@ -1,33 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { getSessionUser, publicUser } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
-// GET /api/auth/me?login=...
-// Свежие данные стража (роль, привязка персонажа) — без пароля.
-// Используется при восстановлении сессии из localStorage, чтобы
-// роль/привязка всегда были актуальны.
+// GET /api/auth/me — текущий пользователь по cookie сессии (без пароля).
+// 401 → сессии нет/истекла: клиент должен выйти и попросить войти заново.
 export async function GET(request: NextRequest) {
-  const login = new URL(request.url).searchParams.get('login')?.trim() ?? ''
-
-  if (!login) {
-    return NextResponse.json({ ok: false, error: 'NO_LOGIN' }, { status: 400 })
-  }
-
-  const user = await db.user.findUnique({ where: { login } })
-
+  const user = await getSessionUser(request)
   if (!user) {
-    return NextResponse.json({ ok: false, error: 'UNKNOWN_USER' }, { status: 404 })
+    return NextResponse.json({ ok: false, error: 'UNAUTHORIZED' }, { status: 401 })
   }
-
-  return NextResponse.json({
-    ok: true,
-    user: {
-      login: user.login,
-      displayName: user.displayName,
-      system: user.system,
-      role: user.role === 'ADMIN' ? 'ADMIN' : 'USER',
-      characterId: user.characterId ?? null,
-    },
-  })
+  return NextResponse.json({ ok: true, user: publicUser(user) })
 }

@@ -1,58 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { dbHint } from '@/lib/db-diagnostics'
+import { hashPassword, isHashed, publicUser, setSessionCookie, verifyPassword } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
 // POST /api/auth/login
 // Body: { login: string, password: string }
-// 200 → { ok: true, user: { login, displayName, system, role, characterId } }
+// 200 → { ok: true, user } + cookie сессии
 // 401 → { ok: false, error: 'INVALID_CREDENTIALS' }
-// Пароль в этом sandbox-архиве хранится открыто в SQLite.
+// Старые открытые пароли при первом успешном входе перехешируются (scrypt).
 export async function POST(request: NextRequest) {
+  const fail = () =>
+    NextResponse.json({ ok: false, error: 'INVALID_CREDENTIALS' }, { status: 401 })
+
   let body: { login?: unknown; password?: unknown } = {}
   try {
-    body = (await request.json()) as { login?: unknown; password?: unknown }
+    body = (await request.json()) as typeof body
   } catch {
-    return NextResponse.json(
-      { ok: false, error: 'INVALID_CREDENTIALS' },
-      { status: 401 },
-    )
+    return fail()
   }
 
   const login = typeof body.login === 'string' ? body.login.trim() : ''
   const password = typeof body.password === 'string' ? body.password : ''
-
-  if (!login || !password) {
-    return NextResponse.json(
-      { ok: false, error: 'INVALID_CREDENTIALS' },
-      { status: 401 },
-    )
-  }
+  if (!login || !password || password.length > 200) return fail()
 
   try {
     const user = await db.user.findUnique({ where: { login } })
+    if (!user || !(await verifyPassword(password, user.password))) return fail()
 
-    if (!user || user.password !== password) {
-      return NextResponse.json(
-        { ok: false, error: 'INVALID_CREDENTIALS' },
-        { status: 401 },
-      )
+    if (!isHashed(user.password)) {
+      await db.user.update({
+        where: { id: user.id },
+        data: { password: await hashPassword(password) },
+      })
     }
 
-    return NextResponse.json({
-      ok: true,
-      user: {
-        login: user.login,
-        displayName: user.displayName,
-        system: user.system,
-        role: user.role === 'ADMIN' ? 'ADMIN' : 'USER',
-        characterId: user.characterId ?? null,
-      },
-    })
+    const res = NextResponse.json({ ok: true, user: publicUser(user) })
+    setSessionCookie(res, user.login)
+    return res
   } catch (e) {
-    // База недоступна (частая причина — конфигурация Vercel+Supabase):
-    // отдаём 503 с подсказкой вместо безликого 500
+    // База недоступна (частая причина — конфигурация Vercel+Supabase)
     console.error('[api/auth/login] DB error:', e)
     return NextResponse.json(
       { ok: false, error: 'DB_UNAVAILABLE', hint: dbHint(e) },

@@ -484,7 +484,6 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          requester: user.login,
           characterId: record.id,
           patch: {
             description,
@@ -1206,7 +1205,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
             <div className="text-[10px] text-dim tracking-widest mb-3 absolute top-3 left-4 z-30">{"// ПРОЕКЦИЯ //"}</div>
             <div className="flex-1 flex items-center justify-center w-full min-h-[280px] holo-reveal">
               {record.imageUrl && !isSealed ? (
-                <HoloPortrait src={displayRecord.imageUrl} corrupted={isCorrupted} sealed={isSealed} status={record.status} full fallbackGlyph={record.sigil} />
+                <HoloPortrait src={displayRecord.imageUrl ?? ""} corrupted={isCorrupted} sealed={isSealed} status={record.status} full fallbackGlyph={record.sigil} />
               ) : (
                 <div className="flex flex-col items-center gap-4">
                   <Sigil glyph={record.sigil} corrupted={isCorrupted} size={180} />

@@ -74,7 +74,7 @@ export function CommandPalette() {
         SECRETS: "secrets",
       };
       for (const l of lore) {
-        const folder = (l as Record<string, unknown>).folder as string | null;
+        const folder = (l as unknown as Record<string, unknown>).folder as string | null;
         const section = folder ? folderToSection[folder] ?? "lore" : "lore";
         if (section === "secrets") continue; // не показываем секреты в поиске
         out.push({

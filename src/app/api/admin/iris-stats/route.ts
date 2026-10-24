@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { requireAdmin } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -7,7 +8,7 @@ export const dynamic = 'force-dynamic'
 // МАСТЕРСКАЯ · ИРИС В ЦИФРАХ — агрегация поглощения по всем стражам.
 // Доступ: только роль ADMIN.
 //
-// GET /api/admin/iris-stats?requester=<login>
+// GET /api/admin/iris-stats
 //   → { ok, totals, rows }
 //     rows — ирис-досье (⟪…⟫), отсортированные по открытиям:
 //     { id, name, kind, system, opens, readers, stage, cleanWords, eaten }
@@ -62,13 +63,11 @@ function parseJsonArray(raw: string | null | undefined): string[] {
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
-  const requester = searchParams.get('requester') ?? ''
 
   try {
-    const admin = await db.user.findUnique({ where: { login: requester } })
-    if (!admin || admin.role !== 'ADMIN') {
-      return NextResponse.json({ ok: false, error: 'FORBIDDEN' }, { status: 403 })
-    }
+    const auth = await requireAdmin(request)
+    if (auth.error) return auth.error
+    const admin = auth.user
 
     // ирис-досье всех миров: Character / Lore / Location с ⟪…⟫ в тексте
     const [characters, lore, locations, progress] = await Promise.all([

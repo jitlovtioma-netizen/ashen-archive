@@ -2956,3 +2956,17 @@ nav .btn-crt:hover > span:first-child {
     animation: none !important;
   }
 }
+
+/* Доступность: при системной настройке «уменьшить движение» гасим ВСЕ
+   анимации (мерцание CRT, глитчи, частицы). Длительность почти нулевая,
+   а не none — события animationend/transitionend продолжают срабатывать. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,7 +1,13 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Share_Tech_Mono, VT323, MedievalSharp } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
+
+// цвет панели браузера на телефонах — в тон CRT-фону
+export const viewport: Viewport = {
+  themeColor: "#050805",
+  colorScheme: "dark",
+};
 
 const shareTechMono = Share_Tech_Mono({
   variable: "--font-mono",

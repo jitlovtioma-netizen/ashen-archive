@@ -208,7 +208,7 @@ function mergeOpens(
 export async function hydrateProgressFromServer(login: string, system: string) {
   try {
     const r = await fetch(
-      `/api/progress?login=${encodeURIComponent(login)}&requester=${encodeURIComponent(login)}&system=${system}`,
+      `/api/progress?login=${encodeURIComponent(login)}&system=${system}`,
     );
     if (!r.ok) return;
     const d = (await r.json()) as { progress: ProgressData | null };
@@ -278,6 +278,7 @@ export const useArchive = create<ArchiveState>()(
       logout: () => {
         // сохраняем прогресс перед выходом
         flushProgressSave();
+        void fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
         set({
           user: null,
           booted: false,
@@ -360,7 +361,7 @@ export const useArchive = create<ArchiveState>()(
         });
         try {
           const r = await fetch(
-            `/api/progress?login=${encodeURIComponent(s.user.login)}&requester=${encodeURIComponent(s.user.login)}&system=${s.user.system}`,
+            `/api/progress?login=${encodeURIComponent(s.user.login)}&system=${s.user.system}`,
             { method: "DELETE" },
           );
           return r.ok;

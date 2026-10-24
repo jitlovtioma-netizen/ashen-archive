@@ -28,6 +28,13 @@
 // ============================================================================
 
 import { db } from '../src/lib/db'
+import { randomBytes, scryptSync } from 'node:crypto'
+
+/** Тот же формат, что и src/lib/auth.ts: scrypt$<salt>$<hash> */
+function seedHashPassword(pw: string): string {
+  const salt = randomBytes(16)
+  return `scrypt$${salt.toString('hex')}$${scryptSync(pw, salt, 64).toString('hex')}`
+}
 
 // ─── MERGE-хелперы: ничего не удаляем, рукотворное не трогаем ───────────────
 
@@ -101,7 +108,7 @@ async function mergeMany<T extends Record<string, unknown>>(
 // Обёртки с тем же контрактом, что и prisma.create/createMany — чтобы тела
 // блоков ниже не переписывать: mergeMany подставляет натуральныe ключи.
 async function ensureFaction(args: { data: Record<string, unknown> }) {
-  return mergeRow('faction', { name: args.data.name, system: args.data.system }, args.data)
+  return mergeRow<{ id: string }>('faction', { name: args.data.name, system: args.data.system }, args.data)
 }
 async function mergeCharacters(args: { data: Record<string, unknown>[] }) {
   await mergeMany('character', args.data, (r) => ({ name: r.name, system: r.system }))
@@ -214,20 +221,30 @@ async function main() {
   console.log('▸ Пользователи...')
   for (const u of [
     // ─── Администраторы архива (подсвечиваются в списке онлайн) ───
-    { login: 'dnd', password: 'ashen', displayName: 'Страж Эларии', system: 'DND', role: 'ADMIN' },
-    { login: 'pf2e', password: 'ashen', displayName: 'Страж Голариона', system: 'PF2E', role: 'ADMIN' },
+    { login: 'dnd', displayName: 'Страж Эларии', system: 'DND', role: 'ADMIN' },
+    { login: 'pf2e', displayName: 'Страж Голариона', system: 'PF2E', role: 'ADMIN' },
     // ─── Новые стражи Эларии (DND) ───
-    { login: 'sashakarev1809', password: '1411Masha!', displayName: 'sashakarev1809', system: 'DND' },
-    { login: 'IlyaKazakhStrong', password: 'Qotaq667', displayName: 'IlyaKazakhStrong', system: 'DND' },
-    { login: 'NiT', password: 'Tihe123', displayName: 'NiT', system: 'DND' },
-    { login: 'ps1x0k1d', password: '676767', displayName: 'ps1x0k1d', system: 'DND' },
+    { login: 'sashakarev1809', displayName: 'sashakarev1809', system: 'DND' },
+    { login: 'IlyaKazakhStrong', displayName: 'IlyaKazakhStrong', system: 'DND' },
+    { login: 'NiT', displayName: 'NiT', system: 'DND' },
+    { login: 'ps1x0k1d', displayName: 'ps1x0k1d', system: 'DND' },
     // ─── Стражи Голариона (PF2E) ───
-    { login: 'Mira', password: 'Flower', displayName: 'Mira', system: 'PF2E' },
-    { login: 'xlov21', password: 'NegrVolody', displayName: 'xlov21', system: 'PF2E' },
-    { login: 'EvaMoon', password: 'EverMoon', displayName: 'EvaMoon', system: 'PF2E' },
-    { login: 'GTT_EDMI', password: 'EldMaster', displayName: 'GTT_EDMI', system: 'PF2E' },
+    { login: 'Mira', displayName: 'Mira', system: 'PF2E' },
+    { login: 'xlov21', displayName: 'xlov21', system: 'PF2E' },
+    { login: 'EvaMoon', displayName: 'EvaMoon', system: 'PF2E' },
+    { login: 'GTT_EDMI', displayName: 'GTT_EDMI', system: 'PF2E' },
   ]) {
-    await mergeRow('user', { login: u.login }, u, { preserveIfExists: true })
+    // Пароли в коде больше не хранятся. Для НОВОГО пользователя пароль берётся
+    // из переменной SEED_PW_<login> или генерируется и печатается один раз.
+    // Существующих пользователей seed не трогает.
+    const exists = await db.user.findUnique({ where: { login: u.login } })
+    if (exists) {
+      mergeStats.user.kept++
+      continue
+    }
+    const plain = process.env[`SEED_PW_${u.login}`] || randomBytes(9).toString('base64url')
+    await mergeRow('user', { login: u.login }, { ...u, password: seedHashPassword(plain) })
+    console.log(`  ✦ создан ${u.login} — пароль: ${plain}`)
   }
 
   // ───────────────────────────────────────────────────────────────────────

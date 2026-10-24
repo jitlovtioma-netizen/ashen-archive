@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { getSessionUser } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -47,6 +48,11 @@ export async function POST(request: NextRequest) {
   const login = typeof body.login === 'string' ? body.login.trim() : ''
   if (!login) {
     return NextResponse.json({ ok: false, error: 'NO_LOGIN' }, { status: 400 })
+  }
+  // отмечать онлайн можно только себя
+  const me = await getSessionUser(request)
+  if (!me || me.login !== login) {
+    return NextResponse.json({ ok: false, error: 'UNAUTHORIZED' }, { status: 401 })
   }
 
   try {

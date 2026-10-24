@@ -9,7 +9,7 @@ import { join } from 'node:path'
 // нельзя (а в v5.7.1 это стало и технически невозможно: dev-вотчер Next.js
 // стирает файлы из public/ — «фантом», см. scripts/make-seed-zip.mjs).
 // Вместо этого:
-//   1. админ просит ссылку: GET /api/admin/make-seed?requester=X&issue=1
+//   1. админ просит ссылку: GET /api/admin/make-seed?issue=1
 //      → { url: "/api/seed?t=<login>.<exp>.<hmac>" } (живает 15 минут);
 //   2. браузер скачивает по ней: GET /api/seed?t=…
 //      → проверка подписи HMAC + срока + что login всё ещё админ.

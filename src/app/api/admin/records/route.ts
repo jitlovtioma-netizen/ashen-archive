@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { requireAdmin } from '@/lib/auth'
 import { DOSSIER_THEME_KEYS, IRIS_PALETTE_KEYS } from '@/lib/themes'
 
 export const dynamic = 'force-dynamic'
@@ -8,12 +9,12 @@ export const dynamic = 'force-dynamic'
 // МАСТЕРСКАЯ СОЗИДАТЕЛЯ — CRUD всех записей архива без правки кода.
 // Доступ: только роль ADMIN.
 //
-// GET  /api/admin/records?requester=<login>&system=DND|PF2E
+// GET  /api/admin/records?system=DND|PF2E
 //   → { ok, characters, lore, locations, factions, riddles, achievements, bindings }
 //     characters — ВСЕ (HERO и NPC), bindings — кто из стражей к кому привязан.
 //
 // POST /api/admin/records
-//   { requester, action: 'create' | 'update' | 'delete',
+//   { action: 'create' | 'update' | 'delete',
 //     kind: 'character' | 'lore' | 'location' | 'faction' | 'riddle' | 'achievement',
 //     id?, data? }
 //   → { ok, record } | { ok: false, error, hint? }
@@ -335,14 +336,12 @@ function buildAchievement(raw: Record<string, unknown>, isCreate: boolean) {
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
-  const requester = searchParams.get('requester') ?? ''
   const rawSystem = (searchParams.get('system') ?? 'DND').toUpperCase()
 
   try {
-    const admin = await db.user.findUnique({ where: { login: requester } })
-    if (!admin || admin.role !== 'ADMIN') {
-      return NextResponse.json({ ok: false, error: 'FORBIDDEN' }, { status: 403 })
-    }
+    const auth = await requireAdmin(request)
+    if (auth.error) return auth.error
+    const admin = auth.user
     if (!(VALID_SYSTEMS as readonly string[]).includes(rawSystem)) {
       return NextResponse.json({ ok: false, error: 'BAD_SYSTEM' }, { status: 400 })
     }
@@ -408,13 +407,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: 'BAD_JSON' }, { status: 400 })
   }
 
-  const requester = typeof body.requester === 'string' ? body.requester.trim() : ''
   const action = String(body.action ?? '')
   const kind = String(body.kind ?? '') as RecKind
   const id = typeof body.id === 'string' ? body.id : ''
   const raw = (body.data ?? {}) as Record<string, unknown>
 
-  if (!requester) return NextResponse.json({ ok: false, error: 'NO_LOGIN' }, { status: 400 })
   if (!['create', 'update', 'delete'].includes(action)) {
     return NextResponse.json({ ok: false, error: 'BAD_ACTION', hint: 'create | update | delete' }, { status: 400 })
   }
@@ -426,10 +423,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const admin = await db.user.findUnique({ where: { login: requester } })
-    if (!admin || admin.role !== 'ADMIN') {
-      return NextResponse.json({ ok: false, error: 'FORBIDDEN' }, { status: 403 })
-    }
+    const auth = await requireAdmin(request)
+    if (auth.error) return auth.error
+    const admin = auth.user
 
     // ── DELETE ──
     if (action === 'delete') {
@@ -515,16 +511,16 @@ export async function POST(request: NextRequest) {
     if (isCreate) {
       const created =
         kind === 'character'
-          ? await db.character.create({ data })
+          ? await db.character.create({ data: data as never })
           : kind === 'lore'
-            ? await db.lore.create({ data })
+            ? await db.lore.create({ data: data as never })
             : kind === 'location'
-              ? await db.location.create({ data })
+              ? await db.location.create({ data: data as never })
               : kind === 'faction'
-                ? await db.faction.create({ data })
+                ? await db.faction.create({ data: data as never })
                 : kind === 'riddle'
-                  ? await db.riddle.create({ data })
-                  : await db.achievement.create({ data })
+                  ? await db.riddle.create({ data: data as never })
+                  : await db.achievement.create({ data: data as never })
       return NextResponse.json({ ok: true, record: created })
     }
 

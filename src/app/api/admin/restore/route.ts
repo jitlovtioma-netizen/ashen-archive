@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { requireAdmin } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -7,7 +8,7 @@ export const dynamic = 'force-dynamic'
 // POST /api/admin/restore — восстановление архива из JSON-бэкапа (кнопка
 // «⇧ ВОССТАНОВИТЬ» в Мастерской; бэкап скачивается кнопкой «⇩ БЭКАП»).
 //
-// Body: { requester, action: 'preview' | 'restore', dump }
+// Body: { action: 'preview' | 'restore', dump }
 //   dump — содержимое archive-backup-YYYY-MM-DD.json (формат /api/admin/export).
 //
 // Логика — зеркально merge-seed, ничего не удаляет и не перезаписывает:
@@ -91,34 +92,34 @@ async function tableCreate(
   try {
     switch (table) {
       case 'factions':
-        return await db.faction.create({ data })
+        return await db.faction.create({ data: data as never })
       case 'characters':
-        return await db.character.create({ data })
+        return await db.character.create({ data: data as never })
       case 'lore':
-        return await db.lore.create({ data })
+        return await db.lore.create({ data: data as never })
       case 'locations':
-        return await db.location.create({ data })
+        return await db.location.create({ data: data as never })
       case 'riddles':
-        return await db.riddle.create({ data })
+        return await db.riddle.create({ data: data as never })
       default:
-        return await db.achievement.create({ data })
+        return await db.achievement.create({ data: data as never })
     }
   } catch {
     const retry = { ...data }
     delete retry.id
     switch (table) {
       case 'factions':
-        return await db.faction.create({ data: retry })
+        return await db.faction.create({ data: retry as never })
       case 'characters':
-        return await db.character.create({ data: retry })
+        return await db.character.create({ data: retry as never })
       case 'lore':
-        return await db.lore.create({ data: retry })
+        return await db.lore.create({ data: retry as never })
       case 'locations':
-        return await db.location.create({ data: retry })
+        return await db.location.create({ data: retry as never })
       case 'riddles':
-        return await db.riddle.create({ data: retry })
+        return await db.riddle.create({ data: retry as never })
       default:
-        return await db.achievement.create({ data: retry })
+        return await db.achievement.create({ data: retry as never })
     }
   }
 }
@@ -131,13 +132,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: 'BAD_JSON' }, { status: 400 })
   }
 
-  const requester = typeof body.requester === 'string' ? body.requester.trim() : ''
   const action = body.action === 'restore' ? 'restore' : 'preview'
   const dump = body.dump
 
-  if (!requester) {
-    return NextResponse.json({ ok: false, error: 'NO_LOGIN' }, { status: 400 })
-  }
   if (!isValidDump(dump)) {
     return NextResponse.json(
       {
@@ -150,10 +147,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const admin = await db.user.findUnique({ where: { login: requester } })
-    if (!admin || admin.role !== 'ADMIN') {
-      return NextResponse.json({ ok: false, error: 'FORBIDDEN' }, { status: 403 })
-    }
+    const auth = await requireAdmin(request)
+    if (auth.error) return auth.error
+    const admin = auth.user
 
     // ── расчёт: чего в базе нет (будет воссоздано), что есть (пропуск) ──
     const report: Record<string, TableReport> = {}

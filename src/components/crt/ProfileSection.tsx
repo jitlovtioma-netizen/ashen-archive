@@ -3,37 +3,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useArchive } from "@/lib/store";
-import { usePresence, sendBroadcast, kickUser, presenceEnabled } from "@/lib/presence";
+import { usePresence, kickUser, presenceEnabled } from "@/lib/presence";
 import { sfx } from "@/lib/audio";
-import type {
-  Achievement,
-  Character,
-  GameSystem,
-  PresenceUser,
-  UserSummary,
-} from "@/lib/types";
+import type { Achievement, Character, GameSystem, PresenceUser, UserSummary } from "@/lib/types";
 import { Sigil } from "@/components/crt/Sigil";
 import { UserProfileModal } from "@/components/crt/UserProfileModal";
 import { RecordModal } from "@/components/crt/RecordModal";
 import type { CardRecord } from "@/components/crt/RecordCard";
 import { secretsShardsRequired } from "@/lib/types";
-
-const SYS_COLOR: Record<GameSystem, string> = {
-  DND: "var(--red)",
-  PF2E: "var(--cyan)",
-};
-const SYS_LABEL: Record<GameSystem, string> = {
-  DND: "D&D 5e · ЭЛАРИЯ",
-  PF2E: "PF2E · ГОЛАРИОН",
-};
-
-// режимы сортировки реестра стражей
-const SORT_MODES = [
-  { id: "ONLINE", label: "ПО СЕТИ" },
-  { id: "PROGRESS", label: "ПО ПРОГРЕССУ" },
-  { id: "DAYS", label: "ПО СТАЖУ" },
-] as const;
-type SortMode = (typeof SORT_MODES)[number]["id"];
+import { SYS_COLOR, SYS_LABEL, SORT_MODES, SortMode, daysInArchive, formatDateRu, formatLastSeen, formatDuration, Stat } from "./profile/shared";
+import { AdminPanel } from "./profile/AdminPanel";
+import { optimizedSrc } from "@/lib/image";
 
 export function ProfileSection({ system }: { system: GameSystem }) {
   const user = useArchive((s) => s.user);
@@ -439,8 +419,9 @@ export function ProfileSection({ system }: { system: GameSystem }) {
             <div className="panel-inset p-3 flex items-center gap-4 flex-wrap">
               {myCharacter.imageUrl && (
                 <img
-                  src={myCharacter.imageUrl}
+                  src={optimizedSrc(myCharacter.imageUrl, 56)}
                   alt={myCharacter.name}
+                  loading="lazy"
                   className="w-14 h-14 object-cover clip-hud-sm"
                   style={{ filter: "saturate(0.85) contrast(1.05)" }}
                 />
@@ -879,268 +860,5 @@ export function ProfileSection({ system }: { system: GameSystem }) {
           document.body
         )}
     </section>
-  );
-}
-
-// ─── админ-панель: вещание + привязки ──────────────────────────────────
-
-function AdminPanel({
-  users,
-  characters,
-  system,
-}: {
-  users: UserSummary[];
-  characters: Character[];
-  system: GameSystem;
-}) {
-  const pushToast = useArchive((s) => s.pushToast);
-  const [msg, setMsg] = useState("");
-  const [sending, setSending] = useState(false);
-
-  // привязки
-  const [bindLogin, setBindLogin] = useState("");
-  const [bindChar, setBindChar] = useState("");
-  const [bindSaving, setBindSaving] = useState(false);
-  const user = useArchive((s) => s.user);
-
-  const doBroadcast = () => {
-    const text = msg.trim();
-    if (!text) return;
-    setSending(true);
-    sendBroadcast(text);
-    sfx.glitch();
-    setTimeout(() => {
-      setSending(false);
-      setMsg("");
-      pushToast({
-        kind: "warn",
-        title: "ГОЛОС АРХИВА",
-        body: "Сообщение отправлено всем стражам в сети.",
-      });
-    }, 400);
-  };
-
-  const doBind = async () => {
-    if (!bindLogin) return;
-    setBindSaving(true);
-    try {
-      const r = await fetch("/api/users/bind", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          requester: user?.login,
-          login: bindLogin,
-          characterId: bindChar || null,
-        }),
-      });
-      const d = await r.json();
-      if (r.ok && d.ok) {
-        sfx.unlock();
-        pushToast({
-          kind: "ach",
-          title: "ПРИВЯЗКА ОБНОВЛЕНА",
-          body: bindChar
-            ? `Персонаж привязан к стражу ${bindLogin}.`
-            : `Привязка стража ${bindLogin} снята.`,
-        });
-      } else {
-        sfx.error();
-        pushToast({
-          kind: "warn",
-          title: "ОТКАЗ АРХИВА",
-          body: `Код: ${d.error ?? "UNKNOWN"}`,
-        });
-      }
-    } catch {
-      sfx.error();
-    } finally {
-      setBindSaving(false);
-    }
-  };
-
-  const sysChars = characters.filter((c) => c.system === system);
-
-  return (
-    <div
-      className="panel clip-hud brackets p-4"
-      style={{ borderColor: "var(--amber-dim)" }}
-    >
-      <div className="flex items-center gap-2 mb-3">
-        <span className="glow-amber text-sm tracking-widest">
-          ⚡ ПАНЕЛЬ СОЗИДАТЕЛЯ
-        </span>
-        <span className="text-[10px] text-dim">
-          {"// доступно только администраторам архива //"}
-        </span>
-      </div>
-
-      {/* вещание */}
-      <div className="panel-inset p-3 mb-3">
-        <div className="text-[10px] text-dim tracking-widest mb-2">
-          {"// ВЕЩАНИЕ_НА_ВЕСЬ_ЭКРАН //"}
-        </div>
-        <textarea
-          value={msg}
-          onChange={(e) => setMsg(e.target.value.slice(0, 500))}
-          placeholder="// введите послание стражам архива… //"
-          rows={3}
-          className="w-full bg-[var(--bg-deep)] text-sm text-[var(--text)] p-2 outline-none border border-[var(--line)] focus:border-[var(--red-dim)] transition-colors resize-none crt-scroll font-mono-crt"
-          aria-label="Текст сообщения для всех стражей"
-        />
-        <div className="flex items-center gap-2 mt-2">
-          <button
-            onClick={doBroadcast}
-            disabled={!msg.trim() || sending}
-            className="btn-crt btn-red clip-hud-sm px-4 py-2 text-xs disabled:opacity-40 disabled:cursor-default"
-          >
-            {sending ? "▸ ПЕРЕДАЧА…" : "📢 ОТПРАВИТЬ ВСЕМ"}
-          </button>
-          <span className="text-[9px] text-dim">
-            {msg.length}/500 · получат все стражи в сети
-          </span>
-        </div>
-      </div>
-
-      {/* привязка персонажей */}
-      <div className="panel-inset p-3">
-        <div className="text-[10px] text-dim tracking-widest mb-2">
-          {"// ПРИВЯЗКА_ПЕРСОНАЖЕЙ //"}
-        </div>
-        <div className="text-[10px] text-dim italic mb-2">
-          {"// выберите стража и его персонажа из мира " + (system === "DND" ? "Эларии" : "Голариона") + " //"}
-        </div>
-        <div className="flex flex-col sm:flex-row gap-2">
-          <select
-            value={bindLogin}
-            onChange={(e) => setBindLogin(e.target.value)}
-            className="flex-1 bg-[var(--bg-deep)] text-xs text-[var(--text)] p-2 outline-none border border-[var(--line)] focus:border-[var(--amber-dim)] cursor-pointer"
-            aria-label="Выбор стража"
-          >
-            <option value="">— страж —</option>
-            {users
-              .filter((u) => u.system === system)
-              .map((u) => (
-                <option key={u.login} value={u.login}>
-                  {u.login} ({u.displayName})
-                </option>
-              ))}
-          </select>
-          <select
-            value={bindChar}
-            onChange={(e) => setBindChar(e.target.value)}
-            className="flex-[2] bg-[var(--bg-deep)] text-xs text-[var(--text)] p-2 outline-none border border-[var(--line)] focus:border-[var(--amber-dim)] cursor-pointer"
-            aria-label="Выбор персонажа"
-          >
-            <option value="">— без привязки —</option>
-            {sysChars.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.sigil} {c.name} — {c.title}
-              </option>
-            ))}
-          </select>
-          <button
-            onClick={doBind}
-            disabled={!bindLogin || bindSaving}
-            className="btn-crt btn-amber clip-hud-sm px-4 py-2 text-xs disabled:opacity-40 disabled:cursor-default shrink-0"
-          >
-            {bindSaving ? "▸…" : "🔗 ПРИВЯЗАТЬ"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── мини-стат ──────────────────────────────────────────────────────────
-
-// ─── форматирование времени для карточек стражей ───────────────────────
-
-// «дней в архиве»: полных суток с момента регистрации стража
-function daysInArchive(createdAt: string): number {
-  const t = Date.parse(createdAt);
-  if (Number.isNaN(t)) return 0;
-  return Math.max(0, Math.floor((Date.now() - t) / 86_400_000));
-}
-
-// римские цифры для номеров сессий — атмосфера старой хроники
-
-// дата в русском формате ДД.ММ.ГГГГ
-function formatDateRu(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  const pad = (v: number) => String(v).padStart(2, "0");
-  return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
-}
-
-// «был в сети»: только что / N мин назад / N ч назад / вчера / DD.MM.YYYY
-function formatLastSeen(ts: number): string {
-  const diffMin = Math.floor((Date.now() - ts) / 60000);
-  if (diffMin < 1) return "только что";
-  if (diffMin < 60) return `${diffMin} мин назад`;
-  const h = Math.floor(diffMin / 60);
-  if (h < 24) return `${h} ч назад`;
-  if (h < 48) return "вчера";
-  const d = new Date(ts);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
-}
-
-// «в архиве»: сколько времени страж уже онлайн
-function formatDuration(ms: number): string {
-  const min = Math.floor(ms / 60000);
-  if (min < 1) return "меньше минуты";
-  if (min < 60) return `${min} мин`;
-  const h = Math.floor(min / 60);
-  return `${h} ч ${min % 60} мин`;
-}
-
-function Stat({
-  label,
-  value,
-  color,
-  valueColor,
-  bar,
-}: {
-  label: string;
-  value: string;
-  color: "amber" | "green" | "violet";
-  valueColor?: string;
-  /** v5.6 — мини-бар под значением: pct (0..100) + стиль заливки */
-  bar?: { pct: number; kind: "amber" | "green" | "iris" };
-}) {
-  const cls =
-    color === "amber"
-      ? "glow-amber"
-      : color === "violet"
-        ? "glow-violet"
-        : "glow-green";
-  return (
-    <div className="panel-inset p-2 text-center">
-      <div className={`font-vt323 text-2xl ${cls}`} style={valueColor ? { color: valueColor } : undefined}>
-        {value}
-      </div>
-      <div className="text-[9px] text-dim tracking-widest mt-0.5">{label}</div>
-      {bar && (
-        <div
-          className="stat-mini-bar mt-1.5"
-          role="img"
-          aria-label={`Прогресс: ${bar.pct}%`}
-        >
-          <span
-            className={bar.kind === "iris" ? "iris-bar-fill" : undefined}
-            style={{
-              width: `${bar.pct}%`,
-              ...(bar.kind === "iris"
-                ? null
-                : {
-                    background:
-                      bar.kind === "amber" ? "var(--amber)" : "var(--green)",
-                    boxShadow: `0 0 6px ${bar.kind === "amber" ? "var(--amber-dim)" : "rgba(74,246,38,.4)"}`,
-                  }),
-            }}
-          />
-        </div>
-      )}
-    </div>
   );
 }

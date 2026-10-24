@@ -98,8 +98,15 @@ export default function Home() {
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
-    fetch(`/api/auth/me?login=${encodeURIComponent(user.login)}`)
-      .then((r) => (r.ok ? r.json() : null))
+    fetch("/api/auth/me")
+      .then((r) => {
+        // сессии нет/истекла (или это старая сессия без cookie) — просим войти заново
+        if (r.status === 401) {
+          if (!cancelled) useArchive.getState().logout();
+          return null;
+        }
+        return r.ok ? r.json() : null;
+      })
       .then((d) => {
         if (!cancelled && d?.ok && d.user) {
           useArchive.getState().patchUser({

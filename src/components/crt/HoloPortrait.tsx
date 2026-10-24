@@ -1,5 +1,7 @@
 "use client";
 
+import { optimizedSrc } from "@/lib/image";
+
 interface HoloPortraitProps {
   src: string;
   corrupted?: boolean;
@@ -93,9 +95,10 @@ export function HoloPortrait({
 
       {/* the portrait image — full rectangular */}
       <img
-        src={src}
+        src={optimizedSrc(src, full ? 420 : size)}
         alt="Портрет"
         loading="lazy"
+        decoding="async"
         className="relative z-10 object-cover"
         style={imgStyle}
         onError={(e) => {

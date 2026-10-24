@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { requireAdmin } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
 // POST /api/users/bind
-// Body: { requester, login, characterId | null }
+// Body: { login, characterId | null }
 // Привязка персонажа к аккаунту стража. Только ADMIN (проверка по БД).
 // characterId === null → отвязать.
 export async function POST(request: NextRequest) {
@@ -15,22 +16,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: 'BAD_JSON' }, { status: 400 })
   }
 
-  const requester = typeof body.requester === 'string' ? body.requester.trim() : ''
   const login = typeof body.login === 'string' ? body.login.trim() : ''
   const characterId =
     typeof body.characterId === 'string' && body.characterId.length > 0
       ? body.characterId
       : null
 
-  if (!requester || !login) {
+  if (!login) {
     return NextResponse.json({ ok: false, error: 'NO_LOGIN' }, { status: 400 })
   }
 
   // Права: только админ
-  const admin = await db.user.findUnique({ where: { login: requester } })
-  if (!admin || admin.role !== 'ADMIN') {
-    return NextResponse.json({ ok: false, error: 'FORBIDDEN' }, { status: 403 })
-  }
+  const auth = await requireAdmin(request)
+  if (auth.error) return auth.error
+  const admin = auth.user
 
   const user = await db.user.findUnique({ where: { login } })
   if (!user) {

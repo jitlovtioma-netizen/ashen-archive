@@ -40,7 +40,7 @@ export function UserProfileModal({
   useEffect(() => {
     sfx.whisper();
     fetch(
-      `/api/progress?login=${encodeURIComponent(target.login)}&requester=${encodeURIComponent(requester)}&system=${target.system}`,
+      `/api/progress?login=${encodeURIComponent(target.login)}&system=${target.system}`,
     )
       .then((r) => r.json())
       .then((d) => setProgress(d.progress ?? null))

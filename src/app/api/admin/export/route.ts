@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { requireAdmin } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GET /api/admin/export?requester=<login> — полный бэкап архива в JSON.
+// GET /api/admin/export — полный бэкап архива в JSON.
 //
 // Выгружает ВСЕ таблицы контента (включая ответы загадок и userModified-
 // записи) плюс пользователей с привязками досье. Файл скачивается кнопкой
@@ -15,13 +16,11 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
-  const requester = searchParams.get('requester') ?? ''
 
   try {
-    const admin = await db.user.findUnique({ where: { login: requester } })
-    if (!admin || admin.role !== 'ADMIN') {
-      return NextResponse.json({ ok: false, error: 'FORBIDDEN' }, { status: 403 })
-    }
+    const auth = await requireAdmin(request)
+    if (auth.error) return auth.error
+    const admin = auth.user
 
     const [characters, lore, locations, factions, riddles, achievements, users] =
       await Promise.all([

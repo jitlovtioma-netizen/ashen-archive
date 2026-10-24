@@ -1,7 +1,7 @@
 "use client";
 
 import { ArchiveSection } from "@/components/crt/ArchiveSection";
-import type { CardRecord } from "@components/crt/RecordCard";
+import type { CardRecord } from "@/components/crt/RecordCard";
 import {
   secretsShardsRequired,
   shardsWordGenitive,
@@ -28,11 +28,11 @@ const loreNormalize = (r: Lore) => ({
   shardWord: r.shardWord,
   mapX: r.mapX,
   mapY: r.mapY,
-  imageUrl: (r as Record<string, unknown>).imageUrl as string | null ?? null,
-  status: ((r as Record<string, unknown>).status as "ALIVE" | "DEAD" | "MISSING") ?? "ALIVE",
-  friendship: (r as Record<string, unknown>).friendship as number | null ?? null,
-  themeColor: (r as Record<string, unknown>).themeColor as string | null ?? null,
-  irisColor: (r as Record<string, unknown>).irisColor as string | null ?? null,
+  imageUrl: (r as unknown as Record<string, unknown>).imageUrl as string | null ?? null,
+  status: ((r as unknown as Record<string, unknown>).status as "ALIVE" | "DEAD" | "MISSING") ?? "ALIVE",
+  friendship: (r as unknown as Record<string, unknown>).friendship as number | null ?? null,
+  themeColor: (r as unknown as Record<string, unknown>).themeColor as string | null ?? null,
+  irisColor: (r as unknown as Record<string, unknown>).irisColor as string | null ?? null,
   recordType: "lore" as const,
 });
 
@@ -61,8 +61,8 @@ export function CharactersSection({ system }: SectionProps) {
         mapY: r.mapY,
         imageUrl: r.imageUrl,
         status: r.status as "ALIVE" | "DEAD" | "MISSING",
-        themeColor: (r as Record<string, unknown>).themeColor as string | null ?? null,
-  irisColor: (r as Record<string, unknown>).irisColor as string | null ?? null,
+        themeColor: (r as unknown as Record<string, unknown>).themeColor as string | null ?? null,
+  irisColor: (r as unknown as Record<string, unknown>).irisColor as string | null ?? null,
         recordType: "character",
         characterTitle: r.title,
         characterCategory: r.category,
@@ -81,7 +81,7 @@ export function LoreSection({ system }: SectionProps) {
       code="ЗАПРОС_БАЗА_ЛОРА"
       columns={1}
       blurb={`// история мира: катастрофы, эпохи, ресурсы //`}
-      filter={(r) => !(r as Record<string, unknown>).folder}
+      filter={(r) => !(r as unknown as Record<string, unknown>).folder}
       normalize={loreNormalize}
     />
   );
@@ -96,7 +96,7 @@ export function LoreGodsSection({ system }: SectionProps) {
       code="ЗАПРОС_ПАНТЕОН"
       columns={1}
       blurb={`// двенадцать божеств Эларии, что черпают силу из веры //`}
-      filter={(r) => (r as Record<string, unknown>).folder === "PANTHEON"}
+      filter={(r) => (r as unknown as Record<string, unknown>).folder === "PANTHEON"}
       normalize={loreNormalize}
     />
   );
@@ -111,7 +111,7 @@ export function LoreNpcsSection({ system }: SectionProps) {
       code="ЗАПРОС_ВТОРОСТЕПЕННЫЕ"
       columns={1}
       blurb={`// значимые NPC, встреченные партией в странствиях //`}
-      filter={(r) => (r as Record<string, unknown>).folder === "SECONDARY_HEROES"}
+      filter={(r) => (r as unknown as Record<string, unknown>).folder === "SECONDARY_HEROES"}
       revealAtMaxGaze="Отражение"
       sortByFriendship
       normalize={loreNormalize}
@@ -128,7 +128,7 @@ export function LoreSecretsSection({ system }: SectionProps) {
       code="СОКРЫТОЕ"
       columns={1}
       blurb={`// тайны, открытые тем, кто собрал ${shardsWordGenitive(secretsShardsRequired(system))} осколков памяти //`}
-      filter={(r) => (r as Record<string, unknown>).folder === "SECRETS"}
+      filter={(r) => (r as unknown as Record<string, unknown>).folder === "SECRETS"}
       emptyHint="secrets"
       normalize={loreNormalize}
     />
@@ -156,8 +156,8 @@ export function LocationsSection({ system }: SectionProps) {
         shardWord: r.shardWord,
         mapX: r.mapX,
         mapY: r.mapY,
-        themeColor: (r as Record<string, unknown>).themeColor as string | null ?? null,
-  irisColor: (r as Record<string, unknown>).irisColor as string | null ?? null,
+        themeColor: (r as unknown as Record<string, unknown>).themeColor as string | null ?? null,
+  irisColor: (r as unknown as Record<string, unknown>).irisColor as string | null ?? null,
         recordType: "location" as const,
       })}
     />

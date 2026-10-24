@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { requireUser } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -39,24 +40,22 @@ function parseOpens(raw: string): Record<string, number> {
   }
 }
 
-// GET /api/progress?login=X&requester=Y&system=DND
-// Свой прогресс — всегда; чужой — только если requester имеет роль ADMIN.
+// GET /api/progress?login=X&system=DND
+// Свой прогресс — всегда; чужой — только админу.
 export async function GET(request: NextRequest) {
   const sp = new URL(request.url).searchParams
   const login = sp.get('login')?.trim() ?? ''
-  const requester = sp.get('requester')?.trim() ?? ''
   const system = (sp.get('system') ?? 'DND').toUpperCase() === 'PF2E' ? 'PF2E' : 'DND'
 
   if (!login) {
     return NextResponse.json({ ok: false, error: 'NO_LOGIN' }, { status: 400 })
   }
 
-  // Проверка прав: сам пользователь или админ
-  if (login !== requester) {
-    const req = await db.user.findUnique({ where: { login: requester } })
-    if (!req || req.role !== 'ADMIN') {
-      return NextResponse.json({ ok: false, error: 'FORBIDDEN' }, { status: 403 })
-    }
+  // Проверка прав (по cookie сессии): сам пользователь или админ
+  const auth = await requireUser(request)
+  if (auth.error) return auth.error
+  if (login !== auth.user.login && auth.user.role !== 'ADMIN') {
+    return NextResponse.json({ ok: false, error: 'FORBIDDEN' }, { status: 403 })
   }
 
   const user = await db.user.findUnique({ where: { login } })
@@ -90,24 +89,22 @@ export async function GET(request: NextRequest) {
   })
 }
 
-// DELETE /api/progress?login=X&requester=Y&system=Z
+// DELETE /api/progress?login=X&system=Z
 // Полный сброс прогресса до нуля. Свой прогресс — всегда; чужой — только админ.
 export async function DELETE(request: NextRequest) {
   const sp = new URL(request.url).searchParams
   const login = sp.get('login')?.trim() ?? ''
-  const requester = sp.get('requester')?.trim() ?? ''
   const system = (sp.get('system') ?? 'DND').toUpperCase() === 'PF2E' ? 'PF2E' : 'DND'
 
   if (!login) {
     return NextResponse.json({ ok: false, error: 'NO_LOGIN' }, { status: 400 })
   }
 
-  // Проверка прав: сам пользователь или админ
-  if (login !== requester) {
-    const req = await db.user.findUnique({ where: { login: requester } })
-    if (!req || req.role !== 'ADMIN') {
-      return NextResponse.json({ ok: false, error: 'FORBIDDEN' }, { status: 403 })
-    }
+  // Проверка прав (по cookie сессии): сам пользователь или админ
+  const auth = await requireUser(request)
+  if (auth.error) return auth.error
+  if (login !== auth.user.login && auth.user.role !== 'ADMIN') {
+    return NextResponse.json({ ok: false, error: 'FORBIDDEN' }, { status: 403 })
   }
 
   const user = await db.user.findUnique({ where: { login } })
@@ -143,10 +140,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: 'NO_LOGIN' }, { status: 400 })
   }
 
-  const user = await db.user.findUnique({ where: { login } })
-  if (!user) {
-    return NextResponse.json({ ok: false, error: 'UNKNOWN_USER' }, { status: 404 })
+  // Сохранять можно только свой прогресс
+  const auth = await requireUser(request)
+  if (auth.error) return auth.error
+  if (login !== auth.user.login) {
+    return NextResponse.json({ ok: false, error: 'FORBIDDEN' }, { status: 403 })
   }
+  const user = auth.user
 
   const gazeRaw = typeof body.gaze === 'number' ? body.gaze : 7
   const gaze = Math.max(0, Math.min(100, Math.round(gazeRaw)))

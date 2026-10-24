@@ -249,7 +249,6 @@ export function disconnectPresence() {
   }
   if (supaChannel) {
     void supaChannel.unsubscribe();
-    void supaChannel.remove();
     supaChannel = null;
   }
   supaInitDone = false;

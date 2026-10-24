@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { requireAdmin } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // /api/admin/reorder — порядок записей в архиве (drag-n-drop в Мастерской).
 //
-// POST { requester, kind, system, ids }
+// POST { kind, system, ids }
 //   kind: 'character' | 'lore' | 'location' | 'faction'
 //   system: 'DND' | 'PF2E' (мир списка)
 //   ids: массив id записей В НОВОМ ПОРЯДКЕ (текущая вкладка Мастерской)
@@ -34,14 +35,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: 'BAD_JSON' }, { status: 400 })
   }
 
-  const requester = typeof body.requester === 'string' ? body.requester.trim() : ''
   const kind = String(body.kind ?? '') as SortKind
   const rawSystem = String(body.system ?? '').toUpperCase()
   const ids = Array.isArray(body.ids) ? body.ids : []
 
-  if (!requester) {
-    return NextResponse.json({ ok: false, error: 'NO_LOGIN' }, { status: 400 })
-  }
   if (!(SORTABLE_KINDS as readonly string[]).includes(kind)) {
     return NextResponse.json(
       { ok: false, error: 'BAD_KIND', hint: 'сортируются: character, lore, location, faction' },
@@ -70,14 +67,13 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const admin = await db.user.findUnique({ where: { login: requester } })
-    if (!admin || admin.role !== 'ADMIN') {
-      return NextResponse.json({ ok: false, error: 'FORBIDDEN' }, { status: 403 })
-    }
+    const auth = await requireAdmin(request)
+    if (auth.error) return auth.error
+    const admin = auth.user
     const system = rawSystem as System
 
     // все записи этого вида и мира — id из другого мира/таблицы отклоняем
-    const table =
+    const table = (
       kind === 'character'
         ? db.character
         : kind === 'lore'
@@ -85,6 +81,7 @@ export async function POST(request: NextRequest) {
           : kind === 'location'
             ? db.location
             : db.faction
+    ) as unknown as typeof db.character
     const inWorld = await table.findMany({
       where: { system },
       select: { id: true },

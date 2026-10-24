@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { requireUser } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
 // POST /api/characters/edit
-// Body: { requester, characterId, patch: { description?, title?, status? } }
+// Body: { characterId, patch: { description?, title?, status? } }
 //
 // Редактирование досье персонажа. Права:
 //   • ВЛАДЕЛЕЦ — страж, к которому персонаж привязан (user.characterId);
@@ -23,21 +24,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: 'BAD_JSON' }, { status: 400 })
   }
 
-  const requester = typeof body.requester === 'string' ? body.requester.trim() : ''
   const characterId = typeof body.characterId === 'string' ? body.characterId : ''
   const patch = (body.patch ?? {}) as Record<string, unknown>
 
-  if (!requester) {
-    return NextResponse.json({ ok: false, error: 'NO_LOGIN' }, { status: 400 })
-  }
   if (!characterId) {
     return NextResponse.json({ ok: false, error: 'NO_CHARACTER' }, { status: 400 })
   }
 
-  const user = await db.user.findUnique({ where: { login: requester } })
-  if (!user) {
-    return NextResponse.json({ ok: false, error: 'UNKNOWN_USER' }, { status: 404 })
-  }
+  const auth = await requireUser(request)
+  if (auth.error) return auth.error
+  const user = auth.user
 
   const character = await db.character.findUnique({ where: { id: characterId } })
   if (!character) {
