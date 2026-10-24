@@ -8,6 +8,8 @@ import {
   Cormorant_Garamond,
   Cormorant_SC,
   Marck_Script,
+  Alegreya,
+  Alegreya_SC,
 } from "next/font/google";
 import "./globals.css";
 import "./world-dnd.css";
@@ -82,6 +84,25 @@ const cormorantSC = Cormorant_SC({
   preload: false,
 });
 
+// Основной текст Хроники: книжный шрифт с крупным глазом букв — читается
+// и в мелких подписях (Cormorant остаётся только для крупных заголовков).
+const alegreya = Alegreya({
+  variable: "--font-book",
+  subsets: ["latin", "cyrillic"],
+  weight: ["400", "500", "700"],
+  style: ["normal", "italic"],
+  display: "swap",
+  preload: false,
+});
+
+const alegreyaSC = Alegreya_SC({
+  variable: "--font-book-sc",
+  subsets: ["latin", "cyrillic"],
+  weight: ["500", "700"],
+  display: "swap",
+  preload: false,
+});
+
 const marck = Marck_Script({
   variable: "--font-hand",
   subsets: ["latin", "cyrillic"],
@@ -130,6 +151,8 @@ export default function RootLayout({
         cormorant.variable,
         cormorantSC.variable,
         marck.variable,
+        alegreya.variable,
+        alegreyaSC.variable,
       ].join(" ")}
     >
       <body className="antialiased">

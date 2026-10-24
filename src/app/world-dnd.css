@@ -61,10 +61,14 @@ html[data-world="dnd"] {
   --input: var(--line);
   --ring: var(--green);
 
-  --ff-body: var(--font-serif), "Cormorant Garamond", Georgia, serif;
-  --ff-head: var(--font-serif-sc), var(--font-serif), Georgia, serif;
-  --ff-title: var(--font-serif), "Cormorant Garamond", Georgia, serif;
-  --ff-hand: var(--font-hand), var(--font-serif), cursive;
+  /* Alegreya — основной текст и подписи (читается в мелком размере);
+     Cormorant — только крупные заголовки (--ff-display);
+     Marck Script — только подпись на обложке (--ff-hand). */
+  --ff-body: var(--font-book), "Alegreya", Georgia, serif;
+  --ff-head: var(--font-book-sc), var(--font-book), Georgia, serif;
+  --ff-title: var(--font-book), "Alegreya", Georgia, serif;
+  --ff-display: var(--font-serif), var(--font-book), Georgia, serif;
+  --ff-hand: var(--font-hand), var(--font-book), cursive;
   --fs-body: 17px;
 
   --tale-radius: 10px;
@@ -87,21 +91,40 @@ html[data-world="dnd"] ::selection {
 
 /* Мелкие подписи CRT рассчитаны на моноширинный шрифт: у Cormorant
    маленький глаз буквы, поэтому крохотные размеры чуть поднимаем. */
-html[data-world="dnd"] .text-\[9px\] { font-size: 11.5px; }
-html[data-world="dnd"] .text-\[10px\] { font-size: 12.5px; }
-html[data-world="dnd"] .text-\[11px\] { font-size: 13.5px; }
-html[data-world="dnd"] .text-\[12px\] { font-size: 14.5px; }
-html[data-world="dnd"] .text-xs { font-size: 14px; }
-html[data-world="dnd"] .text-sm { font-size: 15.5px; }
+html[data-world="dnd"] .text-\[8px\] { font-size: 11px; }
+html[data-world="dnd"] .text-\[9px\] { font-size: 12.5px; }
+html[data-world="dnd"] .text-\[10px\] { font-size: 13.5px; }
+html[data-world="dnd"] .text-\[11px\] { font-size: 14.5px; }
+html[data-world="dnd"] .text-\[12px\] { font-size: 15px; }
+html[data-world="dnd"] .text-\[13px\] { font-size: 16px; }
+html[data-world="dnd"] .text-\[14px\] { font-size: 17px; }
+html[data-world="dnd"] .text-xs { font-size: 14.5px; }
+html[data-world="dnd"] .text-sm { font-size: 16px; }
+html[data-world="dnd"] .text-base { font-size: 17.5px; }
+/* межбуквенная разрядка CRT-подписей мешает читать книжный шрифт */
+html[data-world="dnd"] .tracking-widest,
+html[data-world="dnd"] .tracking-\[0\.3em\],
+html[data-world="dnd"] .tracking-\[0\.25em\],
+html[data-world="dnd"] .tracking-\[0\.2em\] {
+  letter-spacing: 0.06em;
+}
+html[data-world="dnd"] .tracking-wider {
+  letter-spacing: 0.03em;
+}
 
 /* заголовки-имена — гарнитура с характером, без «табличного» разрядки */
 html[data-world="dnd"] .font-medieval {
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.01em !important;
 }
 html[data-world="dnd"] .font-vt323 {
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
+}
+/* крупные заголовки разделов — парадная гарнитура */
+html[data-world="dnd"] h2.font-medieval {
+  font-family: var(--ff-display);
+  font-size: 1.9rem;
 }
 
 /* ── Свечение: мягкое золото вместо фосфора ─────────────────────────────── */
@@ -180,9 +203,11 @@ html[data-world="dnd"] .brackets::after {
 
 /* ── Кнопки и чипы ──────────────────────────────────────────────────────── */
 html[data-world="dnd"] .btn-crt {
-  font-family: var(--ff-head);
+  /* обычное начертание: у капители строчные буквы слишком мелкие */
+  font-family: var(--ff-body);
+  font-weight: 500;
   text-transform: none;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
   border-radius: 8px;
   border-color: rgba(233, 200, 116, 0.18);
   background: rgba(255, 255, 255, 0.02);
@@ -369,7 +394,7 @@ body.gaze-extreme .tale-vignette {
 }
 .chapter-heading {
   margin-top: 0.35rem;
-  font-family: var(--ff-title);
+  font-family: var(--ff-display);
   font-style: italic;
   font-size: 1.15rem;
   color: var(--text-dim);
@@ -377,8 +402,9 @@ body.gaze-extreme .tale-vignette {
 .chapter-narration {
   max-width: 44rem;
   margin: 0.6rem auto 0;
-  font-family: var(--ff-hand);
-  font-size: 1.28rem;
+  font-family: var(--ff-body);
+  font-style: italic;
+  font-size: 1.12rem;
   line-height: 1.5;
   color: #e6def4;
 }
@@ -472,7 +498,7 @@ html[data-world="dnd"] .world-footer {
   text-transform: uppercase;
 }
 .tale-cover-title {
-  font-family: var(--ff-title);
+  font-family: var(--ff-display);
   font-weight: 700;
   font-size: clamp(2.1rem, 7vw, 2.9rem);
   line-height: 1.05;
@@ -530,8 +556,9 @@ html[data-world="dnd"] .world-footer {
 }
 .tale-page-body {
   flex: 1;
-  font-family: var(--ff-hand);
-  font-size: clamp(1.2rem, 3.6vw, 1.5rem);
+  font-family: var(--ff-body);
+  font-style: italic;
+  font-size: clamp(1.1rem, 3.4vw, 1.3rem);
   line-height: 1.55;
 }
 .tale-line {
@@ -539,7 +566,8 @@ html[data-world="dnd"] .world-footer {
   animation: inkIn 1.2s ease both;
 }
 .tale-line:first-child::first-letter {
-  font-family: var(--ff-title);
+  font-family: var(--ff-display);
+  font-style: normal;
   font-weight: 700;
   font-size: 2.6em;
   float: left;
@@ -578,7 +606,7 @@ html[data-world="dnd"] .world-footer {
 
 @media (max-width: 640px) {
   .chapter-narration {
-    font-size: 1.08rem;
+    font-size: 1.02rem;
   }
   .chapter-heading {
     font-size: 1rem;
