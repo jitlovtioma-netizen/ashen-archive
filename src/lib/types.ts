@@ -120,7 +120,7 @@ export interface Lore extends BaseRecord {
   imageUrl?: string | null;
   sortOrder?: number;
   status?: string;
-  friendship?: number | null; // шкала дружбы (1-10) для второстепенных NPC
+  friendship?: number | null; // шкала дружбы (1-10); -1 — «неизвестно» (FRIENDSHIP_UNKNOWN)
 }
 
 export interface Location extends BaseRecord {
@@ -186,6 +186,10 @@ export const SYSTEM_WORLD: Record<GameSystem, string> = {
 };
 
 export const SYSTEM_COLOR: Record<GameSystem, string> = {
-  DND: "var(--red)",
+  // --world-dnd: красный в CRT-архиве, золото в «Хронике Эларии»
+  DND: "var(--world-dnd)",
   PF2E: "var(--cyan)",
 };
+
+/** Значение шкалы дружбы «отношения неизвестны» (вместо 1–10). */
+export const FRIENDSHIP_UNKNOWN = -1;

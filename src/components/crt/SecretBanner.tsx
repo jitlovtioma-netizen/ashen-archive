@@ -25,7 +25,7 @@ export function SecretBanner() {
         className="panel clip-hud brackets max-w-lg w-full p-6 text-center fade-in"
         style={{
           borderColor: "var(--violet)",
-          boxShadow: "0 0 40px rgba(167,139,250,0.4)",
+          boxShadow: "0 0 40px rgba(var(--violet-rgb),0.4)",
         }}
       >
         <div className="text-5xl mb-4 glow-violet pulse-slow">👁</div>

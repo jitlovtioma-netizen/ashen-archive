@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useArchive } from "@/lib/store";
 import { startAudio, sfx } from "@/lib/audio";
 import { SYSTEM_WORLD, SYSTEM_SHORT, type GameSystem } from "@/lib/types";
+import { ChronicleOpening } from "./ChronicleOpening";
 
 function bootLines(system: GameSystem) {
   const world = SYSTEM_WORLD[system];
@@ -25,6 +26,13 @@ function bootLines(system: GameSystem) {
 type Phase = "gate" | "flash" | "log" | "done";
 
 export function BootSequence() {
+  const isDnd = useArchive((s) => s.user?.system === "DND");
+  const booted = useArchive((s) => s.booted);
+  if (booted) return null;
+  return isDnd ? <ChronicleOpening /> : <TerminalBoot />;
+}
+
+function TerminalBoot() {
   const booted = useArchive((s) => s.booted);
   const setBooted = useArchive((s) => s.setBooted);
   const user = useArchive((s) => s.user);

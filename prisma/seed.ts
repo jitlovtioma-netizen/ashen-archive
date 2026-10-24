@@ -28,6 +28,7 @@
 // ============================================================================
 
 import { db } from '../src/lib/db'
+import { KALI_CATEGORY, KALI_DESCRIPTION, KALI_FRIENDSHIP, KALI_IMAGE, KALI_STATUS } from './kali'
 import { randomBytes, scryptSync } from 'node:crypto'
 
 /** Тот же формат, что и src/lib/auth.ts: scrypt$<salt>$<hash> */
@@ -1449,34 +1450,16 @@ async function main() {
       },
       {
         title: 'Кали',
-        category: 'Божественная Сущность · Запечатана',
+        category: KALI_CATEGORY,
+        status: KALI_STATUS,
         system: 'DND',
-        description:
-          'На вид девушка, пыталась манипулировать Бруно и его мыслями, с помощью своей власти свела его с ума, и убила Амелию, после чего прокляла её тело. В будущем благодаря манипуляциям смогла убедить его открыть дверь в самое глубокое место сознания, и она начала убивать частички разума, и забирать полный контроль над его разумом и телом.\n\n' +
-          melt('...но в какой-то момент пространство вздогнуло... ') +
-          'Лицимерие' +
-          melt(' ...её шёпот... ') +
-          melt('Бруно начал просыпаться от сна... ') +
-          'Двуличность' +
-          melt(' ...неизвестное существо начало говорить ему... ') +
-          melt('«Очнись! Это она убила Амелию!»... ') +
-          'Враг' +
-          melt(' ...она сделала так, чтобы ты видел в ней... ') +
-          melt('Бруно прозрел, он понял кто настоящий... ') +
-          'Никчёмность' +
-          melt(' ...попытался дать отпор, но сил не хватало... ') +
-          'Смерть' +
-          melt(' ...кукла под контролем Кали сражалась против... ') +
-          melt('Раудона, Мурасаки и Реми... меч Кайма начал пульсировать... ') +
-          'Боль' +
-          melt(' ...меч вонзился в её тело и запечатал её в разуме... ') +
-          melt('но на долго ли?...'),
+        description: KALI_DESCRIPTION,
         sigil: '🔮',
         mapX: 300,
         mapY: 320,
         isCorrupted: true,
-        imageUrl: img('heroes/kali.png'),
-        friendship: 2,
+        imageUrl: img(KALI_IMAGE),
+        friendship: KALI_FRIENDSHIP,
         folder: 'SECONDARY_HEROES',
         sortOrder: 4,
         shardWord: 'реальность',
@@ -1612,7 +1595,8 @@ async function main() {
         mapX: 700,
         mapY: 470,
         friendship: 4,
-        imageUrl: img('heroes/tey.png'),
+        // арта ещё нет (файл tey.png так и не был загружен) — показывается символ 🎩
+        imageUrl: null,
         folder: 'SECONDARY_HEROES',
         sortOrder: 97,
       },

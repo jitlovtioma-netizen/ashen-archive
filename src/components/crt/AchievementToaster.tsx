@@ -9,7 +9,7 @@ const KIND_STYLE: Record<
 > = {
   ach: { border: "var(--amber-dim)", glow: "glow-amber", label: "ДОСТИЖЕНИЕ" },
   secret: {
-    border: "rgba(167,139,250,0.5)",
+    border: "rgba(var(--violet-rgb),0.5)",
     glow: "glow-violet",
     label: "СОКРЫТОЕ",
   },

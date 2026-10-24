@@ -29,12 +29,26 @@ const NAV_ADMIN: NavItem = {
   sigil: "✎",
 };
 
+// В «Хронике Эларии» вместо кодов терминала — главы книги
+const TALE_CHAPTER: Record<string, string> = {
+  profile: "Пролог",
+  admin: "Перо Созидателя",
+  characters: "Глава I",
+  factions: "Глава II",
+  lore: "Глава III",
+  lore_gods: "Глава IV",
+  lore_npcs: "Глава V",
+  locations: "Глава VI",
+  secrets: "Запечатано",
+};
+
 export function Sidebar() {
   const section = useArchive((s) => s.section);
   const setSection = useArchive((s) => s.setSection);
   const shards = useArchive((s) => s.shards);
   const gaze = useArchive((s) => s.gaze);
   const user = useArchive((s) => s.user);
+  const isDnd = user?.system === "DND";
   const totalShardWords = useArchive((s) => s.totalShardWords);
 
   const onNav = (k: Section) => {
@@ -79,7 +93,8 @@ export function Sidebar() {
       aria-label="Архивный индекс"
     >
       <div className="hidden md:block text-[10px] text-dim tracking-widest px-2 py-1 border-b border-[var(--line)] mb-1">
-        {"// АРХИВНЫЙ_ИНДЕКС"}
+        <span className="crt-only">{"// АРХИВНЫЙ_ИНДЕКС"}</span>
+        <span className="tale-only">Оглавление</span>
       </div>
 
       {fullNav.map((item) => (
@@ -93,7 +108,7 @@ export function Sidebar() {
           <span className="text-base leading-none">{item.sigil}</span>
           <span className="flex flex-col items-start leading-tight">
             <span className="text-[10px] text-dim tracking-wider hidden md:inline">
-              {item.code}
+              {isDnd ? TALE_CHAPTER[item.key] ?? "" : item.code}
             </span>
             <span className="text-xs tracking-wider">{item.label}</span>
           </span>
@@ -167,7 +182,7 @@ export function Sidebar() {
                 color: user.role === "ADMIN" ? "var(--amber)" : "var(--green)",
                 textShadow:
                   user.role === "ADMIN"
-                    ? "0 0 8px rgba(232,161,58,0.6)"
+                    ? "0 0 8px rgba(var(--amber-rgb),0.6)"
                     : "0 0 8px rgba(79,239,134,0.5)",
               }}
             >
@@ -175,7 +190,7 @@ export function Sidebar() {
             </div>
             <div
               className="text-[9px] tracking-wider"
-              style={{ color: user.system === "DND" ? "var(--red)" : "var(--cyan)" }}
+              style={{ color: user.system === "DND" ? "var(--world-dnd)" : "var(--cyan)" }}
             >
               {user.system === "DND" ? "D&D 5e · Элария" : "PF2e · Голарион"}
             </div>

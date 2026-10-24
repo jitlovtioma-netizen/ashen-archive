@@ -257,7 +257,8 @@ export function rowView(data: AdminData, kind: RecKind, r: AnyRow): RowView {
     if (l.folder) chips.push({ text: FOLDER_LABELS[l.folder] ?? l.folder });
     if (l.status === "DEAD") chips.push({ text: "💀 ПАЛ", cls: "chip-err" });
     if (l.status === "MISSING") chips.push({ text: "? ПРОПАЛ", cls: "chip-warn" });
-    if (l.friendship) chips.push({ text: `❤ ${l.friendship}/10`, title: "Шкала дружбы" });
+    if (l.friendship === -1) chips.push({ text: "❔ ???", title: "Отношения неизвестны" });
+    else if (l.friendship) chips.push({ text: `❤ ${l.friendship}/10`, title: "Шкала дружбы" });
   } else if (kind === "location") {
     // без доп. чипов
   } else if (kind === "faction") {

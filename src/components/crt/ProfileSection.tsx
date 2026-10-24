@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ChapterIntro } from "./ChapterIntro";
 import { createPortal } from "react-dom";
 import { useArchive } from "@/lib/store";
-import { usePresence, kickUser, presenceEnabled } from "@/lib/presence";
+import { usePresence, kickUser, presenceEnabled, presenceBackend } from "@/lib/presence";
 import { sfx } from "@/lib/audio";
 import type { Achievement, Character, GameSystem, PresenceUser, UserSummary } from "@/lib/types";
 import { Sigil } from "@/components/crt/Sigil";
@@ -267,7 +268,8 @@ export function ProfileSection({ system }: { system: GameSystem }) {
   return (
     <section className="flex flex-col gap-3">
       {/* ─── шапка раздела ─── */}
-      <div className="panel clip-hud-sm px-3 py-2 flex items-center gap-2 flex-wrap">
+      <ChapterIntro code="ЗАПРОС_ПРОФИЛЬ_СТРАЖА" />
+      <div className="crt-only panel clip-hud-sm px-3 py-2 flex items-center gap-2 flex-wrap">
         <span className="text-[10px] text-dim tracking-widest">
           КОРЕНЬ &gt; СЕКТОР_{system} &gt;
         </span>
@@ -291,7 +293,7 @@ export function ProfileSection({ system }: { system: GameSystem }) {
         <h2 className="font-medieval text-2xl glow-amber tracking-wider">
           Профиль стража
         </h2>
-        <span className="text-[10px] text-dim">
+        <span className="crt-only text-[10px] text-dim">
           {"// досье, прогресс и братья по архиву //"}
         </span>
       </div>
@@ -305,7 +307,7 @@ export function ProfileSection({ system }: { system: GameSystem }) {
               className="panel-inset p-3 shrink-0"
               style={{
                 borderColor: isAdmin ? "var(--amber-dim)" : undefined,
-                boxShadow: isAdmin ? "0 0 24px rgba(232,161,58,0.18)" : undefined,
+                boxShadow: isAdmin ? "0 0 24px rgba(var(--amber-rgb),0.18)" : undefined,
               }}
             >
               <Sigil
@@ -340,7 +342,7 @@ export function ProfileSection({ system }: { system: GameSystem }) {
                     borderColor:
                       system === "DND"
                         ? "var(--red-dim)"
-                        : "rgba(63,214,200,0.4)",
+                        : "rgba(var(--cyan-rgb),0.4)",
                   }}
                 >
                   {SYS_LABEL[system]}
@@ -454,7 +456,7 @@ export function ProfileSection({ system }: { system: GameSystem }) {
                 style={{
                   borderColor: "var(--amber-dim)",
                   color: "var(--amber)",
-                  background: "rgba(232, 161, 58, 0.08)",
+                  background: "rgba(var(--amber-rgb), 0.08)",
                 }}
               >
                 ✎ ОТКРЫТЬ ДОСЬЕ
@@ -791,7 +793,8 @@ export function ProfileSection({ system }: { system: GameSystem }) {
                     ) : (
                       <span className="text-[9px] text-dim italic">новичок</span>
                     )}
-                    {isOnline && !isSelf && isAdmin && (
+                    {/* изгнание работает только через socket-сервис */}
+                    {isOnline && !isSelf && isAdmin && presenceBackend === "socket" && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();

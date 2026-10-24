@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type CSSProperties } from "react";
+import { ChapterIntro } from "@/components/crt/ChapterIntro";
 import { useFactions } from "@/lib/useFactions";
 import { RecordCard } from "@/components/crt/RecordCard";
 import { Sigil } from "@/components/crt/Sigil";
@@ -47,7 +48,8 @@ export function FactionsSection({ system }: FactionSectionProps) {
 
   return (
     <section className="flex flex-col gap-3 h-full">
-      <div className="panel clip-hud-sm px-3 py-2 flex items-center gap-2 flex-wrap">
+      <ChapterIntro code="РЕЕСТР_ФРАКЦИЙ" />
+      <div className="crt-only panel clip-hud-sm px-3 py-2 flex items-center gap-2 flex-wrap">
         <span className="text-[10px] text-dim tracking-widest">
           КОРЕНЬ &gt; СЕКТОР_{system} &gt;
         </span>
@@ -64,7 +66,7 @@ export function FactionsSection({ system }: FactionSectionProps) {
         <h2 className="font-medieval text-2xl glow-amber tracking-wider title-sweep">
           Фракции
         </h2>
-        <span className="text-[10px] text-dim">
+        <span className="crt-only text-[10px] text-dim">
           {"// организации и государства. раскройте папку, чтобы увидеть значимых персонажей //"}
         </span>
       </div>

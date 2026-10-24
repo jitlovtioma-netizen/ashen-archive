@@ -164,7 +164,7 @@ export function SinsWheel({ onClose }: SinsWheelProps) {
           </div>
           <h2
             className="font-medieval text-2xl sm:text-3xl glow-amber tracking-wider"
-            style={{ textShadow: "0 0 12px rgba(232, 161, 58, 0.5)" }}
+            style={{ textShadow: "0 0 12px rgba(var(--amber-rgb), 0.5)" }}
           >
             КОЛЕСО ГРЕХОВ
           </h2>
@@ -181,7 +181,7 @@ export function SinsWheel({ onClose }: SinsWheelProps) {
               alt="Колесо грехов"
               className="absolute inset-0 w-full h-full object-contain rounded-full"
               style={{
-                filter: "drop-shadow(0 0 30px rgba(232, 161, 58, 0.3))",
+                filter: "drop-shadow(0 0 30px rgba(var(--amber-rgb), 0.3))",
               }}
             />
             {/* Кликабельные зоны — грехи (кнопки на черепах, в полный размер) */}
@@ -204,13 +204,13 @@ export function SinsWheel({ onClose }: SinsWheelProps) {
                   className="w-full h-full rounded-full transition-all"
                   style={{
                     background: sin.available
-                      ? "rgba(232, 161, 58, 0.1)"
+                      ? "rgba(var(--amber-rgb), 0.1)"
                       : "transparent",
                     border: sin.available
-                      ? "2px solid rgba(232, 161, 58, 0.5)"
+                      ? "2px solid rgba(var(--amber-rgb), 0.5)"
                       : "2px solid transparent",
                     boxShadow: sin.available
-                      ? "0 0 16px rgba(232, 161, 58, 0.3)"
+                      ? "0 0 16px rgba(var(--amber-rgb), 0.3)"
                       : "none",
                     opacity: sin.available ? 1 : 0.4,
                     cursor: sin.available ? "pointer" : "default",
@@ -253,7 +253,7 @@ export function SinsWheel({ onClose }: SinsWheelProps) {
                     src={selectedSin.outcomeImage}
                     alt={selectedSin.name}
                     className="w-full max-h-[150px] md:max-h-[250px] object-contain rounded"
-                    style={{ filter: "drop-shadow(0 0 10px rgba(232, 161, 58, 0.3))" }}
+                    style={{ filter: "drop-shadow(0 0 10px rgba(var(--amber-rgb), 0.3))" }}
                   />
                 </div>
               )}

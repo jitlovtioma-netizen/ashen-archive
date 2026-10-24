@@ -182,7 +182,7 @@ function splitPunct(w: string): { core: string; tail: string } {
 
 type Piece =
   | { t: "space"; s: string }
-  | { t: "word"; w: string }
+  | { t: "word"; w: string; anchor?: boolean }
   | { t: "corrupt"; core: string; tail: string; glyphs: string; ghost?: boolean }
   | { t: "oblivion"; core: string; tail: string; glyphs: string; full: string };
 
@@ -190,14 +190,9 @@ type Line = Piece[];
 
 // Якоря смысла в досье Кали: шесть грехов-слов, которые искажение
 // не смеет тронуть — только они остаются читаемыми в расплавленном тексте.
-export const KALI_ANCHORS = [
-  "Лицимерие",
-  "Двуличность",
-  "Враг",
-  "Никчёмность",
-  "Смерть",
-  "Боль",
-];
+// Досье Кали целиком съедено ирисом ⟪…⟫ — уцелело одно слово.
+// Якорь защищён от порчи и от «поглощения» ириса при повторных открытиях.
+export const KALI_ANCHORS = ["Цикл"];
 
 function buildLines(
   text: string,
@@ -287,7 +282,8 @@ function buildLines(
             });
           }
         } else {
-          lines[lines.length - 1].push({ t: "word", w: core + tail });
+          // слово-якорь (protect) выделяется: оно уцелело вопреки искажению
+          lines[lines.length - 1].push({ t: "word", w: core + tail, anchor: isProtected });
         }
       }
     });
@@ -479,7 +475,15 @@ export function CorruptedText({
             ? "\u00A0"
             : line.map((p, pi) => {
                 if (p.t === "space") return p.s;
-                if (p.t === "word") return p.w;
+                if (p.t === "word") {
+                  return p.anchor ? (
+                    <span key={pi} className="iris-anchor" title="Единственное, что уцелело">
+                      {p.w}
+                    </span>
+                  ) : (
+                    p.w
+                  );
+                }
                 if (p.t === "oblivion") {
                   return (
                     <span

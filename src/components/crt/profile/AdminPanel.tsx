@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useArchive } from "@/lib/store";
-import { sendBroadcast } from "@/lib/presence";
+import { sendBroadcast, presenceBackend } from "@/lib/presence";
 import { sfx } from "@/lib/audio";
 import type { Character, GameSystem, UserSummary } from "@/lib/types";
 
@@ -97,7 +97,9 @@ export function AdminPanel({
         </span>
       </div>
 
-      {/* вещание */}
+      {/* вещание — только через socket-сервис (в остальных режимах некому доставить) */}
+      {presenceBackend === "socket" && (
+        <>
       <div className="panel-inset p-3 mb-3">
         <div className="text-[10px] text-dim tracking-widest mb-2">
           {"// ВЕЩАНИЕ_НА_ВЕСЬ_ЭКРАН //"}
@@ -123,6 +125,9 @@ export function AdminPanel({
           </span>
         </div>
       </div>
+
+        </>
+      )}
 
       {/* привязка персонажей */}
       <div className="panel-inset p-3">

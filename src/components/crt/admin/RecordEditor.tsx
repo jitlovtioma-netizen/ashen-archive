@@ -163,7 +163,7 @@ export function RecordEditor({
       className="panel clip-hud brackets p-3 sm:p-4 space-y-3 fade-in"
       style={{
         borderColor: "var(--amber-dim)",
-        boxShadow: "0 0 30px rgba(232,161,58,0.12)",
+        boxShadow: "0 0 30px rgba(var(--amber-rgb),0.12)",
       }}
     >
       {/* header */}
@@ -647,14 +647,24 @@ export function RecordEditor({
                 type="range"
                 min={0}
                 max={10}
-                value={draft.friendship ? parseInt(draft.friendship, 10) : 0}
+                disabled={draft.friendship === "-1"}
+                value={draft.friendship && draft.friendship !== "-1" ? parseInt(draft.friendship, 10) : 0}
                 onChange={(e) => setDraft({ friendship: e.target.value === "0" ? "" : e.target.value })}
-                className="flex-1 accent-[var(--amber)]"
+                className="flex-1 accent-[var(--amber)] disabled:opacity-30"
                 aria-label="Шкала дружбы"
               />
               <span className="text-[11px] glow-amber w-8 text-center">
-                {draft.friendship ? `${draft.friendship}/10` : "—"}
+                {draft.friendship === "-1" ? "???" : draft.friendship ? `${draft.friendship}/10` : "—"}
               </span>
+              <button
+                type="button"
+                className="btn-crt px-2 py-0.5 text-[10px]"
+                data-active={draft.friendship === "-1"}
+                onClick={() => setDraft({ friendship: draft.friendship === "-1" ? "" : "-1" })}
+                title="Отношения неизвестны — вместо шкалы показывается «???»"
+              >
+                НЕИЗВЕСТНО
+              </button>
             </div>
           </Field>
         )}
@@ -842,7 +852,7 @@ export function RecordEditor({
               "color-mix(in srgb, var(--panel-1) 88%, transparent)",
             backdropFilter: "blur(6px)",
             boxShadow: dirty
-              ? "0 6px 24px rgba(0,0,0,0.45), 0 0 18px rgba(232,161,58,0.10)"
+              ? "0 6px 24px rgba(0,0,0,0.45), 0 0 18px rgba(var(--amber-rgb),0.10)"
               : "0 6px 24px rgba(0,0,0,0.45)",
           }}
         >

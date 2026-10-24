@@ -1,6 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
+import { ChapterIntro } from "./ChapterIntro";
 import { useArchiveData } from "@/lib/useArchiveData";
 import { RecordCard, type CardRecord } from "./RecordCard";
 import { useArchive } from "@/lib/store";
@@ -86,7 +87,8 @@ export function ArchiveSection<T>({
 
   return (
     <section className="flex flex-col gap-3 h-full">
-      <div className="panel clip-hud-sm px-3 py-2 flex items-center gap-2 flex-wrap">
+      <ChapterIntro code={code} />
+      <div className="crt-only panel clip-hud-sm px-3 py-2 flex items-center gap-2 flex-wrap">
         <span className="text-[10px] text-dim tracking-widest">
           КОРЕНЬ &gt; СЕКТОР_{system} &gt;
         </span>
@@ -132,7 +134,7 @@ export function ArchiveSection<T>({
           className="panel clip-hud brackets p-8 sm:p-12 text-center fade-in"
           style={{
             borderColor: "var(--violet-dim)",
-            boxShadow: "0 0 40px rgba(167, 139, 250, 0.12)",
+            boxShadow: "0 0 40px rgba(var(--violet-rgb), 0.12)",
           }}
         >
           <div className="text-5xl mb-4 pulse-slow">🔓</div>

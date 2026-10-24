@@ -103,7 +103,7 @@ export function Stat({
                 : {
                     background:
                       bar.kind === "amber" ? "var(--amber)" : "var(--green)",
-                    boxShadow: `0 0 6px ${bar.kind === "amber" ? "var(--amber-dim)" : "rgba(74,246,38,.4)"}`,
+                    boxShadow: `0 0 6px ${bar.kind === "amber" ? "var(--amber-dim)" : "rgba(var(--green-rgb),.4)"}`,
                   }),
             }}
           />

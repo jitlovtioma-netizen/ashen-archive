@@ -5,28 +5,43 @@ import { getSessionUser } from '@/lib/auth'
 export const dynamic = 'force-dynamic'
 
 // ============================================================================
-// /api/presence — «был в сети» для бесплатного режима онлайна (Supabase
-// Realtime). Клиент раз в минуту отмечается POST'ом; GET возвращает карту
-// login → epoch последнего визита (за последние 30 дней, не больше 100).
-// Модель безопасности — как у остальных роутов архива: логин доверенный,
-// это архив дружеской партии, а не банк.
+// /api/presence — онлайн без внешних сервисов. Клиент отмечается POST'ом
+// (только за себя — проверяется сессия); GET отдаёт «был в сети» (карта
+// login → epoch за 30 дней) и список тех, кто в сети прямо сейчас.
 // ============================================================================
 
-// GET /api/presence → { ok: true, lastSeen: { [login]: number } }
+// Страж считается «в сети», если отмечался не дольше этого времени назад
+// (клиент в режиме опроса отмечается раз в 30 секунд).
+const ONLINE_WINDOW_MS = 90_000
+
+// GET /api/presence →
+//   { ok, lastSeen: { [login]: epoch }, online: [{ login, displayName, system, role }] }
+// online — для режима «опрос сервера» (без Supabase Realtime и без socket.io).
 export async function GET() {
   try {
     const since = new Date(Date.now() - 30 * 24 * 3600 * 1000)
     const users = await db.user.findMany({
       where: { lastSeenAt: { gte: since } },
-      select: { login: true, lastSeenAt: true },
+      select: { login: true, displayName: true, system: true, role: true, lastSeenAt: true },
       orderBy: { lastSeenAt: 'desc' },
       take: 100,
     })
     const lastSeen: Record<string, number> = {}
+    const online: { login: string; displayName: string; system: string; role: string }[] = []
+    const onlineAfter = Date.now() - ONLINE_WINDOW_MS
     for (const u of users) {
-      if (u.lastSeenAt) lastSeen[u.login] = u.lastSeenAt.getTime()
+      if (!u.lastSeenAt) continue
+      lastSeen[u.login] = u.lastSeenAt.getTime()
+      if (u.lastSeenAt.getTime() >= onlineAfter) {
+        online.push({
+          login: u.login,
+          displayName: u.displayName,
+          system: u.system === 'PF2E' ? 'PF2E' : 'DND',
+          role: u.role === 'ADMIN' ? 'ADMIN' : 'USER',
+        })
+      }
     }
-    return NextResponse.json({ ok: true, lastSeen })
+    return NextResponse.json({ ok: true, lastSeen, online })
   } catch (e) {
     console.error('[api/presence] GET error:', e)
     return NextResponse.json(

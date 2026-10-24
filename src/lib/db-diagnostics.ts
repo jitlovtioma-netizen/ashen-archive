@@ -18,7 +18,7 @@ export function dbHint(e: unknown): string {
     return (
       "Провайдер Prisma не совпадает с DATABASE_URL. " +
       'На Vercel+Supabase в prisma/schema.prisma должно быть provider = "postgresql" ' +
-      "(см. README_VERCEL.md, раздел «HTTP 500»)."
+      "(см. README.md, раздел «Деплой»)."
     )
   }
 
@@ -44,7 +44,7 @@ export function dbHint(e: unknown): string {
     return (
       "В базе нет таблиц. Локально: bun run db:use-postgres, в .env — direct-ссылка " +
       "Supabase (5432), затем bunx prisma db push && bun run db:seed && " +
-      "bun run prisma/bind-characters.ts (см. README_VERCEL.md, шаг 2)."
+      "bun run prisma/bind-characters.ts (см. README.md)."
     )
   }
 

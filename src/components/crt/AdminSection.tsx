@@ -11,7 +11,7 @@ import { RecKind, TabKey, AdminCharacterRow, AdminLoreRow, AdminLocationRow, Adm
 import { emptyDraft, draftFromRow, buildPayload, tabForRecord, rowsForTab, rowView } from "./admin/drafts";
 import { RecordRow } from "./admin/RecordRow";
 import { RecordEditor } from "./admin/RecordEditor";
-import { useDiagnostics, useSeedArchive } from "./admin/hooks";
+import { useDiagnostics } from "./admin/hooks";
 
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -60,7 +60,6 @@ export function AdminSection({ system: userSystem }: { system: GameSystem }) {
   const [restoreError, setRestoreError] = useState<string | null>(null);
   const restoreFileRef = useRef<HTMLInputElement | null>(null);
   const { diag, runDiagnostics } = useDiagnostics(pushToast);
-  const { seedState, seedSize, seedBusy, downloadSeedZip, buildSeedZip } = useSeedArchive(user, pushToast);
 
   const activeTab = TABS.find((t) => t.key === tab) ?? TABS[0];
 
@@ -868,38 +867,6 @@ export function AdminSection({ system: userSystem }: { system: GameSystem }) {
         >
           ⇧ ВОССТАНОВИТЬ
         </button>
-        {/* v5.7.1 — seed.zip: весь проект одним файлом. «⇩» скачивает готовый
-            архив (исходники + база + доки — для развёртывания вручную);
-            если файл потерялся (фантом песочницы) — «⟳» пересобирает его */}
-        <button
-          onClick={() =>
-            seedState === "ready" ? void downloadSeedZip() : void buildSeedZip()
-          }
-          disabled={seedBusy || seedState === "checking"}
-          data-state={
-            seedState === "ready" ? "ready" : seedState === "checking" ? "checking" : "missing"
-          }
-          onMouseEnter={() => sfx.hover()}
-          className="btn-crt seed-zip-btn clip-hud-sm px-3 py-2 text-[10px]"
-          title={
-            seedState === "ready"
-              ? `Скачать seed.zip — полный архив проекта${seedSize ? ` (${(seedSize / 1024).toFixed(0)} КБ)` : ""}: исходники, база, доки, worklog. Для развёртывания вручную`
-              : "seed.zip потерялся (фантом песочницы) — пересобрать архив проекта прямо из браузера"
-          }
-        >
-          {seedBusy
-            ? "⟳ СОБИРАЮ…"
-            : seedState === "ready"
-              ? `⇩ АРХИВ${seedSize ? ` · ${(seedSize / 1024).toFixed(0)} КБ` : ""}`
-              : seedState === "checking"
-                ? "⇩ АРХИВ…"
-                : "⟳ СОБРАТЬ АРХИВ"}
-        </button>
-        {seedBusy && (
-          <span className="seed-zip-busy-glyph text-[11px] glow-amber" aria-hidden>
-            ⟳
-          </span>
-        )}
         {restoreError && (
           <span
             className="text-[10px] leading-relaxed max-w-[280px] truncate"
@@ -1361,7 +1328,7 @@ export function AdminSection({ system: userSystem }: { system: GameSystem }) {
                   borderColor: "var(--amber)",
                   background: "var(--panel-2)",
                   boxShadow:
-                    "0 14px 36px rgba(0,0,0,0.55), 0 0 26px rgba(232,161,58,0.28)",
+                    "0 14px 36px rgba(0,0,0,0.55), 0 0 26px rgba(var(--amber-rgb),0.28)",
                   transform: "rotate(1.2deg) scale(1.02)",
                   maxWidth: 560,
                 }}

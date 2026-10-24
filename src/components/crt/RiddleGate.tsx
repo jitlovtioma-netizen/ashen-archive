@@ -349,7 +349,7 @@ export function RiddleGate({ recordName, system, onSolved, onCancel }: RiddleGat
       <div
         className="panel clip-hud brackets w-full max-w-lg p-6 fade-in"
         style={{
-          boxShadow: "0 0 40px rgba(167, 139, 250, 0.3)",
+          boxShadow: "0 0 40px rgba(var(--violet-rgb), 0.3)",
           animation: "modalIn 0.3s ease-out forwards",
         }}
         onClick={(e) => e.stopPropagation()}
@@ -403,7 +403,7 @@ export function RiddleGate({ recordName, system, onSolved, onCancel }: RiddleGat
               className={`w-full bg-[var(--bg-deep)] border px-3 py-2 text-sm text-[var(--green)] focus:outline-none transition-all font-mono-crt clip-hud-sm ${
                 error
                   ? "border-[var(--red)] shadow-[0_0_10px_rgba(255,36,36,0.4)] animate-pulse"
-                  : "border-[var(--line-bright)] focus:border-[var(--violet)] focus:shadow-[0_0_10px_rgba(167,139,250,0.3)]"
+                  : "border-[var(--line-bright)] focus:border-[var(--violet)] focus:shadow-[0_0_10px_rgba(var(--violet-rgb),0.3)]"
               }`}
               placeholder={checking ? "архив сверяет ответ…" : "впиши ответ..."}
             />
@@ -451,7 +451,7 @@ export function RiddleGate({ recordName, system, onSolved, onCancel }: RiddleGat
               alt="Ехидна"
               className="max-h-[85vh] max-w-[85vw] object-contain rounded-lg"
               style={{
-                filter: "drop-shadow(0 0 30px rgba(167, 139, 250, 0.4))",
+                filter: "drop-shadow(0 0 30px rgba(var(--violet-rgb), 0.4))",
                 animation: "echidnaIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards",
               }}
             />
@@ -467,9 +467,9 @@ export function RiddleGate({ recordName, system, onSolved, onCancel }: RiddleGat
           </div>
           <style>{`
             @keyframes echidnaIn {
-              0% { opacity: 0; transform: scale(0.5) rotate(-10deg); filter: blur(20px) drop-shadow(0 0 60px rgba(167, 139, 250, 0.8)); }
-              60% { filter: blur(0) drop-shadow(0 0 30px rgba(167, 139, 250, 0.4)); }
-              100% { opacity: 1; transform: scale(1) rotate(0deg); filter: blur(0) drop-shadow(0 0 30px rgba(167, 139, 250, 0.4)); }
+              0% { opacity: 0; transform: scale(0.5) rotate(-10deg); filter: blur(20px) drop-shadow(0 0 60px rgba(var(--violet-rgb), 0.8)); }
+              60% { filter: blur(0) drop-shadow(0 0 30px rgba(var(--violet-rgb), 0.4)); }
+              100% { opacity: 1; transform: scale(1) rotate(0deg); filter: blur(0) drop-shadow(0 0 30px rgba(var(--violet-rgb), 0.4)); }
             }
           `}</style>
         </div>

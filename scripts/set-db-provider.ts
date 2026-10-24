@@ -16,7 +16,7 @@
 //
 // ВАЖНО: переключение меняет кодогенерацию клиента. После смены провайдера
 // обязательно выполни `bunx prisma generate` (и в папке presence-service,
-// если используешь её). Подробности: README_VERCEL.md.
+// если используешь её). Подробности: README.md.
 // ============================================================================
 
 import { readFileSync, writeFileSync, existsSync } from "fs";
@@ -76,7 +76,7 @@ if (provider === "postgresql") {
 │     Vercel соберёт сайт с postgres-клиентом.                                │
 │  7. В Project Settings → Environment Variables (Vercel) добавь              │
 │     DATABASE_URL = transaction-pooler URL (порт 6543, ?pgbouncer=true).     │
-│ Подробно: README_VERCEL.md                                                  │
+│ Подробно: README.md                                                  │
 └─────────────────────────────────────────────────────────────────────────────┘`);
 } else {
   console.log(`
@@ -85,5 +85,5 @@ if (provider === "postgresql") {
   1. В .env поставь DATABASE_URL=file:/абс/путь/к/db/custom.db
   2. bunx prisma generate && bun run dev
 
-  Подробнее: README_DEPLOY.md`);
+  Подробнее: README.md`);
 }

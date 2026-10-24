@@ -100,7 +100,7 @@ export function BrunoMiniGame({ onClose }: BrunoMiniGameProps) {
       <div
         className="panel clip-hud brackets w-full max-w-md p-6 fade-in"
         style={{
-          boxShadow: "0 0 40px rgba(74, 246, 38, 0.3)",
+          boxShadow: "0 0 40px rgba(var(--green-rgb), 0.3)",
           animation: "modalIn 0.3s ease-out forwards",
         }}
         onClick={(e) => e.stopPropagation()}
@@ -143,7 +143,7 @@ export function BrunoMiniGame({ onClose }: BrunoMiniGameProps) {
                 style={{
                   width: `${(correct / 5) * 100}%`,
                   background: "linear-gradient(90deg, var(--green-deep), var(--green))",
-                  boxShadow: "0 0 8px rgba(74,246,38,0.5)",
+                  boxShadow: "0 0 8px rgba(var(--green-rgb),0.5)",
                 }}
               />
             </div>
@@ -184,7 +184,7 @@ export function BrunoMiniGame({ onClose }: BrunoMiniGameProps) {
                 className={`w-full bg-[var(--bg-deep)] border px-3 py-3 text-center text-2xl text-[var(--green)] focus:outline-none transition-all font-vt323 clip-hud-sm ${
                   wrong
                     ? "border-[var(--red)] shadow-[0_0_10px_rgba(255,36,36,0.4)]"
-                    : "border-[var(--line-bright)] focus:border-[var(--green)] focus:shadow-[0_0_10px_rgba(74,246,38,0.3)]"
+                    : "border-[var(--line-bright)] focus:border-[var(--green)] focus:shadow-[0_0_10px_rgba(var(--green-rgb),0.3)]"
                 }`}
                 placeholder="?"
                 disabled={gameState !== "playing"}

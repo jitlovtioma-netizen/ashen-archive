@@ -7,6 +7,8 @@ interface HoloPortraitProps {
   corrupted?: boolean;
   sealed?: boolean;
   status?: "ALIVE" | "DEAD" | "MISSING";
+  /** подпись бейджа «пропал» (например, «ПРОПАЛА» для героини) */
+  missingLabel?: string;
   size?: number;
   fallbackGlyph?: string;
   full?: boolean; // прямоугольная голограмма на весь контейнер
@@ -25,6 +27,7 @@ export function HoloPortrait({
   size = 88,
   fallbackGlyph,
   full = false,
+  missingLabel,
 }: HoloPortraitProps) {
   const dead = status === "DEAD";
   const missing = status === "MISSING";
@@ -151,7 +154,7 @@ export function HoloPortrait({
           className="absolute -bottom-1 left-1/2 -translate-x-1/2 chip chip-warn text-[8px] px-1 py-0 whitespace-nowrap z-30"
           style={{ letterSpacing: "0.1em" }}
         >
-          ? ПРОПАЛ
+          {missingLabel ?? "? ПРОПАЛ"}
         </span>
       )}
     </div>

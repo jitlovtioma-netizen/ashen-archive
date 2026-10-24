@@ -76,8 +76,8 @@ export function SozidatelReveal({ imageUrl, onComplete }: SozidatelRevealProps) 
             <div
               className="font-vt323 text-2xl tracking-widest"
               style={{
-                color: "rgba(63, 214, 200, 0.5)",
-                textShadow: "2px 0 rgba(255,36,36,0.4), -2px 0 rgba(167,139,250,0.4)",
+                color: "rgba(var(--cyan-rgb), 0.5)",
+                textShadow: "2px 0 rgba(255,36,36,0.4), -2px 0 rgba(var(--violet-rgb),0.4)",
                 animation: "sozidatelTextGlitch 0.15s steps(2) infinite",
               }}
             >
@@ -112,7 +112,7 @@ export function SozidatelReveal({ imageUrl, onComplete }: SozidatelRevealProps) 
             className="relative max-h-[90vh] max-w-[90vw] object-contain"
             style={{
               animation: "sozidatelArtIn 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards",
-              filter: "drop-shadow(0 0 30px rgba(63, 214, 200, 0.4))",
+              filter: "drop-shadow(0 0 30px rgba(var(--cyan-rgb), 0.4))",
             }}
           />
           {/* Лёгкий glow по краям */}
@@ -120,7 +120,7 @@ export function SozidatelReveal({ imageUrl, onComplete }: SozidatelRevealProps) 
             className="absolute inset-0 pointer-events-none"
             style={{
               background:
-                "radial-gradient(ellipse at center, transparent 50%, rgba(63, 214, 200, 0.05) 100%)",
+                "radial-gradient(ellipse at center, transparent 50%, rgba(var(--cyan-rgb), 0.05) 100%)",
               animation: "sozidatelGlow 3s ease-in-out infinite",
             }}
           />
@@ -160,9 +160,9 @@ export function SozidatelReveal({ imageUrl, onComplete }: SozidatelRevealProps) 
           100% { transform: translate(0, 0); }
         }
         @keyframes sozidatelArtIn {
-          0% { opacity: 0; transform: scale(0.7); filter: blur(20px) drop-shadow(0 0 60px rgba(63, 214, 200, 0.8)); }
-          60% { filter: blur(0) drop-shadow(0 0 30px rgba(63, 214, 200, 0.4)); }
-          100% { opacity: 1; transform: scale(1); filter: blur(0) drop-shadow(0 0 30px rgba(63, 214, 200, 0.4)); }
+          0% { opacity: 0; transform: scale(0.7); filter: blur(20px) drop-shadow(0 0 60px rgba(var(--cyan-rgb), 0.8)); }
+          60% { filter: blur(0) drop-shadow(0 0 30px rgba(var(--cyan-rgb), 0.4)); }
+          100% { opacity: 1; transform: scale(1); filter: blur(0) drop-shadow(0 0 30px rgba(var(--cyan-rgb), 0.4)); }
         }
         @keyframes sozidatelGlow {
           0%, 100% { opacity: 0.3; }

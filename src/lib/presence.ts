@@ -12,7 +12,9 @@
 //      (БЕСПЛАТНО, на том же Supabase-проекте: канал presence — кто онлайн
 //      прямо сейчас + «в архиве с…»; lastSeen пишется heartbeat'ом в
 //      основную БД через /api/presence. Вещание/изгнание не поддерживаются).
-//   3. Иначе presence полностью ВЫКЛЮЧЕН.
+//   3. Иначе — опрос сервера (по умолчанию, настройка не нужна): клиент
+//      раз в 30 с отмечается в /api/presence и забирает оттуда список тех,
+//      кто отмечался за последние 90 с. Вещание/изгнание не поддерживаются.
 // ============================================================================
 
 import { create } from "zustand";
@@ -67,16 +69,15 @@ const SUPABASE_MODE =
     ? { url: SUPA_URL, anon: SUPA_ANON }
     : null;
 
-// Включён ли presence в этой сборке (для UI: «В СЕТИ», счётчик стражей)
-export const presenceEnabled =
-  PRESENCE_URL !== null || SUPABASE_MODE !== null;
+// Онлайн работает всегда: без внешних сервисов — опросом сервера
+export const presenceEnabled = true;
 
 // Какой бэкенд активен (для тултипов в UI)
-export const presenceBackend: "socket" | "supabase" | null = PRESENCE_URL
+export const presenceBackend: "socket" | "supabase" | "poll" = PRESENCE_URL
   ? "socket"
   : SUPABASE_MODE
     ? "supabase"
-    : null;
+    : "poll";
 
 // ── Режим 1: socket.io mini-service ─────────────────────────────────────────
 let socket: Socket | null = null;
@@ -173,6 +174,68 @@ async function initSupabasePresence(login: string, system: string) {
   }
 }
 
+// ── Режим 3: опрос сервера ──────────────────────────────────────────────────
+const POLL_MS = 30_000;
+let pollTimer: ReturnType<typeof setInterval> | null = null;
+let pollLogin: string | null = null;
+// когда мы впервые увидели стража в сети (для «в архиве с…»)
+const firstSeenOnline = new Map<string, number>();
+
+async function pollOnce() {
+  if (!pollLogin) return;
+  try {
+    await fetch("/api/presence", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ login: pollLogin }),
+    });
+    const r = await fetch("/api/presence", { cache: "no-store" });
+    const d = (await r.json()) as {
+      ok?: boolean;
+      lastSeen?: Record<string, number>;
+      online?: Omit<PresenceUser, "since">[];
+    };
+    if (!d?.ok) throw new Error("presence");
+    const now = Date.now();
+    const list: PresenceUser[] = (d.online ?? []).map((u) => {
+      if (!firstSeenOnline.has(u.login)) firstSeenOnline.set(u.login, now);
+      return { ...u, since: firstSeenOnline.get(u.login)! };
+    });
+    for (const login of [...firstSeenOnline.keys()]) {
+      if (!list.some((u) => u.login === login)) firstSeenOnline.delete(login);
+    }
+    const st = usePresence.getState();
+    st.setOnline(list);
+    if (d.lastSeen) st.setLastSeen(d.lastSeen);
+    st.setConnected(true);
+  } catch {
+    usePresence.getState().setConnected(false);
+  }
+}
+
+function onVisible() {
+  if (document.visibilityState === "visible") void pollOnce();
+}
+
+function startPolling(login: string) {
+  pollLogin = login;
+  void pollOnce();
+  if (!pollTimer) {
+    pollTimer = setInterval(() => void pollOnce(), POLL_MS);
+    document.addEventListener("visibilitychange", onVisible);
+  }
+}
+
+function stopPolling() {
+  if (pollTimer) {
+    clearInterval(pollTimer);
+    pollTimer = null;
+    document.removeEventListener("visibilitychange", onVisible);
+  }
+  pollLogin = null;
+  firstSeenOnline.clear();
+}
+
 // ── Публичный API ───────────────────────────────────────────────────────────
 
 // Подключиться и заявить о себе. Вызывается при входе / смене мира.
@@ -233,12 +296,14 @@ export function initPresence(login: string, system: string) {
     return;
   }
 
-  // Режим 3: presence не сконфигурирован — тихий офлайн
+  // Режим 3: опрос сервера — работает без какой-либо настройки
   void system;
+  startPolling(login);
 }
 
 // Отключиться (при выходе из архива)
 export function disconnectPresence() {
+  stopPolling();
   if (socket) {
     socket.disconnect();
     socket = null;

@@ -35,7 +35,7 @@ export function UserProfileModal({
   const isOnline = online.some((o) => o.login === target.login);
   const isAdmin = target.role === "ADMIN";
   const color =
-    target.system === "DND" ? "var(--red)" : "var(--cyan)";
+    target.system === "DND" ? "var(--world-dnd)" : "var(--cyan)";
 
   useEffect(() => {
     sfx.whisper();
@@ -85,7 +85,7 @@ export function UserProfileModal({
         style={{
           borderColor: isAdmin ? "var(--amber-dim)" : "var(--line)",
           boxShadow: isAdmin
-            ? "0 0 50px rgba(232,161,58,0.18)"
+            ? "0 0 50px rgba(var(--amber-rgb),0.18)"
             : "0 0 40px rgba(0,0,0,0.6)",
         }}
         onClick={(e) => e.stopPropagation()}

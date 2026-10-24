@@ -74,7 +74,7 @@ export function TitleBar() {
 
   return (
     <header className="panel clip-hud-sm flex items-center gap-2 sm:gap-3 px-3 py-2 select-none">
-      <div className="flex items-center gap-1.5">
+      <div className="crt-only flex items-center gap-1.5">
         <span className="led led-red" />
         <span className="led led-amber" />
         <span className="led led-green" />
@@ -82,12 +82,12 @@ export function TitleBar() {
 
       <div className="flex-1 text-center min-w-0">
         <h1 className="font-medieval glow-green-strong text-sm sm:text-xl tracking-[0.15em] truncate">
-          АРХИВ ПЕПЕЛЬНОЙ ДЛАНИ
+          {system === "DND" ? "Хроника Пепельной Длани" : "АРХИВ ПЕПЕЛЬНОЙ ДЛАНИ"}
           <span
             className="hidden sm:inline font-mono-crt text-xs ml-2"
             style={{ color: sysColor }}
           >
-            {" // "}{SYSTEM_SHORT[system]}{" v5.7.3"}
+            {system === "DND" ? " · Элария" : ` // ${SYSTEM_SHORT[system]} v5.8`}
           </span>
         </h1>
       </div>

@@ -106,7 +106,7 @@ export function LoginForm() {
               value={loginStr}
               onChange={(e) => setLoginStr(e.target.value)}
               disabled={loading}
-              className="w-full bg-[var(--bg-deep)] border border-[var(--line-bright)] px-3 py-2 text-sm text-[var(--green)] focus:outline-none focus:border-[var(--green)] focus:shadow-[0_0_10px_rgba(74,246,38,0.3)] transition-all font-mono-crt clip-hud-sm disabled:opacity-50"
+              className="w-full bg-[var(--bg-deep)] border border-[var(--line-bright)] px-3 py-2 text-sm text-[var(--green)] focus:outline-none focus:border-[var(--green)] focus:shadow-[0_0_10px_rgba(var(--green-rgb),0.3)] transition-all font-mono-crt clip-hud-sm disabled:opacity-50"
               placeholder="введите имя..."
             />
           </div>
@@ -125,7 +125,7 @@ export function LoginForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
-              className="w-full bg-[var(--bg-deep)] border border-[var(--line-bright)] px-3 py-2 text-sm text-[var(--green)] focus:outline-none focus:border-[var(--green)] focus:shadow-[0_0_10px_rgba(74,246,38,0.3)] transition-all font-mono-crt clip-hud-sm disabled:opacity-50"
+              className="w-full bg-[var(--bg-deep)] border border-[var(--line-bright)] px-3 py-2 text-sm text-[var(--green)] focus:outline-none focus:border-[var(--green)] focus:shadow-[0_0_10px_rgba(var(--green-rgb),0.3)] transition-all font-mono-crt clip-hud-sm disabled:opacity-50"
               placeholder="••••••••"
             />
           </div>

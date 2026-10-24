@@ -26,14 +26,14 @@ export function Sigil({ glyph, corrupted, size = 64, spin = true }: SigilProps) 
           <div
             className="absolute inset-2 border"
             style={{
-              borderColor: corrupted ? "rgba(255,36,36,0.4)" : "rgba(74,246,38,0.4)",
+              borderColor: corrupted ? "rgba(255,36,36,0.4)" : "rgba(var(--green-rgb),0.4)",
               transform: "rotateX(60deg)",
             }}
           />
           <div
             className="absolute inset-2 border"
             style={{
-              borderColor: corrupted ? "rgba(255,36,36,0.3)" : "rgba(74,246,38,0.3)",
+              borderColor: corrupted ? "rgba(255,36,36,0.3)" : "rgba(var(--green-rgb),0.3)",
               transform: "rotateY(60deg)",
             }}
           />
@@ -44,14 +44,14 @@ export function Sigil({ glyph, corrupted, size = 64, spin = true }: SigilProps) 
         className="absolute rounded-full border"
         style={{
           inset: size * 0.1,
-          borderColor: corrupted ? "rgba(255,36,36,0.25)" : "rgba(74,246,38,0.25)",
+          borderColor: corrupted ? "rgba(255,36,36,0.25)" : "rgba(var(--green-rgb),0.25)",
         }}
       />
       <div
         className="absolute rounded-full border"
         style={{
           inset: size * 0.22,
-          borderColor: corrupted ? "rgba(255,36,36,0.18)" : "rgba(74,246,38,0.18)",
+          borderColor: corrupted ? "rgba(255,36,36,0.18)" : "rgba(var(--green-rgb),0.18)",
         }}
       />
       {/* corner brackets */}

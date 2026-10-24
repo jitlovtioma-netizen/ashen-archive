@@ -2,12 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { HoloPortrait } from "./HoloPortrait";
-import { Sigil } from "./Sigil";
+import { FriendshipMeter } from "./record/Friendship";
+import { ReflectionOverlay } from "./record/ReflectionOverlay";
+import { MemoryProbeModal } from "./record/MemoryProbeModal";
+import { HoloColumn } from "./record/HoloColumn";
+import { DossierEditForm, type DossierDraft } from "./record/DossierEditForm";
 import { MartinSecretModal } from "./MartinSecretModal";
 import { SinsWheel } from "./SinsWheel";
 import { CorruptedText, IRIS_MAX_STAGE, IRIS_SPREAD_BY_STAGE, KALI_ANCHORS, hasAnyMarks, hasOblivionMarks } from "./CorruptedText";
-import { CorruptToolbar } from "./CorruptEditorTools";
 import { dispatchIrisWhisper } from "./IrisWhispers";
 import { getDossierTheme, type DossierTheme } from "@/lib/themes";
 import { useArchive } from "@/lib/store";
@@ -72,10 +74,10 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
   const [localPatch, setLocalPatch] = useState<Partial<CardRecord> | null>(null);
   // ── Режим редактирования досье (владелец персонажа или Созидатель) ──
   const [editMode, setEditMode] = useState(false);
-  const [editDraft, setEditDraft] = useState({
+  const [editDraft, setEditDraft] = useState<DossierDraft>({
     description: "",
     title: "",
-    status: "ALIVE" as "ALIVE" | "DEAD" | "MISSING",
+    status: "ALIVE",
   });
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -582,47 +584,14 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
       aria-modal="true"
       aria-label={displayRecord.name}
     >
-      {/* ОТРАЖЕНИЕ overlay — разбросанные слова по всему экрану (только для Кали) */}
-      {isCursed && (
-        <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 9701 }}>
-          {Array.from({ length: 30 }).map((_, i) => {
-            const colors = ["#ff3366", "#a78bfa", "#660066", "#ff0033", "#990033"];
-            const sizes = ["10px", "12px", "14px", "16px", "18px", "20px"];
-            return (
-              <div
-                key={i}
-                className="absolute font-bold tracking-wider whitespace-nowrap"
-                style={{
-                  left: `${Math.random() * 100}%`,
-                  top: `${Math.random() * 100}%`,
-                  fontSize: sizes[Math.floor(Math.random() * sizes.length)],
-                  color: colors[Math.floor(Math.random() * colors.length)],
-                  opacity: 0.08 + Math.random() * 0.25,
-                  transform: `rotate(${Math.random() * 60 - 30}deg)`,
-                  textShadow: `0 0 8px ${colors[Math.floor(Math.random() * colors.length)]}`,
-                  // задержка — внутри шортката, чтобы React не ругался на
-                  // конфликт animation/animationDelay при ререндерах
-                  animation: `reflectionFloat ${4 + Math.random() * 6}s ease-in-out ${i * 0.2}s infinite`,
-                }}
-              >
-                ОТРАЖЕНИЕ
-              </div>
-            );
-          })}
-          <style>{`
-            @keyframes reflectionFloat {
-              0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.1; }
-              50% { transform: translateY(-20px) rotate(5deg); opacity: 0.3; }
-            }
-          `}</style>
-        </div>
-      )}
+      {/* ОТРАЖЕНИЕ — слова по всему экрану (только для Кали) */}
+      {isCursed && <ReflectionOverlay />}
       <div
         className={`panel clip-hud brackets w-full max-w-7xl max-h-[95vh] flex flex-col overflow-hidden ${modalAnimClass} ${isReflection ? "reflection-panel" : ""} ${isEntity ? "entity-modal" : ""} ${isCursed ? "cursed-modal" : ""} ${dossierTheme ? "themed-modal" : ""} ${isIrisRecord && irisStage >= 2 ? "iris-consumed" : ""} ${isIrisRecord && irisStage >= 5 ? "iris-devoured" : ""}`}
         style={
           themedStyle ?? {
             boxShadow:
-              "0 0 60px rgba(74, 246, 38, 0.2), 0 0 120px rgba(0, 0, 0, 0.8)",
+              "0 0 60px rgba(var(--green-rgb), 0.2), 0 0 120px rgba(0, 0, 0, 0.8)",
           }
         }
         onClick={(e) => e.stopPropagation()}
@@ -692,7 +661,9 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
               )}
               {!isSealed && !isCorrupted && <span className="chip chip-ok">✓ ДОСТУПНО</span>}
               {record.status === "DEAD" && <span className="chip chip-err">💀 ПАЛ</span>}
-              {record.status === "MISSING" && <span className="chip chip-warn">? ПРОПАЛ</span>}
+              {record.status === "MISSING" && (
+                <span className="chip chip-warn">{isCursed ? "? ПРОПАЛА" : "? ПРОПАЛ"}</span>
+              )}
             </div>
 
             <div className="divider-glow mb-3" />
@@ -727,56 +698,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
               </div>
             )}
 
-            {/* Большая шкала дружбы в досье */}
-            {typeof record.friendship === "number" && record.friendship > 0 && (
-              <div className="mb-4">
-                <div className="flex items-center gap-3">
-                  {record.friendship >= 10 && <span className="text-2xl">❤️</span>}
-                  <div
-                    className="flex-1 h-3 overflow-hidden rounded-full"
-                    style={{ background: "rgba(0,0,0,0.4)", border: "1px solid var(--line)" }}
-                  >
-                    <div
-                      className="h-full transition-all duration-500 rounded-full"
-                      style={{
-                        width: `${(record.friendship / 10) * 100}%`,
-                        background: record.friendship >= 10
-                          ? "#ff69b4"
-                          : record.friendship >= 7
-                            ? `rgb(${Math.round(232 * (1 - (record.friendship - 7) / 3))}, 246, 38)`
-                            : record.friendship >= 4
-                              ? `rgb(255, ${Math.round(140 + 92 * ((record.friendship - 4) / 3))}, 40)`
-                              : `rgb(${Math.round(160 + 95 * ((record.friendship - 1) / 2))}, ${Math.round(20 + 16 * ((record.friendship - 1) / 2))}, 20)`,
-                        boxShadow: `0 0 8px ${record.friendship >= 10
-                          ? "#ff69b4"
-                          : record.friendship >= 7
-                            ? `rgb(${Math.round(232 * (1 - (record.friendship - 7) / 3))}, 246, 38)`
-                            : record.friendship >= 4
-                              ? `rgb(255, ${Math.round(140 + 92 * ((record.friendship - 4) / 3))}, 40)`
-                              : `rgb(${Math.round(160 + 95 * ((record.friendship - 1) / 2))}, ${Math.round(20 + 16 * ((record.friendship - 1) / 2))}, 20)`}`,
-                      }}
-                    />
-                  </div>
-                  <span
-                    className="text-sm font-mono tracking-wider shrink-0"
-                    style={{
-                      color: record.friendship >= 10
-                        ? "#ff69b4"
-                        : record.friendship >= 7
-                          ? `rgb(${Math.round(232 * (1 - (record.friendship - 7) / 3))}, 246, 38)`
-                          : record.friendship >= 4
-                            ? `rgb(255, ${Math.round(140 + 92 * ((record.friendship - 4) / 3))}, 40)`
-                            : `rgb(${Math.round(160 + 95 * ((record.friendship - 1) / 2))}, ${Math.round(20 + 16 * ((record.friendship - 1) / 2))}, 20)`,
-                    }}
-                  >
-                    {record.friendship}/10
-                  </span>
-                </div>
-                <div className="text-[9px] text-dim tracking-widest mt-1 text-center">
-                  {"// ОТНОШЕНИЯ //"}
-                </div>
-              </div>
-            )}
+            <FriendshipMeter value={record.friendship} />
 
             <div className="text-[10px] text-dim tracking-widest mb-2">{"// ОПИСАНИЕ //"}</div>
 
@@ -791,140 +713,19 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
 
             {/* ── РЕЖИМ ЗАПИСИ: редактирование досье владельцем/Созидателем ── */}
             {editMode ? (
-              <div
-                className="panel-inset p-3 space-y-3 fade-in"
-                style={{ borderColor: "var(--amber-dim)", boxShadow: "inset 0 0 18px rgba(232,161,58,0.07)" }}
-              >
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="chip chip-warn text-[10px]">✎ РЕЖИМ ЗАПИСИ</span>
-                  <span className="text-[9px] text-dim tracking-wider">
-                    {"// перо в ваших руках. правки увидят все стражи архива //"}
-                  </span>
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="dossier-title-edit"
-                    className="text-[10px] text-dim tracking-widest mb-1 block"
-                  >
-                    {"// ЭПИТЕТ //"}
-                  </label>
-                  <input
-                    id="dossier-title-edit"
-                    value={editDraft.title}
-                    onChange={(e) =>
-                      setEditDraft((d) => ({ ...d, title: e.target.value }))
-                    }
-                    maxLength={120}
-                    placeholder="напр. Капитан гарнизона"
-                    className="w-full bg-black/40 border border-[var(--line)] focus:border-[var(--amber-dim)] outline-none px-2.5 py-1.5 text-[13px] text-[var(--text)] transition-colors"
-                    style={{
-                      clipPath:
-                        "polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)",
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <div className="text-[10px] text-dim tracking-widest mb-1">
-                    {"// СТАТУС //"}
-                  </div>
-                  <div className="flex gap-1.5 flex-wrap">
-                    {(
-                      [
-                        ["ALIVE", "✓ ЖИВ"],
-                        ["DEAD", "💀 ПАЛ"],
-                        ["MISSING", "? ПРОПАЛ"],
-                      ] as const
-                    ).map(([s, label]) => (
-                      <button
-                        key={s}
-                        type="button"
-                        onClick={() => setEditDraft((d) => ({ ...d, status: s }))}
-                        className={`chip text-[10px] transition-all cursor-pointer ${
-                          editDraft.status === s
-                            ? "chip-warn"
-                            : "opacity-60 hover:opacity-100"
-                        }`}
-                        aria-pressed={editDraft.status === s}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label
-                      htmlFor="dossier-desc-edit"
-                      className="text-[10px] text-dim tracking-widest"
-                    >
-                      {"// ОПИСАНИЕ //"}
-                    </label>
-                    <span
-                      className={`text-[9px] ${
-                        editDraft.description.length > 5900 ? "glow-red" : "text-dim"
-                      }`}
-                    >
-                      {editDraft.description.length}/6000
-                    </span>
-                  </div>
-                  <textarea
-                    id="dossier-desc-edit"
-                    ref={descEditRef}
-                    value={editDraft.description}
-                    onChange={(e) =>
-                      setEditDraft((d) => ({ ...d, description: e.target.value }))
-                    }
-                    maxLength={6000}
-                    rows={12}
-                    spellCheck={false}
-                    className="w-full bg-black/40 border border-[var(--line)] focus:border-[var(--amber-dim)] outline-none px-2.5 py-2 text-[13px] leading-relaxed text-[var(--text)] transition-colors crt-scroll resize-y min-h-[220px]"
-                    placeholder="Впишите историю героя… Пустая строка — новый абзац."
-                  />
-                </div>
-
-                {/* порча по выделению: пометьте фрагменты — они станут нечитаемыми */}
-                <CorruptToolbar
-                  textareaRef={descEditRef}
-                  value={editDraft.description}
-                  onChange={(v) =>
-                    setEditDraft((d) => ({ ...d, description: v }))
-                  }
-                  accent={dossierTheme?.accent}
-                  compact
-                />
-
-                {saveError && (
-                  <div
-                    className="text-[11px] leading-relaxed"
-                    style={{ color: "var(--red)" }}
-                  >
-                    ⚠ {saveError}
-                  </div>
-                )}
-
-                <div className="flex items-center gap-2 flex-wrap">
-                  <button
-                    onClick={saveEdit}
-                    disabled={saving}
-                    className="btn-crt btn-amber clip-hud-sm px-4 py-2 text-xs disabled:opacity-50 disabled:cursor-default"
-                  >
-                    {saving ? "▸ ЗАПИСЬ В АРХИВ…" : "💾 СОХРАНИТЬ ДОСЬЕ"}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setEditMode(false);
-                      sfx.blip();
-                    }}
-                    disabled={saving}
-                    className="btn-crt clip-hud-sm px-4 py-2 text-xs"
-                  >
-                    ✕ ОТМЕНА
-                  </button>
-                </div>
-              </div>
+              <DossierEditForm
+                draft={editDraft}
+                setDraft={setEditDraft}
+                saving={saving}
+                saveError={saveError}
+                descRef={descEditRef}
+                accent={dossierTheme?.accent}
+                onSave={saveEdit}
+                onCancel={() => {
+                  setEditMode(false);
+                  sfx.blip();
+                }}
+              />
             ) : !isSealed ? (
               isUnknown ? (
                 <div className="text-[14px] leading-relaxed space-y-2">
@@ -1002,7 +803,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
                 style={{
                   borderColor: "var(--amber-dim)",
                   color: "var(--amber)",
-                  background: "rgba(232, 161, 58, 0.08)",
+                  background: "rgba(var(--amber-rgb), 0.08)",
                 }}
               >
                 💀 А ЧТО МОГЛО БЫ БЫТЬ?
@@ -1073,7 +874,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
                 style={{
                   borderColor: "var(--amber-dim)",
                   color: "var(--amber)",
-                  background: "rgba(232, 161, 58, 0.08)",
+                  background: "rgba(var(--amber-rgb), 0.08)",
                 }}
               >
                 🔄 SWAP → {swappedToAnaid ? "ДИАНУ" : "АНАИД"}
@@ -1091,7 +892,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
                 style={{
                   borderColor: "var(--violet-dim)",
                   color: "var(--violet)",
-                  background: "rgba(167, 139, 250, 0.08)",
+                  background: "rgba(var(--violet-rgb), 0.08)",
                 }}
               >
                 🧠 ПРОНИКНУТЬ В ПАМЯТЬ
@@ -1105,43 +906,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
               }
             `}</style>
 
-            {/* Модалка «Проникнуть в память» — Бруно отказался */}
-            {memoryProbeOpen && (
-              <div
-                className="fixed inset-0 z-[9700] flex items-center justify-center p-4"
-                style={{ background: "rgba(2, 0, 2, 0.9)", backdropFilter: "blur(4px)" }}
-                onClick={() => setMemoryProbeOpen(false)}
-                role="dialog"
-                aria-modal="true"
-                aria-label="Проникновение в память"
-              >
-                <div
-                  className="panel clip-hud brackets w-full max-w-md p-8 text-center fade-in"
-                  style={{
-                    borderColor: "var(--violet-dim)",
-                    boxShadow: "0 0 40px rgba(167, 139, 250, 0.3)",
-                    animation: "modalIn 0.3s ease-out forwards",
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="text-5xl mb-4 pulse-slow">🧠</div>
-                  <div className="font-medieval text-lg glow-violet tracking-wider mb-3 glitch" data-text="ОТКАЗАНО">
-                    ОТКАЗАНО
-                  </div>
-                  <div className="text-[14px] text-[var(--text)] leading-relaxed mb-6">
-                    Бруно отказался от этого действия...
-                    <br />
-                    <span className="text-dim italic">Пока что.</span>
-                  </div>
-                  <button
-                    onClick={() => setMemoryProbeOpen(false)}
-                    className="btn-crt clip-hud-sm px-6 py-2 text-xs"
-                  >
-                    ◂ ЗАКРЫТЬ
-                  </button>
-                </div>
-              </div>
-            )}
+            {memoryProbeOpen && <MemoryProbeModal onClose={() => setMemoryProbeOpen(false)} />}
 
             <div className="flex items-center gap-2 mt-5 flex-wrap">
               {isSealed ? (
@@ -1160,7 +925,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
                     <span>🔑 СНЯТИЕ ПЕЧАТИ</span>
                   )}
                   {(ritualActive || ritualCharge > 0) && (
-                    <span className="absolute inset-0" style={{ background: "linear-gradient(90deg, rgba(232,161,58,0.3), rgba(232,161,58,0.1))", width: `${ritualCharge}%`, transition: "width 0.05s linear" }} />
+                    <span className="absolute inset-0" style={{ background: "linear-gradient(90deg, rgba(var(--amber-rgb),0.3), rgba(var(--amber-rgb),0.1))", width: `${ritualCharge}%`, transition: "width 0.05s linear" }} />
                   )}
                 </button>
               ) : (
@@ -1173,7 +938,7 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
                   style={{
                     borderColor: "var(--amber-dim)",
                     color: "var(--amber)",
-                    background: "rgba(232, 161, 58, 0.08)",
+                    background: "rgba(var(--amber-rgb), 0.08)",
                   }}
                   title={isDossierOwner ? "Это ваше досье — впишите свою историю" : "Созидатель может править любое досье"}
                 >
@@ -1201,35 +966,13 @@ export function RecordModal({ record, onClose }: RecordModalProps) {
           </div>
 
           {/* RIGHT: hologram */}
-          <div className="md:w-[45%] p-4 sm:p-6 flex flex-col bg-[var(--bg-deep)] min-h-[300px] relative">
-            <div className="text-[10px] text-dim tracking-widest mb-3 absolute top-3 left-4 z-30">{"// ПРОЕКЦИЯ //"}</div>
-            <div className="flex-1 flex items-center justify-center w-full min-h-[280px] holo-reveal">
-              {record.imageUrl && !isSealed ? (
-                <HoloPortrait src={displayRecord.imageUrl ?? ""} corrupted={isCorrupted} sealed={isSealed} status={record.status} full fallbackGlyph={record.sigil} />
-              ) : (
-                <div className="flex flex-col items-center gap-4">
-                  <Sigil glyph={record.sigil} corrupted={isCorrupted} size={180} />
-                  {isSealed && (
-                    <div className="text-center">
-                      <div className="font-vt323 text-xl glow-amber">[ ПЕЧАТЬ ]</div>
-                      <div className="text-dim text-[10px] tracking-wider mt-1">{"// проекция недоступна //"}</div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-            <div className="mt-4 w-full panel-inset p-2 text-[9px] text-dim tracking-wider">
-              <div className="flex justify-between"><span>SIGIL</span><span className="glow-green">{record.sigil}</span></div>
-              <div className="flex justify-between"><span>MAP_X</span><span>{record.mapX}</span></div>
-              <div className="flex justify-between"><span>MAP_Y</span><span>{record.mapY}</span></div>
-              <div className="flex justify-between">
-                <span>STATUS</span>
-                <span className={record.status === "DEAD" ? "glow-red" : record.status === "MISSING" ? "glow-amber" : "glow-green"}>
-                  {record.status ?? "ALIVE"}
-                </span>
-              </div>
-            </div>
-          </div>
+          <HoloColumn
+            record={record}
+            imageUrl={displayRecord.imageUrl}
+            isSealed={isSealed}
+            isCorrupted={isCorrupted}
+            missingLabel={isCursed ? "? ПРОПАЛА" : undefined}
+          />
         </div>
       </div>
       {martinSecretShown && (

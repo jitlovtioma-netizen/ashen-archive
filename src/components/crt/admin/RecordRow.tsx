@@ -108,7 +108,7 @@ export function RecordRow({
           style={{
             borderColor: "var(--violet-dim)",
             color: "var(--violet)",
-            background: "rgba(167, 139, 250, 0.08)",
+            background: "rgba(var(--violet-rgb), 0.08)",
           }}
           aria-label={`Дублировать ${v.name}`}
           title="Дублировать запись (черновик-копия)"
@@ -122,7 +122,7 @@ export function RecordRow({
           style={{
             borderColor: "var(--amber-dim)",
             color: "var(--amber)",
-            background: "rgba(232, 161, 58, 0.08)",
+            background: "rgba(var(--amber-rgb), 0.08)",
           }}
           aria-label={`Редактировать ${v.name}`}
         >

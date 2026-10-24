@@ -65,9 +65,9 @@ export function KonamiModal() {
         className="panel clip-hud brackets w-full max-w-2xl fade-in relative overflow-hidden"
         style={{
           boxShadow:
-            "0 0 80px rgba(167, 139, 250, 0.6), 0 0 160px rgba(40, 0, 80, 0.9)",
+            "0 0 80px rgba(var(--violet-rgb), 0.6), 0 0 160px rgba(40, 0, 80, 0.9)",
           animation: "modalIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards",
-          border: "1px solid rgba(167, 139, 250, 0.6)",
+          border: "1px solid rgba(var(--violet-rgb), 0.6)",
           background: "rgba(10, 0, 20, 0.98)",
         }}
         onClick={(e) => e.stopPropagation()}
@@ -77,7 +77,7 @@ export function KonamiModal() {
           className="pointer-events-none absolute inset-0"
           style={{
             background:
-              "repeating-linear-gradient(0deg, rgba(167,139,250,0.04) 0, rgba(167,139,250,0.04) 1px, transparent 1px, transparent 3px)",
+              "repeating-linear-gradient(0deg, rgba(var(--violet-rgb),0.04) 0, rgba(var(--violet-rgb),0.04) 1px, transparent 1px, transparent 3px)",
           }}
         />
 

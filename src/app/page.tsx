@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useArchive, flushProgressSave, hydrateProgressFromServer } from "@/lib/store";
 import { initPresence, disconnectPresence } from "@/lib/presence";
+import { setAudioWorld, setSoundEnabled, setMusicMood, sfx, type MusicMood } from "@/lib/audio";
+import { worldOf } from "@/lib/world";
 import { CRTOverlays } from "@/components/crt/CRTOverlays";
 import { BootSequence } from "@/components/crt/BootSequence";
 import { LoginForm } from "@/components/crt/LoginForm";
@@ -34,12 +36,29 @@ import { FactionsSection } from "@/components/sections/FactionsSection";
 import { ProfileSection } from "@/components/crt/ProfileSection";
 import { AdminSection } from "@/components/crt/AdminSection";
 
+// Глава «Хроники» → настроение музыки (см. MOODS в audio.ts)
+const SECTION_MOOD: Record<string, MusicMood> = {
+  characters: "heroes",
+  factions: "factions",
+  lore: "lore",
+  lore_gods: "gods",
+  lore_npcs: "npcs",
+  locations: "places",
+  secrets: "secrets",
+};
+
 function SecretsSection({ system }: { system: "DND" | "PF2E" }) {
   return <LoreSecretsSection system={system} />;
 }
 
 function Viewport({ system }: { system: "DND" | "PF2E" }) {
   const section = useArchive((s) => s.section);
+  const soundOn = useArchive((s) => s.soundOn);
+
+  // кнопка «ЗВУК» глушит всё: и фон, и эффекты интерфейса
+  useEffect(() => {
+    setSoundEnabled(soundOn);
+  }, [soundOn]);
   switch (section) {
     case "profile":
       return <ProfileSection system={system} />;
@@ -80,6 +99,29 @@ export default function Home() {
       })
       .catch(() => {});
   }, [user, setTotalShardWords]);
+
+  // ─── Мир стража: D&D — «Хроника Эларии», PF2e — CRT-архив ───
+  // Атрибут на <html> переключает палитру/шрифты/оверлеи (globals.css),
+  // а звуковой движок — музыку и эффекты.
+  useEffect(() => {
+    const root = document.documentElement;
+    if (!user) {
+      delete root.dataset.world;
+      return;
+    }
+    const world = worldOf(user.system);
+    root.dataset.world = world;
+    setAudioWorld(world);
+  }, [user?.system, user]);
+
+  // ─── Хроника: у каждой главы своё настроение музыки + шелест страницы ───
+  const prevSection = useRef<string | null>(null);
+  useEffect(() => {
+    if (user?.system !== "DND") return;
+    setMusicMood(SECTION_MOOD[section] ?? "default");
+    if (prevSection.current && prevSection.current !== section && booted) sfx.page();
+    prevSection.current = section;
+  }, [section, user?.system, booted]);
 
   // ─── Онлайн-присутствие: подключаемся к presence-сокету ───
   useEffect(() => {
@@ -220,8 +262,10 @@ export default function Home() {
 
           <StatusBar system={system} />
 
-          <div className="text-center text-[10px] text-dim tracking-[0.3em] py-0.5 shrink-0">
-            {`// АРХИВ ПЕПЕЛЬНОЙ ДЛАНИ — ${system === "DND" ? "ЭЛАРИЯ" : "ГОЛАРИОН"} — НЕ ДОВЕРЯЙ СВЕТУ //`}
+          <div className="world-footer text-center text-[10px] text-dim tracking-[0.3em] py-0.5 shrink-0">
+            {system === "DND"
+              ? "❦ Записано рукой Созидателя · он смотрит · не доверяй свету ❦"
+              : "// АРХИВ ПЕПЕЛЬНОЙ ДЛАНИ — ГОЛАРИОН — НЕ ДОВЕРЯЙ СВЕТУ //"}
           </div>
         </>
       )}

@@ -40,7 +40,7 @@ export function StatusBar({ system }: { system: GameSystem }) {
       className="panel clip-hud-sm flex items-center gap-2 sm:gap-3 px-3 py-1.5 text-[10px] sm:text-[11px] tracking-wider overflow-x-auto crt-scroll shrink-0"
       role="contentinfo"
     >
-      <span className="flex items-center gap-1.5 shrink-0" title={presenceEnabled ? (connected ? "Сервис онлайна подключён" : "Переподключение к сервису онлайна…") : "Сервис онлайна не подключён в этой сборке (см. README_VERCEL.md)"}>
+      <span className="flex items-center gap-1.5 shrink-0" title={presenceEnabled ? (connected ? "Сервис онлайна подключён" : "Переподключение к сервису онлайна…") : "Сервис онлайна не подключён в этой сборке (см. README.md)"}>
         {presenceEnabled ? (
           <span className={connected ? "led led-green" : "led led-amber"} />
         ) : (

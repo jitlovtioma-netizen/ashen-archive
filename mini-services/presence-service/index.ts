@@ -88,7 +88,7 @@ const httpServer = createServer();
 const io = new Server(httpServer, {
   // путь по умолчанию "/" — конвенция Caddy-шлюза песочницы.
   // На собственном сервере задайте PRESENCE_SOCKET_PATH=/socket.io
-  // и проксируйте /socket.io/* на этот порт (см. README_DEPLOY.md).
+  // и проксируйте /socket.io/* на этот порт (см. README.md).
   path: process.env.PRESENCE_SOCKET_PATH ?? "/",
   cors: { origin: "*", methods: ["GET", "POST"] },
   pingTimeout: 60000,

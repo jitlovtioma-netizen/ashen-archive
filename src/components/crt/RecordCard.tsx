@@ -17,6 +17,7 @@ import { useRiddles } from "@/lib/useRiddles";
 import { useArchive } from "@/lib/store";
 import { sfx } from "@/lib/audio";
 import { SYSTEM_LABEL, SYSTEM_COLOR, type GameSystem } from "@/lib/types";
+import { FriendshipBar } from "./record/Friendship";
 
 export interface CardRecord {
   id: string;
@@ -77,7 +78,8 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
   // Алдуин — душа повреждена, досье не открывается
   const isSoulDamaged = record.name === "Алдуин";
   // Адам/Ева — скованы контрактом (MISSING), досье не открывается
-  const isContractBound = record.status === "MISSING";
+  // (Кали тоже пропала, но её досье открывается — контракт её не держит)
+  const isContractBound = record.status === "MISSING" && !isCursed;
   const shardCollected = record.shardWord
     ? shards.includes(record.shardWord)
     : false;
@@ -264,7 +266,7 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
             onOpen();
           }
         }}
-        className={`panel clip-hud brackets relative p-4 transition-all duration-200 cursor-pointer hover:border-[var(--green-dim)] hover:shadow-[0_0_16px_rgba(74,246,38,0.15)] hover:-translate-y-[2px] ${
+        className={`panel clip-hud brackets relative p-4 transition-all duration-200 cursor-pointer hover:border-[var(--green-dim)] hover:shadow-[0_0_16px_rgba(var(--green-rgb),0.15)] hover:-translate-y-[2px] ${
           isSealed ? "opacity-90" : ""
         } ${record.name === "???" ? "entity-card" : ""}${dossierTheme ? " card-themed" : ""}`}
         style={
@@ -292,7 +294,6 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
             {SYSTEM_LABEL[record.system]}
           </span>
           {isSealed && <span className="chip chip-warn">🔒 ОПЕЧАТАНО</span>}
-          {isCursed && <span className="chip chip-violet">🔒 ЗАПЕЧАТАНА</span>}
           {isCorrupted && <span className={`chip ${isEntity ? "chip-cyan" : "chip-err"}`}>⚠ ИСКАЖЕНО</span>}
           {dossierTheme && !isCorrupted && !isCursed && (
             <span
@@ -328,7 +329,9 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
             </span>
           )}
           {record.status === "DEAD" && <span className="chip chip-err">💀 ПАЛ</span>}
-          {record.status === "MISSING" && <span className="chip chip-warn">? ПРОПАЛ</span>}
+          {record.status === "MISSING" && (
+            <span className="chip chip-warn">{isCursed ? "? ПРОПАЛА" : "? ПРОПАЛ"}</span>
+          )}
         </div>
 
         <div className={`flex gap-4 ${horizontal ? "flex-row items-center" : ""}`}>
@@ -339,6 +342,7 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
                 corrupted={isCorrupted}
                 sealed={isSealed}
                 status={record.status}
+                missingLabel={isCursed ? "? ПРОПАЛА" : undefined}
                 size={horizontal ? 88 : 72}
                 fallbackGlyph={record.sigil}
               />
@@ -357,9 +361,7 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
               >
                 {record.name}
               </h3>
-              {typeof record.friendship === "number" && record.friendship > 0 && (
-                <FriendshipBar value={record.friendship} />
-              )}
+              <FriendshipBar value={record.friendship} />
             </div>
             <div className={`text-xs tracking-wider mt-0.5 mb-2 ${isEntity ? "text-[var(--cyan)] opacity-80" : "text-dim"}`}>
               {record.subtitle}
@@ -560,53 +562,5 @@ export function RecordCard({ record, horizontal = false }: RecordCardProps) {
         document.body
       )}
     </>
-  );
-}
-
-/**
- * FriendshipBar — шкала дружбы (1-10) в карточке второстепенного NPC.
- * Цвет: от красного (1) к зелёному (10), при 10 — розовый + сердечко.
- */
-function FriendshipBar({ value }: { value: number }) {
-  const max = 10;
-  const pct = Math.min(100, (value / max) * 100);
-
-  let color: string;
-  let heart = false;
-  if (value >= 10) {
-    color = "#ff69b4";
-    heart = true;
-  } else if (value >= 7) {
-    const t = (value - 7) / 3;
-    const r = Math.round(232 * (1 - t));
-    color = `rgb(${r}, 246, 38)`;
-  } else if (value >= 4) {
-    const t = (value - 4) / 3;
-    color = `rgb(255, ${Math.round(140 + 92 * t)}, 40)`;
-  } else {
-    const t = (value - 1) / 2;
-    color = `rgb(${Math.round(160 + 95 * t)}, ${Math.round(20 + 16 * t)}, 20)`;
-  }
-
-  return (
-    <div className="flex items-center gap-1.5 shrink-0">
-      {heart && <span className="text-[10px] leading-none">❤️</span>}
-      <div
-        className="h-1 w-12 overflow-hidden rounded-full"
-        style={{ background: "rgba(0,0,0,0.4)" }}
-      >
-        <div
-          className="h-full transition-all duration-500 rounded-full"
-          style={{
-            width: `${pct}%`,
-            background: color,
-            boxShadow: `0 0 4px ${color}`,
-          }}
-        />
-      </div>
-      <span className="text-[8px] font-mono" style={{ color }}>
-        {value}
-      </span>
-    </div>
   );
 }

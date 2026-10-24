@@ -230,7 +230,8 @@ function buildLore(raw: Record<string, unknown>, isCreate: boolean) {
   if (isCreate || 'friendship' in raw) {
     const f = raw.friendship
     if (f === null || f === undefined || f === '') data.friendship = null
-    else data.friendship = optInt(f, 0, 0, 10)
+    // -1 — «отношения неизвестны», 0..10 — шкала дружбы
+    else data.friendship = optInt(f, 0, -1, 10)
   }
   if (isCreate || 'shardWord' in raw) data.shardWord = optStr(raw.shardWord, MAX_SHARD)
   if (isCreate || 'secretFragment' in raw) data.secretFragment = optStr(raw.secretFragment, MAX_FRAGMENT)
